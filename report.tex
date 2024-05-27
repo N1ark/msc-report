@@ -1,0 +1,90 @@
+\documentclass[11pt]{informatics-report}
+
+\usepackage[utf8]{inputenc}
+\usepackage{titlesec}
+\usepackage[T1]{fontenc}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{paralist}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{adjustbox}
+\usepackage{enumitem}
+\usepackage{xltabular}
+\usepackage{dirtree}
+\usepackage{standalone}
+\usepackage{titletoc}
+
+% code
+\usepackage{minted}
+\setminted{linenos, tabsize=4}
+
+
+% setup bibliography
+\usepackage[style=ieee]{biblatex}
+\addbibresource{references.bib}
+
+% setup hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    citecolor=black,
+    linkcolor=blue,
+    urlcolor=blue,
+}
+
+% glossary entries
+\usepackage[acronym,toc,nonumberlist,nogroupskip]{glossaries}
+\makenoidxglossaries
+\glsdisablehyper
+\loadglsentries{glossary}
+
+% add footnotes without the \footnote{\url{...}} command
+\newcommand{\ftnt}[1]{\footnote{See \url{#1}}}
+
+% custom packages
+%\usepackage{macros}
+
+% ---------------- GENERAL INFO ---------------
+
+\title{Gillian 2{-}{-}\\
+	   A language agnostic CSE}
+\author{Opale Sjöstedt}
+\supervisor{Philippa Gardner}
+
+\date{\today}
+
+%\abstractFile{frontmatter/abstract.tex}
+
+\begin{document}
+
+\createFrontMatter
+
+\onehalfspacing
+
+{\hypersetup{hidelinks}\tableofcontents}
+
+\doublespacing
+
+% ----------------- CHAPTERS -------------------
+
+\input{chapters/introduction.tex}
+
+\input{chapters/litreview.tex}
+
+\input{chapters/plan.tex}
+
+\clearpage
+
+% ----------------- BIBLIOGRAPHY -------------------
+
+\printbibliography
+\addcontentsline{toc}{chapter}{Bibliography}
+
+% ----------------- APPENDICES -------------------
+
+%\appendix
+%\include{appendices/name}
+
+\end{document}
