@@ -1,4 +1,4 @@
-\documentclass[11pt]{informatics-report}
+\documentclass[a4paper,11pt,twoside]{informatics-report}
 
 \usepackage[utf8]{inputenc}
 \usepackage{titlesec}
@@ -15,6 +15,15 @@
 \usepackage{dirtree}
 \usepackage{standalone}
 \usepackage{titletoc}
+\usepackage{subcaption}
+\usepackage{forest}
+\usepackage{todonotes}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathpartir}
+\usepackage{pifont}
 
 % code
 \usepackage{minted}
@@ -34,22 +43,16 @@
     urlcolor=blue,
 }
 
-% glossary entries
-\usepackage[acronym,toc,nonumberlist,nogroupskip]{glossaries}
-\makenoidxglossaries
-\glsdisablehyper
-\loadglsentries{glossary}
-
 % add footnotes without the \footnote{\url{...}} command
 \newcommand{\ftnt}[1]{\footnote{See \url{#1}}}
 
 % custom packages
-%\usepackage{macros}
+\usepackage{macros}
 
 % ---------------- GENERAL INFO ---------------
 
 \title{Gillian 2{-}{-}\\
-	   A language agnostic CSE}
+	   A Language Agnostic CSE}
 \author{Opale Sjöstedt}
 \supervisor{Philippa Gardner}
 
@@ -79,8 +82,8 @@
 
 % ----------------- BIBLIOGRAPHY -------------------
 
-\printbibliography
 \addcontentsline{toc}{chapter}{Bibliography}
+\printbibliography
 
 % ----------------- APPENDICES -------------------
 

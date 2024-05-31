@@ -1,4 +1,170 @@
 \chapter{Literature Review}
 
-Describe the work that has already been completed that is relevant to the problem you are addressing.
-Some projects may need an additional section covering notation, key theories or other such technical information.
+\section{Separation Logic}
+
+As the need to formally verify programs grew, methods needed to be built to provide a framework to do so. Hoare Logic \cite{hoarelogic} is a logic made specifically to allow proving properties of programs, by describing them axiomatically. Every statement can be expressed as having a precondition, the state before execution, and a postcondition, the state after the statement, expressed as \SLtriple PSQ. For assignement for instance, one could have \SLtriple{\code{x}=x}{\code{x} := 0}{\code{x}=0}.
+
+An issue remains however, and it is to do with shared mutable state, like memory of a program -- how does one describe that there is a list in memory of unknown length, that may be mutated at multiple places in the program, while ensuring properties hold at a specific point in time? Being able to describe the state and constraints upheld by global state is difficult, and past solutions scaled poorly. Separation Logic (SL) \cite{seplogic1, seplogic2} is an extension of Hoare logic that permits this in a clear and scalable way. It's main addition is $*$, a separating conjunction: $P * Q$ means not only that the heap satisfies $P$ and $Q$, but that it can be split in two \emph{disjoint} parts, such that one satisfies $P$ and the other $Q$. This allows us to reason about state, by stating what properties are upheld, and how they may be split for further proofs. For instance, given a \emph{list} predicate, when calling a function that mutates the list we can simply substitute the part of the state corresponding to that list with the postcondition of the function, with the guarantee that the rest of the state is untouched, by using the \emph{frame rule}:
+
+\[
+\inferrule[Frame]
+	{\SLtriple{P}{S}{Q}}
+	{\SLtriple{P*F}{S}{Q*F}}
+\]
+
+Because we know that the code $S$ only uses (either by reading or modifying) $P$, any disjoint frame $F$ can be added to the state without altering the execution of $S$. SL also comes equipped with the \emp predicate, representing an empty state (ie. $P * \emp = P$), and the separating implication $\wand$ (also called wand). $P_0 \wand P_1$ states that if the current state is extended with a disjoint part satisfying $P_0$, then $P_1$ holds in the extended heap \cite{seplogic2}.
+
+From these we can then build more complex predicates. A traditional example is the ``points to'' predicate, $a \mapsto x$, stating that the address $a$ stores values $x$. We may note that $a \mapsto x * a \mapsto x$ does \emph{not} hold, since a heap with $a$ pointing to $x$ can not be split into two disjoint heaps both satisfying $a \mapsto x$. Similarly, $a\mapsto x * b \mapsto y$ can only hold if $a\neq b$.
+
+Equipped with composition symbolic execution and separation logic, we are capable of automating verification of code, and ensuring that no bug exists in a given program, according to a manually written specification.
+
+\subsection{Bi-Abduction}
+
+\todo{Explain}
+
+\subsection{Incorrectness Separation Logic}
+
+Separation Logic is, by definition, \emph{over-approximate} (OX): \SLtriple PSQ means that given a precondition $P$, we are guaranteed to reach a state that satisfies $Q$. In other words, $Q$ may encompass \emph{more} than only the states reachable from $P$. This can become an issue when used for real-world code, where errors that don't actually exist may be flagged as such, hindering the use of a bug detection tool (for instance in a CI setting).
+
+To solve this problem, a recent innovation in the field is Incorrectness Separation Logic (ISL) \cite{isl}, derived from Incorrectness Logic \cite{incorrectnesslogic}. It is similar to SL, but \emph{under-approximate} (UX), ensuring that the detected bugs actually exist.
+
+Where SL uses triplets of the form \SLtriple{\text{precondition}}{S}{\text{postcondition}}, incorrectness separation logic uses \ISLtriple{\text{presumption}}{S}{\text{result}}, with the result being an under-approximation of the actual result of the code. The reasoning is thus flipped, where we start from a stronger assertion at the end of the function, and then step back and broaden our assumptions, until reaching the initial presumption. This means that all paths explored this way are guaranteed to exist, but may not encompass all possible paths. 
+
+Another way of comparing SL to ISL is with consequence: in SL, the precondition implies the postcondition, whereas with ISL the result implies the precondition. This enables us to do \emph{true bug-finding}. Furthermore, ISL triplets are extended with an \emph{outcome} $\epsilon$, resulting in \ISLtriple{P}{S}{\epsilon:q}, where $\epsilon$ is the outcome of the function, for instance \textit{ok}, or an error.
+
+
+\subsection{State Models}
+
+To support sound verification engines, research also exists around describing the state used by different languages, in a modular fashion -- although broadly related to SL, this research also has roots in category theory and abstract algebra. Some litterature around this includes:
+
+\begin{itemize}
+	\item \citetitle{fracpermissions} proposes an axtension of the traditional ``points to'' predicate, to allow for fractional permissions that can be used in divide-and-conquer algorithms or in concurrent applications.
+	\item \citetitle{abstractseplogic} gives a formal definition of separation algebra and predicates that satisfy abstract heaps.
+	\item \citetitle{sepalgebra} defines separation algebra, a way of modelling the state of programs in a composable way. It uses relations and defines axioms a relation must respect to be used as a separation algebra.
+	\item \citetitle{higherorderseplogic} uses partial commutative monoids and shows constructions that can be used in higher-order separation logic, as seen in Iris.
+	\item \citetitle{statesoundness} further researches the idea of state models, and in particular properties of separation algebras, such as having multiple units, and the active and passive execution pre-order.
+\end{itemize}
+
+\section{Gillian}
+
+Gillian \cite{gillian0, gillian1, gillian2} is a CSE engine, that supports UX true bug-finding, OX full verification, and exact (EX) whole-program testing \cite{exactsl}. It's first significant characteristic is thus a unified platform, that supports all three modes of operation. 
+
+Secondly, unlike other CSE engines, it is not targetted towards a specific programming language, and is instead parametric on the \emph{memory model} of the target language. One can thus instantiate Gillian to their preferred language, and enjoy a complete CSE engine without having to build one from scratch. This is done by both providing a memory model of the language -- code written in OCaml -- and a compiler from the target language to GIL, an intermediate language used by Gillian.
+
+Gillian has been in development for several years now, and a gap has started to form between the theory, that has seen many evolutions (such has the notion of EX testing \cite{exactsl}) that didn't exist at the time of its original creation. Furthermore, currently unpublished papers aim to improve its existing theory -- and while some of these improvements have already been ported to the source code, it has further diverged from a theory. We will thus aim to write Gillian 2.0{-}{-}, a rework of the original Gillian, taking into account advanced made in the past years as well as additional innovations in the field and ideas from the author of this report.
+
+
+\section{Program Verification}
+
+
+\subsection{Symbolic Execution}
+
+Traditionally, software is tested by calling the code with a predetermined or randomly generated input (for instance with fuzzing), and verifying that the output is as expected. These approaches, where the code is executed ``directly'', are of the realm of \emph{concrete} execution, as the code is run with concrete -- as in real, existing -- values. While this method is straightforward and simple to realize, it comes with flaws: it is limited by the imagination of the person responsible for writing the tests (when written manually), or by the probability of a given input to reach a specific part of the codebase. With fuzzing, methods exist to improve the odds of finding new paths \cite{smartfuzzing}, but it all amounts to luck nevertheless.
+
+A solution to this is symbolic execution: rather than running the code with concrete values, \emph{symbolic} values are used \cite{surveysymex}. These values are abstract, and are then restricted as an interpreter steps through the code. Once a branch of the code terminates, a constraint solver can be used against the accumulated constraints to obtain a possible concrete value, called an \emph{interpretation}.
+
+For a simple C program that checks if a given number is positive or negative and even or odd (see \autoref{fig:branching-example}), symbolic execution would thus branch thrice, once at each condition\footnote{For simplicity, we omit the case where \code{x} is not an integer, which would lead to an error.}. This would then result in 5 different branches, each with different constraints on the program variable \code{x}: $\code{x} = 0$, $\code{x}\%2=0 \land \code{x}<0$, $\code{x}\%2=0 \land \code{x}\>0$, $\code{x}\%2\neq0 \land \code{x}<0$ and $\code{x}\%2\neq0 \land \code{x}>0$\footnote{The four last constraints also contain $\code{x} = 0$, which is included in $\code{x}>0$ and $\code{x}<0$}.
+
+\begin{figure}[h]
+\centering
+\begin{subfigure}{.5\textwidth}
+	\centering
+	\begin{minted}{c}
+if (x == 0) {
+	print("zero");
+	return;
+}
+if (x % 2 == 0) {
+	print("even");
+} else {
+	print("odd");
+}
+if (x < 0) {
+	print("negative");
+} else {
+	print("positive");
+}
+	\end{minted}
+	\caption{Simple branching program}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+\centering
+\begin{forest} 
+[{$\top$}
+	[{$\code{x} = 0$}]
+	[{$\code{x}\neq 0$}
+		[{$\code{x}\%2=0$}
+			[{$\code{x} < 0$}]	
+			[{$\code{x} \geq 0$}]	
+		]
+		[{$\code{x}\%2\neq0$}
+			[{$\code{x} < 0$}]	
+			[{$\code{x} \geq 0$}]	
+		]
+	]
+]	
+\end{forest}
+\caption{Paths obtained from symbolically executing the code, with the added constraint at each node}
+\end{subfigure}
+	
+\caption{Symbolic execution of a simple program}
+	\label{fig:branching-example}
+\end{figure}
+
+\subsection{Compositional Symbolic Execution}
+
+An issue that arises from symbolic execution is that is scales quite poorly, because of path explosion \cite{pathexplo,surveysymex}, as each branch can potentially multiply by two the total number of branches.
+
+A solution to this is \emph{compositional} symbolic execution (CSE), in which the code is tested compositionally, function by function \cite{compositionalsymtesting}. This allows for gradual adoption, as only parts of the code base can be tested, and minimises the effect of path explosion, as only the conditionals in the treated function will cause branching.
+
+To support functions calls, functions are enhanced with \emph{function summaries}, that specify its preconditions and postconditions and that are used when it is called. These summaries, or specifications, express the state at the start and end of the function with first order logic, as follows \cite{compositionalsymtesting}:
+
+\begin{align*}
+	\phi_f 
+		&= (s[0]=c\land \code{ret}=0) \\
+		&\lor (s[0]\neq c\land s[0]=0 \land \code{ret}=-1) \\
+		&\lor (s[0]\neq c\land s[0]\neq 0\land s[1]=c \land \code{ret}=1) \\
+		&\lor \text{etc.} 
+\end{align*}
+
+This approach uses first order logic, and while a good first step towards thinking compositionally, more tools are needed to allow for a more scalable reasoning.
+
+\section{Existing Tools}
+
+A wide range of engines exist to verify the correctness of code, most targeted towards a specific language. This allows them to implement behaviour that is appropriate for that particular language. 
+For instance, CBMC \cite{cbmc} is a bounded model checker, that allows for the verification of C programs, via whole program testing -- that is, it is not compositional, and instead symbolically executes a given codebase, and verifies that properties hold. While clearly useful, as shown by its success, this solution doesn't scale particularly well; larger applications need to be split modularly to be verified, and manual stubbing is required to support testing parts of the code separately.
+
+Slightly separate from symbolic execution, KLEE \cite{klee} allows for the \emph{concolic} execution of LLVM code -- thus supporting C, C++, Rust, and any other language that can be compiled to LLVM. Concolic execution is a hybrid of symbolic and concrete execution, allowing the use of symbolic values along a concrete execution path. Similarly to CBMC, it handles whole program testing, and as such doesn't scale with larger codebases. MACKE \cite{macke} is an adaptation of KLEE enabling compositional testing, proving that concolic execution can be extended to be more scalable, without losing accuracy in reported errors.
+
+As codebases grow, there comes a need for compositional tools that can verify smallers parts of the code, thus enable greater scaling and integration in continuous integration (CI) pipelines, which permit giving rapid feedback to developers. Separation logic enables this, by allowing one to reason about a specific function and ignoring the rest of the program's state.
+
+jStar \cite{jstar} for instance is a tool allowing automated verification of Java code, and is in particular tailored towards handling design patterns that are commonly found in object-oriented programming and that may be hard to reason about. It uses an intermediate representation of Java called Jimple, taken from the Java optimisation framework Soot. Similarly, VeriFast \cite{verifast} is a CSE tool that is targetted at Java and a subset of C. 
+
+Infer \cite{infer} is a tool developped by Meta that uses separation logic and bi-abduction to find bugs in C, C++, Java and Objective-C programs, by attempting to prove correctness and extracting bugs from failures in the proof. It's approach, while initially stemming from separation logic, was used for finding bugs (rather than proving correctness), which led to the creation of ISL \cite{isl} to provide a sound theory justifying this approach. Following this, Pulse \cite{pulse} followed and fully exploited the advances made in ISL to show that this new theory served as more than a justification to past tools, and to prove the existing of true bugs. 
+
+Also using separation logic, JaVerT \cite{javert1, javert2} is a CSE engine aimed to verifying JavaScript, with support for whole program testing, verification, and bi-abduction in the same fashion as Infer -- it followed from Cosette \cite{cosette}, which already supported whole program testing.
+
+While the above examples are targeted at specific target languages, some tools have also been designed with modularity in mind. To do such, they instead support a general intermediate language -- one that isn't designed specifically for a language, like Jimple for Java -- that a target language must be compiled to. This allows for greater flexibility in regards to what languages can be analysed by the engine, as all it needs to be capable of verifying a new language is a compiler. 
+
+An example of such is Viper \cite{viper}, an infrastructure capable of program verification with separation logic, with existing frontends that allow for the verification of Scala, Java and OpenCL. It's intermediate language is a rich object-oriented imperative typed language, that operates on a built-in heap.
+
+One can still take genericity further, by also abstracting the state model the engine operations on. This is precisely what Gillian \cite{gillian0, gillian1, gillian2} does, a CSE engine \emph{parametric on the state model}, and the main work upon which this project this project is based. It doesn't support any one language, but instead can target any language that provides a state model implementation and a compiler to GIL, it's intermediary language. Currently Gillian has been instantiated to the C language (via CompCert-C \cite{compcert}) and JavaScript, as well as Rust \cite{gillianrust}. It is a generalisation of JaVerT, which only targeted JavaScript.
+
+\begin{table}[h]
+\begin{tabular}{l|lll}
+         &                           &               & Parametric \\
+Name     & Target Language           & Compositional & State Model \\ \hline
+CBMC     & C                         & \xmark & \xmark  \\
+KLEE     & LLVM                      & \xmark & \xmark  \\
+MACKE    & LLVM                      & \cmark & \xmark  \\
+jStar    & Java                      & \cmark & \xmark  \\
+VeriFast & C, Java                   & \cmark & \xmark  \\
+Infer    & C, C++, Java, Objective-C & \cmark & \xmark  \\
+Pulse    & C, C++, Java, Objective-C & \cmark & \xmark  \\
+Cosette  & JavaScript                & \cmark & \xmark  \\
+JaVerT   & JavaScript                & \cmark & \xmark  \\
+Viper    & Any                       & \cmark & \xmark  \\
+Gillian  & Any                       & \cmark & \cmark 
+\end{tabular}
+\caption{Comparison of verification tools}
+\end{table}

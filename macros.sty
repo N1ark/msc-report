@@ -1,24 +1,41 @@
-
+% Formatting
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\itl}[1]{{\it#1}}
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+
+% Genereal maths
 \newcommand{\defeq}[0]{\stackrel{\text{def}}=}
 \newcommand{\finmap}[0]{\stackrel{\itl{fin}}\rightharpoonup}
 \newcommand{\pset}[0]{{\cal P}}
 \newcommand{\idx}[1]{\ensuremath{{}^{#1}}}
-\newcommand{\mmdl}[0]{\ensuremath{\mathbb S}}
 \newcommand{\nats}[0]{\ensuremath{\mathbb N}}
 \newcommand{\rarr}[0]{\ensuremath{\rightarrow}}
+
+% Semantics
+\newcommand{\mmdl}[0]{\ensuremath{\mathbb S}}
 \newcommand{\st}[0]{\sigma}
 \newcommand{\St}[0]{\Sigma}
 \newcommand{\evalsto}[3]{\ensuremath{p\vdash(#1)\Downarrow_\theta#2:(#3)}}
 \newcommand{\exec}[5]{#1.#2(#3) \rightsquigarrow #4:(#5)}
-\newcommand{\Ok}[0]{\code{Ok}}
-\newcommand{\Miss}[0]{\code{Miss}}
-\newcommand{\bools}[0]{\mathbb{B}}
-\newcommand{\vtrue}[0]{\texttt{true}}
-\newcommand{\vfalse}[0]{\texttt{false}}
 \newcommand{\corepred}[3]{\ensuremath{\left<\texttt{#1}\right>(#2;#3)}}
 \newcommand{\ins}[0]{\vec{v_i}}
 \newcommand{\outs}[0]{\vec{v_o}}
 
+\newcommand{\Ok}[0]{\code{Ok}}
+\newcommand{\Miss}[0]{\code{Miss}}
+
+\newcommand{\bools}[0]{\mathbb{B}}
+\newcommand{\vtrue}[0]{\texttt{true}}
+\newcommand{\vfalse}[0]{\texttt{false}}
+
+% Sep logic
+\newcommand{\SLtriple}[3]{\ensuremath{\left\{#1\right\}#2\left\{#3\right\}}}
+\newcommand{\ISLtriple}[3]{\ensuremath{\left[#1\right]#2\left[#3\right]}}
+
+\newcommand{\emp}[0]{\textit{emp}}
+\newcommand{\wand}{\mathrel{-\!\!\ast}}
+
+
+% Util
 \renewcommand\tabularxcolumn[1]{m{#1}}% for vertical centering text in X column
