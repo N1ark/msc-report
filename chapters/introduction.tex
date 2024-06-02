@@ -1,15 +1,9 @@
 \chapter{Introduction}
 
-Intro
+As software becomes part of critical element, it needs to be verified formally to ensure it does not fault. To support such verification in a scalable fashion, \emph{separation logic} \cite{seplogic1, seplogic2} was created, permitting compositional proofs on the behaviour of programs. Research has also been done in the field of separation algebra, to provide an abstraction over the state modelled within separation logic, to improve modularity and reduce the effort needed for proofs.
 
+Thanks to separation logic, compositional verification via specifications has been automated, and allows automatic checking of properties via compositional symbolic execution (CSE). A wide range of tools exist, usually enabling the verification of a specific language they are tailored for. Gillian \cite{gillian0, gillian1, gillian2} is a CSE engine that is different, in that it is not made for one specific language but is instead \emph{parametric on the state model}, allowing for it to be used to verify different language, like C, JavaScript or Rust. 
 
+Gillian has now been in development for several years, and the research landscape surrounding it has evolved in parallel, with for instance new techniques for state modelling and the creation of incorrectness separation logic. 
 
-
-
-
-
-
-
-
-
-
+In this report we will present Aether, a CSE engine that follows the steps of Gillian and that is both parametric in the state model and in the language, while being closely related to the theory underpinning it. It's goal is to serve as a simple, efficient and complete engine that supports multiple analysis methods such as OX verification and UX true bug finding, and that is easily extendable for different uses.

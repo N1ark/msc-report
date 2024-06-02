@@ -58,6 +58,8 @@
 			       Supervisor: \@supervisor}\\*
 			\vspace*{0.2in}
 			{\@date}\\*
+			\vspace*{2in}
+			{Submitted in partial fulfilment of the requirements for the MSc Degree in Computing (Software Engineering)}
 		}
 	\end{center}
 	\restoregeometry

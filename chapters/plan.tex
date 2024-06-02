@@ -1,4 +1,23 @@
 \chapter{Project Plan}
 
-Discuss the plan for the remainder of the project. Include a timeline.
-It is useful to define what success in your project will look like. You might be able to compare your system against existing systems.
+During the duration of this project, the author will aim to implement a Compositional Symbolic Engine, that is both parametric in the memory model in the style of Gillian \cite{gillian0, gillian1, gillian2}, and parametric on the language semantics.
+
+An initial implementation will first be done, by following the progresses made in two unpublished papers of the group, the so-called CSE 1 \cite{cse1} and 2, as well as an upcoming PhD dissertation. Further refinements will be brought, from additions from the author as well as existing research, most notably in the field of separation algebras, attempting to line up with progress done by Iris \cite{iris}. This attempt will feature OX verification.
+
+The initial attempt will already attempt to have the language semantics as separate from the rest of the engine as possible, while implementing them for a simplified version of the GIL intermediate language already existing in Gillian.
+
+Later, UX true bug finding with bi-abduction will be added, again following the approach in the unreleased papers and existing research, notably with ISL \cite{isl} and Infer-Pulse \cite{pulse}.
+
+In further development, the built-in language semantics will be stripped out (or made optional), in favour of an interface to specify language semantics externally, and proving soundness of the approach. 
+
+In parallel, a toolkit of separation algebras constructs will be developed, to allow new developers to easily construct complex state models from simpler elements.
+
+This project plan is structured in a way that if due to time constraints further steps cannot be completed, the existing version will remain functional and will still provide innovation. Some notable decisions that are yet to be taken, and that will distinguish
+
+Some of the innovations of the project include: \begin{itemize}
+	\item Providing a mechanisation of program verification using Iris-like state models
+	\item Providing the first (to the knowledge of the author) CSE that is parametric on the semantics of the target language -- existing CSE engines usually have one target language or intermediary language.
+	\item Making the above mentionned engine's implementation close to theory, and implemented in a way to easily allow future mechanised proof of soundness.
+\end{itemize}
+
+Finally, the project will be evaluated by comparing it's execution time in comparison to the existing Gillian implementation, as well as by trying to verify existing real-life code with it.
