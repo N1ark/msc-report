@@ -2,7 +2,7 @@
 
 \section{Separation Logic}
 
-As the need to formally verify programs grew, methods needed to be built to provide a framework to do so. Hoare Logic \cite{hoarelogic} is a logic made specifically to allow proving properties of programs, by describing them axiomatically. Every statement can be expressed as having a precondition -- the state before execution -- and a postcondition -- the state after \emph{successful} execution -- expressed as \SLtriple PSQ. For assignement for instance, one could have \SLtriple{\code{x}=x}{\code{x} := 0}{\code{x}=0}.
+As the need to formally verify programs grew, methods needed to be built to provide a framework to do so. Hoare Logic \cite{hoarelogic} is a logic made specifically to allow proving properties of programs, by describing them axiomatically. Every statement can be expressed as having a precondition -- the state before execution -- and a postcondition -- the state after \emph{successful} execution -- expressed as \SLtriple PSQ. For assignment for instance, one could have \SLtriple{\code{x}=x}{\code{x} := 0}{\code{x}=0}.
 
 While already extremely helpful to reason about programs, an issue remains however, and it is to do with shared mutable state, like memory of a program -- how does one describe that there is a list in memory of unknown length, that may be mutated at multiple places in the program, while ensuring properties hold at a specific point in time? Being able to describe the state and constraints upheld by global state is difficult, and past solutions scaled poorly.
 
@@ -27,7 +27,7 @@ Separation Logic is powerful in that a develop can define a precondition and pos
 	P * A \vdash Q
 \end{align*}
 
-In other words, given a precondition $P$ what is the antiframe $A$ that is needed to reach the postcondition $Q$. While formally developped in \cite{biabduction}, Infer \cite{infer} was the real-world tool to bring the idea to production.
+In other words, given a precondition $P$ what is the antiframe $A$ that is needed to reach the postcondition $Q$. While formally developed in \cite{biabduction}, Infer \cite{infer} was the real-world tool to bring the idea to production.
 
 \subsection{Incorrectness Separation Logic}
 
@@ -35,7 +35,7 @@ Separation Logic is, by definition, \emph{over-approximate} (OX): \SLtriple PSQ 
 
 To solve this problem, a recent innovation in the field is Incorrectness Separation Logic (ISL) \cite{isl}, derived from Incorrectness Logic \cite{incorrectnesslogic}. It is similar to SL, but \emph{under-approximate} (UX), instead ensuring that the detected bugs actually exist.
 
-Where SL uses triplets of the form \SLtriple{\text{precondition}}{S}{\text{postcondition}}, incorrectness separation logic uses \ISLtriple{\text{presumption}}{S}{\text{result}}, with the result being an under-approximation of the actual result of the code. The reasoning is thus flipped, where we start from a stronger assertion at the end of the function, and then step back and broaden our assumptions, until reaching the initial presumption. This means that all paths explored this way are guaranteed to exist, but may not encompass all possible paths. 
+Where SL uses triplets of the form \SLtriple{\text{precondition}}{S}{\text{postcondition}}, incorrectness separation logic uses \ISLtriple{\text{presumption}}{S}{\text{result}}, with the result being an under-approximation of the actual result of the code. The reasoning is thus flipped, where we start from a stronger assertion at the end of the function, and then step back and broaden our assumptions, until reaching the initial presumption. This means that all paths explored this way are guaranteed to exist, but may not encompass all possible paths.
 
 Another way of comparing SL to ISL is with consequence: in SL, the precondition implies the postcondition, whereas with ISL the result implies the precondition. This enables us to do \emph{true bug-finding}. Furthermore, ISL triplets are extended with an \emph{outcome} $\epsilon$, resulting in \ISLtriple{P}{S}{\epsilon:Q}, where $\epsilon$ is the outcome of the function, for instance \textit{ok}, or an error.
 
@@ -47,17 +47,17 @@ While the above examples of separation logic use a simple \emph{abstract heap}, 
 
 An example of such extension is fractional permissions \cite{fracpermissions, fracpermissions2}: the ``points to'' predicate is extended with a \emph{permission}, a fraction $q$ in the $(0;1]$ range, written $a \mapstoq{q} x$. A permission of $1$ gives read and write permission, while anything lower only gives read permission. This allows one to split permissions, for instance $a \mapstoq{1} x$ is equivalent to $a\mapstoq{0.5}x * a\mapstoq{0.5}$, a program can thus concurrently execute two routines that read the same part of the state, while remaining sound -- permissions can then be re-added as the routines exit, regaining full permissions over the cell.
 
-Further changes and improvements to separation logic have been made, usually with the aim of adapting a particular language feature or mechanism that couldn't be expressed otherwise. \citetitle{next700seplogics} argues that indeed too many subtly different separation logics are being created to accomodate specific challenges, which in turn require new soundness proofs that aren't compatible with eachother. To tackle this, research has emerged around the idea of providing one sound metatheory, that would provide the tools necessary to building more complex abstractions \emph{within} that logic, rather than in parallel to it.
+Further changes and improvements to separation logic have been made, usually with the aim of adapting a particular language feature or mechanism that couldn't be expressed otherwise. \citetitle{next700seplogics} argues that indeed too many subtly different separation logics are being created to accommodate specific challenges, which in turn require new soundness proofs that aren't compatible with each other. To tackle this, research has emerged around the idea of providing one sound metatheory, that would provide the tools necessary to building more complex abstractions \emph{within} that logic, rather than in parallel to it.
 
-A first step in this quest towards a single core logic is the definition of an abstraction over the state. The main concept introduced for this is that of \emph{Separation Algebras} \cite{abstractseplogic, sepalgebra}, which allow for the creation of complex state models from simpler elements. Because soudness is proven for these smaller elements, constructions made using them also carry this soundness, and aleviate users of complicated proofs.
+A first step in this quest towards a single core logic is the definition of an abstraction over the state. The main concept introduced for this is that of \emph{Separation Algebras} \cite{abstractseplogic, sepalgebra}, which allow for the creation of complex state models from simpler elements. Because soundness is proven for these smaller elements, constructions made using them also carry this soundness, and alleviate users of complicated proofs.
 
-Different authors used different definitions and axioms to define separation algebras. In \cite{abstractseplogic} they are initially defined as a cancellative partially commutative monoid (PCM) $(\Sigma, \bullet, 0)$. This definition is however too strong: for instance, the cancellativity property implies $\st\bullet\st'=\st \implies \st'=0$. While this is true for some cases such as the points to predicate, this would invalidate useful constructions such as that of an \emph{agreement}, where knowledge can be duplicated. For an agreement separation algebra, we thus have $\st \bullet \st = \st$, which of course dissatisfies cancellativity. 
+Different authors used different definitions and axioms to define separation algebras. In \cite{abstractseplogic} they are initially defined as a cancellative partially commutative monoid (PCM) $(\Sigma, \bullet, 0)$. This definition is however too strong: for instance, the cancellativity property implies $\st\bullet\st'=\st \implies \st'=0$. While this is true for some cases such as the points to predicate, this would invalidate useful constructions such as that of an \emph{agreement}, where knowledge can be duplicated. For an agreement separation algebra, we thus have $\st \bullet \st = \st$, which of course dissatisfies cancellativity.
 
-This approach is also taken in \cite{sepalgebra}, where separation algebras are defined with a functional ternary relation $J(x,y,z)$ written $x\oplus y=z$ -- the choice of using a relation rather than a partial function being due to the fact the authors wanted to construct their models in Rocq, which only supports computable total functions. While the distinction is mostly syntactical and both relational and functional approaches are equivalent, the former makes proof-work less practical \cite{statesoundness, iris}, whereas the functional approach allows one to reason equationally. This paper also introduces the notion of \emph{multi-unit separation algebras}, separation algebras that don't have a single $0$ unit, but rather enforce that every state has \emph{a} unit, that can be different from other states' units. Formally, this means that instead of having $\exists u.~\forall x.~x \oplus u = x$, we have $\forall x.~\exists u_x.~ x\oplus u_x=x$ -- this allows one to properly define the disjoint union (or sum) of separation algebras, with both sides of the sum having a distinct unit. We may note that this is a first distinction from PCMs, as a partially commutative monoid cannot have two distinct units; according to the above definiton, separation algebras are thus a type of partially commutative semigroup.
+This approach is also taken in \cite{sepalgebra}, where separation algebras are defined with a functional ternary relation $J(x,y,z)$ written $x\oplus y=z$ -- the choice of using a relation rather than a partial function being due to the fact the authors wanted to construct their models in Rocq, which only supports computable total functions. While the distinction is mostly syntactical and both relational and functional approaches are equivalent, the former makes proof-work less practical \cite{statesoundness, iris}, whereas the functional approach allows one to reason equationally. This paper also introduces the notion of \emph{multi-unit separation algebras}, separation algebras that don't have a single $0$ unit, but rather enforce that every state has \emph{a} unit, that can be different from other states' units. Formally, this means that instead of having $\exists u.~\forall x.~x \oplus u = x$, we have $\forall x.~\exists u_x.~ x\oplus u_x=x$ -- this allows one to properly define the disjoint union (or sum) of separation algebras, with both sides of the sum having a distinct unit. We may note that this is a first distinction from PCMs, as a partially commutative monoid cannot have two distinct units; according to the above definition, separation algebras are thus a type of partially commutative semigroup.
 
-In \cite{statesoundness}, further improvements are done to the axiomatisation of separation algebras. Most notably, the property of cancellativity is removed, as it is too strong and unpractical for some cases, as shown previously. Furthermore, the idea of unit, or \emph{core}, is made explicity, with the definition of the total function $\hat\cdot$, the core of a resource, which is its \emph{duplicable part}.
+In \cite{statesoundness}, further improvements are done to the axiomatisation of separation algebras. Most notably, the property of cancellativity is removed, as it is too strong and unpractical for some cases, as shown previously. Furthermore, the idea of unit, or \emph{core}, is made explicit, with the definition of the total function $\hat\cdot$, the core of a resource, which is its \emph{duplicable part}.
 
-Finally, Iris \cite{iris} is a state of the art ``higher-order concurrent separation logic''. It places itself as a solution to the problem mentionned in \cite{next700seplogics}, and aims to provide a sound base logic that can be reused and extended to fit all needs. Its \emph{resource algebras} (RAs), similar to separation algebras. Because their separation logic is aimed at automation via Rocq, they need the composition function $\cdot$ to be total. As such, instead of defining invalid composition via partiality (by marking an invalid composition of states as undefined), they instead add a validity function $\cal\overline V$, which returns whether a given state is valid. They also keep the unit function, written $|\cdot|$, that they make \emph{partial}, rather than total -- this, they argue, makes constructing state models from smaller components easier\footnote{The author of this report found it surprising that they removed partiality from composition to then re-add it via the core, as this lacks consistency}. This was confirmed when developping state models for Gillian, where having the core be a total function made some state models more complicated to make sound.
+Finally, Iris \cite{iris} is a state of the art ``higher-order concurrent separation logic''. It places itself as a solution to the problem mentioned in \cite{next700seplogics}, and aims to provide a sound base logic that can be reused and extended to fit all needs. Its \emph{resource algebras} (RAs), similar to separation algebras. Because their separation logic is aimed at automation via Rocq, they need the composition function $\cdot$ to be total. As such, instead of defining invalid composition via partiality (by marking an invalid composition of states as undefined), they instead add a validity function $\cal\overline V$, which returns whether a given state is valid. They also keep the unit function, written $|\cdot|$, that they make \emph{partial}, rather than total -- this, they argue, makes constructing state models from smaller components easier\footnote{The author of this report found it surprising that they removed partiality from composition to then re-add it via the core, as this lacks consistency}. This was confirmed when developing state models for Gillian, where having the core be a total function made some state models more complicated to make sound.
 
 \section{Program Verification}
 
@@ -93,24 +93,24 @@ if (x < 0) {
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
 \centering
-\begin{forest} 
+\begin{forest}
 [{$\top$}
 	[{$\code{x} = 0$}]
 	[{$\code{x}\neq 0$}
 		[{$\code{x}\%2=0$}
-			[{$\code{x} < 0$}]	
-			[{$\code{x} \geq 0$}]	
+			[{$\code{x} < 0$}]
+			[{$\code{x} \geq 0$}]
 		]
 		[{$\code{x}\%2\neq0$}
-			[{$\code{x} < 0$}]	
-			[{$\code{x} \geq 0$}]	
+			[{$\code{x} < 0$}]
+			[{$\code{x} \geq 0$}]
 		]
 	]
-]	
+]
 \end{forest}
 \caption{Paths obtained from symbolically executing the code, with the added constraint at each node}
 \end{subfigure}
-	
+
 \caption{Symbolic execution of a simple program}
 	\label{fig:branching-example}
 \end{figure}
@@ -121,24 +121,24 @@ An issue that arises from symbolic execution is that is scales quite poorly, bec
 
 A solution to this is \emph{compositional} symbolic execution (CSE), in which the code is tested compositionally, function by function. This allows for gradual adoption, as only parts of the code base can be tested, and minimises the effect of path explosion.
 
-A great tool for this is separation logic: one can specify the precondition and postcondition of a function, and the symbolic execution can then step through the code, by starting from a state satisfying the precondition and ensuring that once the branch terminates the postcondition is satisfied. 
+A great tool for this is separation logic: one can specify the precondition and postcondition of a function, and the symbolic execution can then step through the code, by starting from a state satisfying the precondition and ensuring that once the branch terminates the postcondition is satisfied.
 
 \section{Existing Tools}
 
-A wide range of engines exist to verify the correctness of code, most targeted towards a specific language. This allows them to implement behaviour that is appropriate for that particular language. 
+A wide range of engines exist to verify the correctness of code, most targeted towards a specific language. This allows them to implement behaviour that is appropriate for that particular language.
 For instance, CBMC \cite{cbmc} is a bounded model checker, that allows for the verification of C programs, via whole program testing -- that is, it is not compositional, and instead symbolically executes a given codebase, and verifies that properties hold. While clearly useful, as shown by its success, this solution doesn't scale particularly well; larger applications need to be split modularly to be verified, and manual stubbing is required to support testing parts of the code separately.
 
 Slightly separate from symbolic execution, KLEE \cite{klee} allows for the \emph{concolic} execution of LLVM code -- thus supporting C, C++, Rust, and any other language that can be compiled to LLVM. Concolic execution is a hybrid of symbolic and concrete execution, allowing the use of symbolic values along a concrete execution path. Similarly to CBMC, it handles whole program testing, and as such doesn't scale with larger codebases. MACKE \cite{macke} is an adaptation of KLEE enabling compositional testing, proving that concolic execution can be extended to be more scalable, without losing accuracy in reported errors.
 
-As codebases grow, there comes a need for compositional tools that can verify smallers parts of the code, thus enable greater scaling and integration in continuous integration (CI) pipelines, which permit giving rapid feedback to developers. Separation logic enables this, by allowing one to reason about a specific function and ignoring the rest of the program's state.
+As codebases grow, there comes a need for compositional tools that can verify smaller parts of the code, thus enable greater scaling and integration in continuous integration (CI) pipelines, which permit giving rapid feedback to developers. Separation logic enables this, by allowing one to reason about a specific function and ignoring the rest of the program's state.
 
-jStar \cite{jstar} for instance is a tool allowing automated verification of Java code, and is in particular tailored towards handling design patterns that are commonly found in object-oriented programming and that may be hard to reason about. It uses an intermediate representation of Java called Jimple, taken from the Java optimisation framework Soot. Similarly, VeriFast \cite{verifast} is a CSE tool that is targetted at Java and a subset of C, while SpaceInvader \cite{spaceinvader} allows for the verification of C code in device drivers.
+jStar \cite{jstar} for instance is a tool allowing automated verification of Java code, and is in particular tailored towards handling design patterns that are commonly found in object-oriented programming and that may be hard to reason about. It uses an intermediate representation of Java called Jimple, taken from the Java optimisation framework Soot. Similarly, VeriFast \cite{verifast} is a CSE tool that is targeted at Java and a subset of C, while SpaceInvader \cite{spaceinvader} allows for the verification of C code in device drivers.
 
-Infer \cite{infer} is a tool developped by Meta that uses separation logic and bi-abduction to find bugs in C, C++, Java and Objective-C programs, by attempting to prove correctness and extracting bugs from failures in the proof. It's approach, while initially stemming from separation logic, was used for finding bugs rather than proving correctness, which led to the creation of ISL \cite{isl} to provide a sound theory justifying this approach. Following this, Pulse \cite{pulse} followed and fully exploited the advances made in ISL to show that this new theory served as more than a justification to past tools, and to prove the existing of true bugs. 
+Infer \cite{infer} is a tool developed by Meta that uses separation logic and bi-abduction to find bugs in C, C++, Java and Objective-C programs, by attempting to prove correctness and extracting bugs from failures in the proof. It's approach, while initially stemming from separation logic, was used for finding bugs rather than proving correctness, which led to the creation of ISL \cite{isl} to provide a sound theory justifying this approach. Following this, Pulse \cite{pulse} followed and fully exploited the advances made in ISL to show that this new theory served as more than a justification to past tools, and to prove the existing of true bugs.
 
 Also using separation logic, JaVerT \cite{javert1, javert2} is a CSE engine aimed to verifying JavaScript, with support for whole program testing, verification, and bi-abduction in the same fashion as Infer -- it followed from Cosette \cite{cosette}, which already supported whole program testing.
 
-While the above examples are targeted at specific target languages, some tools have also been designed with modularity in mind. To do such, they instead support a general intermediate language -- one that isn't designed specifically for a language, like Jimple for Java -- that a target language must be compiled to. This allows for greater flexibility in regards to what languages can be analysed by the engine, as all it needs to be capable of verifying a new language is a compiler. 
+While the above examples are targeted at specific target languages, some tools have also been designed with modularity in mind. To do such, they instead support a general intermediate language -- one that isn't designed specifically for a language, like Jimple for Java -- that a target language must be compiled to. This allows for greater flexibility in regards to what languages can be analysed by the engine, as all it needs to be capable of verifying a new language is a compiler.
 
 An example of such is Viper \cite{viper}, an infrastructure capable of program verification with separation logic, with existing frontends that allow for the verification of Scala, Java and OpenCL. It's intermediate language is a rich object-oriented imperative typed language, that operates on a built-in heap.
 
@@ -151,28 +151,26 @@ One can still take genericity further, by also abstracting the state model the e
 CBMC     & C                         & \xmark & \xmark & WPST\\
 KLEE     & LLVM                      & \xmark & \xmark & Concolic  \\
 MACKE    & LLVM                      & \cmark & \xmark & Concolic \\
-jStar    & Java                      & \cmark & \xmark & OX \\
+jStar*   & Java                      & \cmark & \xmark & OX \\
 VeriFast & C, Java                   & \cmark & \xmark & OX \\
 Infer    & C, C++, Java, Objective-C & \cmark & \xmark & OX \\
 Pulse    & C, C++, Java, Objective-C & \cmark & \xmark & UX \\
-Cosette  & JavaScript                & \cmark & \xmark & WPST \\
+Cosette* & JavaScript                & \cmark & \xmark & WPST \\
 JaVerT   & JavaScript                & \cmark & \xmark & WPST, OX \\
-Viper    & IR (Viper)                0& \cmark & \xmark & OX \\
+Viper    & IR (Viper)                & \cmark & \xmark & OX \\
 Gillian  & IR (GIL)                  & \cmark & \cmark & WPST, OX, UX\\
-\multicolumn{5}{c}{\footnotesize WPST = Whole Program Symbolic Testing.}
+\multicolumn{5}{c}{\footnotesize{WPST = Whole Program Symbolic Testing.}}\\
+\multicolumn{5}{c}{\footnotesize{*Unmaintained}}
 \end{tabular}
 \caption{Comparison of verification tools}
 \end{table}
 
 \section{Gillian}
 
-Gillian \cite{gillian0, gillian1, gillian2} is a CSE engine, that supports UX true bug-finding, OX full verification, and exact (EX) whole-program testing \cite{exactsl}. It's first significant characteristic is thus a unified platform, that supports all three modes of operation. 
+Gillian \cite{gillian0, gillian1, gillian2} is a CSE engine, that supports UX true bug-finding, OX full verification, and exact (EX) whole-program testing \cite{exactsl}. It's first significant characteristic is thus a unified platform, that supports all three modes of operation.
 
-Secondly, unlike other CSE engines, it is not targetted towards a specific programming language, and is instead parametric on the memory model of the target language. One can thus instantiate Gillian to their preferred language, and enjoy a complete CSE engine without having to build one from scratch. This is done by both providing a memory model of the language -- code written in OCaml -- and a compiler from the target language to GIL, an intermediate language used by Gillian. 
+Secondly, unlike other CSE engines, it is not targeted towards a specific programming language, and is instead parametric on the memory model of the target language. One can thus instantiate Gillian to their preferred language, and enjoy a complete CSE engine without having to build one from scratch. This is done by both providing a memory model of the language -- code written in OCaml -- and a compiler from the target language to GIL, an intermediate language used by Gillian.
 
 Gillian uses PCMs for state models, which, as seen above, comes with certain restrictions. GIL programs interact with the state with \emph{actions}, that are implemented via the memory model -- because actions are the only way for the program to interact with state, having sound actions is sufficient to then have sound language semantics. A simple heap model for instance could expose actions such as \code{allocate}, \code{free}, \code{load} and \code{store}.
 
 Gillian has been in development for several years now, and a gap has started to form between the implementation and the theory, that has seen many evolutions (such has the notion of EX testing \cite{exactsl}) that didn't exist at the time of its original creation. Furthermore, currently unpublished papers aim to improve its existing theory -- and while some of these improvements have already been ported to the source code, it still carries much of its past decisions.
-
-
-
