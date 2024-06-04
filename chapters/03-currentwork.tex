@@ -1,0 +1,74 @@
+\chapter{Current Work}
+
+\section{Initial Thoughts}
+
+Two separate groups of work stemmed from Gillian \cite{gillian0, gillian1, gillian2} and are in the process of being written or published: CSE1 \cite{cse1} and CSE2, and the thesis of Sacha-Élie Ayoun. The former is a formalisation of a unified compositional symbolic execution engine, parametric on the memory model, aimed at providing a sound and generalisable theory for a CSE engine. The latter is the complete theory behind the Gilllian framework, as well as that of the instantiation of Gillian to C and Rust. Both of threm are thus about a CSE parametric on the memory model.
+
+As these two works are being developed in parallel, they have taken different approaches for several parts of their respective engine -- part of the current project is evaluating these decisions, and deciding on which is the most appropriate. We may also consider outside works that contribute to these questions.
+
+\subsection{State models: PCMs or RAs}
+
+Gillian represents its state model as a partially commutative monoid (PCM). As discussed previously, this comes with certain limitations -- most notably, the existence of a single $0$ element, whereas other instances of separation algebras in the litterature (such as the Resource Algebras (RAs) in Iris \cite{iris}) permit several $0$s (via the unit function), as well as the absence of a unit.
+
+This is in particular useful for some particular state models, such as the sum, written $A \oplus B$, with $A\defeq(A,0_A,\cdot)$ and $B\defeq(B,0_B,\cdot)$ two state models. Initial attempts at defining a sum model in Sacha's thesis modelled it as \code{$A \oplus B \defeq 0_\oplus $ | L $A$ | R $B$}, with the composition defined as:
+
+{
+\newcommand{\LS}[0]{\code{L }}
+\newcommand{\RS}[0]{\code{R }}
+\begin{align*}
+	0_\oplus \cdot \st = \st \cdot 0_\oplus &= \st \\*
+	\LS\st \cdot \LS\st' &= \LS (\st\cdot\st') \\*
+	\RS\st \cdot \RS\st' &= \RS (\st\cdot\st')
+\end{align*}
+}
+
+
+In particular this poses a problem when one wants to be able to \emph{switch} from one side of the sum to the other, as the existence of the states \code{L $0_A$} and \code{R $0_B$} is not frame preserving, requiring the sum to be rewritten as \code{$0_\oplus $ | L $A \backslash \{0_A\}$ | R $B \backslash \{0_B\}$} hinting at something being wrong about the $0$s. 
+
+Similarly, a frame-preserving switch requires that either the state switched from or switched to (in OX and UX respectively) be \emph{exclusively owned}. This can be defined as $\code{is\_exclusively\_owned} ~\st \defeq \forall \st'.~\st'\neq 0\implies \neg(\st\#\st')$, where $\#$ signifies that both states are disjoint and can be composed. While this definition works, having a core function would make it more elegant, and easier to prove for a given state; Iris defines this same predicate as $\text{exclusive}(a)\defeq\forall c.\neg\irisval(a\cdot c)$, allowing them to then prove sides of a sum can be switched from one to the other via the following rule:
+\[
+\inferrule[Exclusive-Update]
+	{\text{exclusive}(a) \\ \irisval(b)}
+	{a \rightsquigarrow b}
+\]
+
+The insight from this is that again, the requirement that a PCM must have a unique $0$ element is too strong -- it then requires one to remove this $0$ in higher state model transformations, which is both unelegant and tricky to notice.
+
+Another argument in favour of RAs is the strength of the Iris theory, that provides flexible constructs and has been succesfully reused several times. As such, creating an engine that uses Iris' RAs for its state models allows one to benefit for free from the existing infrastructure surrounding it, and in particular its Rocq implementation.
+
+Iris being extremely sophisticated and supporting complex ``higher-order ghost state'', their composition needs to be total, and accompanied by a validity function \irisval. Because the CSE engine developed for this project will not recquire such sophistication, we will make the choice of diverging from Iris on the totality of composition, instead keeping it partial. And because the validity function was used to rule out compositions that should not be allowed, we may also get rid of it, and instead rely on the fact an invalid composition is simply not defined. This comes with the pleasant side-effect that ``error states'' need not be defined for state models, as is the case with Iris where they must always define a fallback $\lightning$ state to be used for invalid composition, for instance as it is the case for the exclusive state model:
+
+\begin{align*}
+	\textsc{Ex}(X) &\defeq \text{ex}(x:X) \color{red} ~|~ \lightning\\
+	\color{red}\irisval(a) &\color{red}\defeq a \neq \lightning\\
+	|ex(x)| &\defeq \bot
+\end{align*}
+
+The above parts marked in {\color{red}red} could thus be ignored by making composition partial; instead of always being $\lightning$, it always is undefined. One can go from an Iris-like RA to this new type of partial RA with a simple equivalence: $\irisval(\st\cdot\st')$ is true in the former if and only if $\st\cdot\st'$ is defined in the latter (this can be further proven using Iris' rule \textsc{Ra-Valid-Op}, which states $\forall a,b.~ \irisval(a\cdot b)\implies \irisval(a)$).
+
+While further work could be about attempting to port Iris' higher-order ghost states to this framework, this will be left out of scope for now, noting that the current divergence from Iris is minimal and easy to revert with the above equivalence.
+
+\subsection{Well-formedness: Implicit or Explicit}
+
+\subsection{Symbolic and Logical Variables: United or Separate}
+
+\section{Work So Far}
+
+\subsection{State Models}
+
+\subsection{Gillian Experiments}
+
+\subsection{Sum Soundness}
+
+
+
+
+
+
+
+
+
+
+
+
+
