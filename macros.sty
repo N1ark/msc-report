@@ -6,11 +6,13 @@
 
 % Genereal maths
 \newcommand{\defeq}[0]{\stackrel{\textnormal{def}}=}
-\newcommand{\finmap}[0]{\stackrel{\itl{fin}}\rightharpoonup}
+\newcommand{\finmap}[0]{\xrightharpoonup{\mathit{fin}}}
 \newcommand{\pset}[0]{{\cal P}}
 \newcommand{\idx}[1]{\ensuremath{{}^{#1}}}
 \newcommand{\nats}[0]{\ensuremath{\mathbb N}}
 \newcommand{\rarr}[0]{\ensuremath{\rightarrow}}
+\newcommand{\dom}[0]{\operatorname{dom}}
+\newcommand{\codom}[0]{\operatorname{codom}}
 
 % Semantics
 \newcommand{\mmdl}[0]{\ensuremath{\mathbb S}}
@@ -24,10 +26,19 @@
 
 \newcommand{\Ok}[0]{\code{Ok}}
 \newcommand{\Miss}[0]{\code{Miss}}
+\newcommand{\Err}[0]{\code{Err}}
+\newcommand{\LFail}[0]{\code{LFail}}
+
+\newcommand{\Nat}[0]{\text{Nat}}
+\newcommand{\Val}[0]{\text{Val}}
 
 \newcommand{\bools}[0]{\mathbb{B}}
 \newcommand{\vtrue}[0]{\texttt{true}}
 \newcommand{\vfalse}[0]{\texttt{false}}
+
+\newcommand{\Wf}[0]{\ensuremath{{\cal W}\!f}}
+\newcommand{\Wfc}[0]{\ensuremath{{\cal W}\!f\!c}}
+\newcommand{\SAT}[0]{\texttt{SAT}}
 
 % Sep logic
 \newcommand{\SLtriple}[3]{\ensuremath{\left\{#1\right\}#2\left\{#3\right\}}}
@@ -40,6 +51,10 @@
 
 % Iris
 \newcommand{\irisval}[0]{\ensuremath{\overline{\cal V}}}
+
+% Engine
+\newcommand{\consume}[0]{\code{consume}}
+\newcommand{\produce}[0]{\code{produce}}
 
 % Util
 \renewcommand\tabularxcolumn[1]{m{#1}}% for vertical centering text in X column
