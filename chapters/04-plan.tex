@@ -2,13 +2,13 @@
 
 During the duration of this project, the author will aim to implement a Compositional Symbolic Engine, that is both parametric in the memory model in the style of Gillian \cite{gillian0, gillian1, gillian2}, and parametric on the language semantics.
 
-An initial implementation will first be done, by following the progress made by unpublished papers of the group, CSE1 \cite{cse1} and CSE2, as well as the upcoming PhD dissertation of Sacha-Élie Ayoun \cite{sacha-phd}. Further refinements will be brought, from additions from the author as well as existing research, most notably in the field of separation algebras, attempting to line up with progress done by Iris \cite{iris}. This first version will feature OX verification.
+An initial implementation will first be done, by following the progress made by unpublished papers of the group, CSE1 \cite{cse1} and CSE2, as well as the upcoming PhD dissertation of Sacha-Élie Ayoun \cite{sacha-phd} -- see \autoref{sec:initial-thoughts} for some key differences. Further refinements will be brought, from additions from the author as well as existing research, most notably in the field of separation algebras, attempting to line up with progress done by Iris \cite{iris}. This first version will feature OX and UX verification.
 
 The initial version will also attempt to have the language semantics as separate from the rest of the engine as possible, while implementing them for a simplified version of the GIL intermediate language as seen in Gillian.
 
-Later, UX true bug finding with bi-abduction will be added, again following the approach in the unreleased papers and existing research, notably with ISL \cite{isl} and Infer-Pulse \cite{pulse}.
+Along with this, a theory will be made to justify the choices made in the engine and proving its soudness. Some of these decisions include, as seen in \autoref{sec:initial-thoughts}, deciding what form will state models take, where will well-formedness by formulated, how symbolic variables will be handled and matched, etc.
 
-In further development, the built-in language semantics will be stripped out (or made optional), in favour of an interface to specify language semantics externally, and proving soundness of the approach. 
+In further development, the built-in language semantics will be stripped out (or made optional), in favour of an interface to specify language semantics externally, and proving soundness of the approach by formulating axioms that must hold for the analyses to be sound.
 
 In parallel, a toolkit of separation algebras constructs will be developed, to allow new developers to easily construct complex state models from simpler elements. These will be ported from the pre-existing work presented in \autoref{sec:state-models-work}.
 
@@ -17,7 +17,7 @@ This project plan is structured in a way that if due to time constraints further
 Some of the innovations of the project include: \begin{itemize}
 	\item Making a CSE engine that uses Iris-like state models
 	\item Providing the first (to the knowledge of the author) CSE engine that is parametric on the semantics of the target language -- existing CSE engines usually have one target language or intermediary language.
-	\item Making the above mentionned engine's implementation close to theory, and implemented in a way to easily allow future mechanised proof of soundness.
+	\item Providing axioms and proof for the soundness of parametric language semantics.
 \end{itemize}
 
 Finally, the project will be evaluated by comparing it's execution time in comparison to the existing Gillian implementation, as well as by trying to verify existing real-life code with it.
