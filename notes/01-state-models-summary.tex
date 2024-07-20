@@ -1,0 +1,44 @@
+\chapter{State Models Cheatsheet}
+
+
+Note $X^? \defeq X \uplus \bot$, $X^\emptyset \defeq X \uplus \emptyset$
+
+\section{Examples per language}
+
+\begin{tabularx}{\textwidth}{l|l}
+	\thead{\bfseries Language} & \thead{\bfseries Memory Model}\\ \hline\hline
+	WISL & PMap(\itl{Loc}, OneShot(List(Exc(\itl{Val})))) \\ \hline
+	JSIL & PMap(\itl{Loc}, PMap(\itl{Str},Exc(\itl{Val$^\emptyset$})) $\otimes$ PMap(\itl{Loc},Ag(\itl{Val}))
+\end{tabularx}
+
+\section{State Models}
+
+Base building blocks for later transformers. They store values of type $\tau$, usually \itl{Value} or something derived from it. They all define a \code{load} and \code{store} action.
+
+\begin{tabularx}{\textwidth}{l|X|l|l}
+	\thead{\bfseries Name} & \thead{\bfseries Purpose} & \thead{\bfseries Type} & \thead{\bfseries Predicates}\\ \hline\hline
+	Exc & \small Exclusive ownership of a specific resources & \code{$\tau^?$} & \code{PointsTo}\\\hline
+	Ag & \small Multiple parties agree on the same value for a resource & $\tau$ & \code{Agree} \\\hline
+	Frac & \small Allow partial (readonly) ownership of an object & $\tau \times (0,1]$& \code{Frac} \\\hline
+\end{tabularx} 
+
+\section{State Model Transformers}
+
+State model transformers take one or more input state models \mmdl~(and an auxiliary sort I in the case of PMap), and result in a new state model. Here the ``Type'' column only specifies the type of the resulting memory model, the inputs are inferred. $\mmdl.\St$ stands for the heap type of memory model \mmdl.
+
+\begin{tabularx}{\textwidth}{l|X|l|l|l}
+	\thead{\bfseries Name} & \thead{\bfseries Purpose} & \thead{\bfseries Type} & \thead{\bfseries Actions} & \thead{\bfseries Predicates}\\ \hline\hline
+	Product ($\otimes$) & Two simultaneous states, each being updated separately (eg. List) & $\mmdl_1.\St \times \mmdl_2.\St$ & \multicolumn{2}{l}{lift with \code{A1}, \code{A2}} \\\hline
+	Sum ($\oplus$) & Either of two states existing & $\mmdl_1.\St \uplus \mmdl_2.\St$ & \multicolumn{2}{l}{lift with \code{A1}, \code{A2}}\\\hline	
+	PMap & \small Define memory as a map of address (a sort~I) to value & $(\text{I}\finmap \mmdl.\St) \times \pset(I)^?$ *\idx1 & \multicolumn{2}{l}{lift with index in-param} \\\hline
+	List & \small Ensure continuous memory allocation  & $(\nats \finmap \mmdl.\St) \times \nats^?$ *\idx2 & \multicolumn{2}{l}{lift with index in-param} \\\hline
+	Freeable & \small The program only has one go at something (eg. freeing memory) & Exc($\mmdl.\St$) $\oplus$ Exc($\{\varnothing\}$) & \code{free} \\ \hline
+\end{tabularx} 
+
+\vspace{1cm}
+
+*\idx1 Full definition: $\left\{ (h,d) \in (\text{I} \finmap \tau )\times \pset(I)^? ~|~ \text{dom}(h)^?\subseteq d\right\}$, with the heap $h$ and $d$ the domain set indicating the non-missing indices.
+
+
+*\idx2 Full definition: $\left\{ (b, n^?) \in (\mathbb N \finmap \tau) \times \mathbb N^? ~|~ \text{dom}(b) \subseteq [0, n^?)  \right\}$, with $b$ the block and $n$ the size of the block if known.
+

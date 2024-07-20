@@ -1,0 +1,58 @@
+\RequirePackage{mathpartir}
+\RequirePackage{xifthen}
+\RequirePackage{hyperref}
+
+%% Debugging
+\newboolean{myproofsdebugging}
+\setboolean{myproofsdebugging}{false}
+
+\newcommand{\enableproofdebug}[0]{\setboolean{myproofsdebugging}{true}}
+\newcommand{\disableproofdebug}[0]{\setboolean{myproofsdebugging}{false}}
+
+\newcommand{\showifmyproofsdebug}[1]{\ifthenelse{\boolean{myproofsdebugging}}{{\color{teal}#1}}{}}
+
+%% Some utilities to introduce elements
+\newcommand{\pflet}[0]{\textbf{Let}~}
+\newcommand{\pfprove}[0]{\textbf{To prove}~}
+\newcommand{\pfassume}[0]{\textbf{Assume}~}
+\newcommand{\pfltr}[0]{\bigskip\noindent\textbf{\textit{Case}} $\boxed{\Rightarrow}$:}
+\newcommand{\pfrtl}[0]{\bigskip\noindent\textbf{\textit{Case}} $\boxed{\Leftarrow}$:}
+\newcommand{\pfcase}[1]{\bigskip\noindent\textbf{\textit{Case} #1:}}
+\newcommand{\pfprop}[1]{\bigskip\noindent\textbf{Proposition: #1}}
+
+
+%% Counters
+\newcounter{proofcounter}
+\setcounter{proofcounter}{0}
+\newcounter{hypcounter}
+\newcounter{goalcounter}
+\newcommand{\resetproofcounters}[0]{\setcounter{hypcounter}{0}\setcounter{goalcounter}{0}\stepcounter{proofcounter}}
+
+\newcommand{\hypraw}[1]{\mbox{\textbf{(H#1)}}}
+\newcommand{\goalraw}[1]{\mbox{\textbf{(G#1)}}}
+
+\newcommand{\hypthin}[1]{\mbox{(H#1)}}
+\newcommand{\goalthin}[1]{\mbox{(G#1)}}
+
+%% Defining hypotheses
+\newenvironment{hypvlist}[0]{\begin{description}}{\end{description}}
+\newcommand{\currenthyp}[1]{\hypraw{\thehypcounter\showifmyproofsdebug{/#1}}}
+\newcommand{\hypvitem}[1]{\refstepcounter{hypcounter}\expandafter\label{pf:hyp:\theproofcounter:#1}\item[\currenthyp{#1}]}
+
+\newcommand{\newhyp}[1]{\refstepcounter{hypcounter}\expandafter\label{pf:hyp:\theproofcounter:#1}\currenthyp{#1}}
+\newenvironment{hyphlist}[0]{\begin{mathpar}}{\end{mathpar}}
+
+\newcommand{\hyp}[1]{\hypthin{\expandafter\ref*{pf:hyp:\theproofcounter:#1}}}
+
+%% Defining goals
+\newcommand{\currentgoal}[1]{\goalraw{\thegoalcounter\showifmyproofsdebug{/#1}}}
+\newenvironment{goalvlist}[0]{\begin{description}}{\end{description}}
+\newcommand{\goalvitem}[1]{\refstepcounter{goalcounter}\expandafter\label{pf:goal:\theproofcounter:#1}\item[\currentgoal{#1}]}
+
+\newcommand{\newgoal}[1]{\refstepcounter{goalcounter}\expandafter\label{pf:goal:\theproofcounter:#1}\currentgoal{#1}}
+\newenvironment{goalhlist}[0]{\begin{mathpar}}{\end{mathpar}}
+
+\newcommand{\goal}[1]{\goalthin{\expandafter\ref*{pf:goal:\theproofcounter:#1}}}
+
+%% The proof environment itself
+\renewenvironment{proof}{\setlength\parindent{0pt}\resetproofcounters\textit{Proof.}}{\qed\bigskip}

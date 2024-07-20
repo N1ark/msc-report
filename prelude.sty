@@ -1,0 +1,54 @@
+% ---------------- PACKAGES ---------------
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\usepackage{paralist}
+
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+\usepackage{adjustbox}
+\usepackage{dirtree}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{forest}
+\usepackage{graphicx}
+\usepackage{makecell}
+\usepackage{mathpartir}
+\usepackage{mathtools}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{pifont}
+\usepackage{standalone}
+\usepackage{stmaryrd}
+\usepackage{subcaption}
+\usepackage{tabularx}
+\usepackage{textcomp}
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{todonotes}
+\usepackage{xltabular}
+
+% setup bibliography
+\usepackage[style=ieee,backend=bibtex]{biblatex}
+\addbibresource{references}
+
+% setup hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    citecolor=black,
+    linkcolor=blue,
+    urlcolor=blue,
+}
+
+% add footnotes without the \footnote{\url{...}} command
+\newcommand{\ftnt}[1]{\footnote{See \url{#1}}}
+
+% custom packages
+\usepackage{macros}
+\usepackage{mylistings}
+\usepackage{myproofs}

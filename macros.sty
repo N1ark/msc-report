@@ -4,26 +4,40 @@
 \newcommand{\cmark}{\ding{51}}
 \newcommand{\xmark}{\ding{55}}
 
-% Genereal maths
+% General maths
 \newcommand{\defeq}[0]{\stackrel{\textnormal{def}}=}
 \newcommand{\finmap}[0]{\xrightharpoonup{\mathit{fin}}}
 \newcommand{\pset}[0]{{\cal P}}
 \newcommand{\idx}[1]{\ensuremath{{}^{#1}}}
 \newcommand{\nats}[0]{\ensuremath{\mathbb N}}
 \newcommand{\rarr}[0]{\ensuremath{\rightarrow}}
+\newcommand{\Rarr}[0]{\ensuremath{\Rightarrow}}
 \newcommand{\dom}[0]{\operatorname{dom}}
 \newcommand{\codom}[0]{\operatorname{codom}}
+\newcommand{\preo}[0]{\preccurlyeq}
+\renewcommand{\part}[0]{\rightharpoonup}
 
 % Semantics
+\newcommand{\execac}[0]{\code{execute\_action}}
+\newcommand{\consume}[0]{\code{consume}}
+\newcommand{\produce}[0]{\code{produce}}
+\newcommand{\fix}[0]{\code{fix}}
+\newcommand{\actions}[0]{\ensuremath{\cal{A}}}
+\newcommand{\preds}[0]{\ensuremath{\Delta}}
+
 \newcommand{\mmdl}[0]{\ensuremath{\mathbb S}}
 \newcommand{\st}[0]{\sigma}
 \newcommand{\St}[0]{\Sigma}
 \newcommand{\evalsto}[3]{\ensuremath{p\vdash(#1)\Downarrow_\theta#2:(#3)}}
-\newcommand{\exec}[5]{#1.#2(#3) \rightsquigarrow #4:(#5)}
+\newcommand{\execOLD}[5]{#1.#2(#3) \rightsquigarrow #4:(#5)}
+\newcommand{\ppexec}[3]{\ensuremath{#1(#2)\rightsquigarrow(#3)}}
+\newcommand{\ppcons}[2]{\ensuremath{\consume(#1)\rightsquigarrow (#2)}}
+\newcommand{\ppprod}[2]{\ensuremath{\produce(#1)\rightsquigarrow (#2)}}
 \newcommand{\corepred}[3]{\ensuremath{\left<\texttt{#1}\right>(#2;#3)}}
 \newcommand{\ins}[0]{\vec{v_i}}
 \newcommand{\outs}[0]{\vec{v_o}}
 
+\newcommand{\outcomes}[0]{{\cal O}}
 \newcommand{\Ok}[0]{\code{Ok}}
 \newcommand{\Miss}[0]{\code{Miss}}
 \newcommand{\Err}[0]{\code{Err}}
@@ -48,13 +62,42 @@
 \newcommand{\emp}[0]{\textit{emp}}
 \newcommand{\wand}{\mathrel{-\!\!\ast}}
 \newcommand{\mapstoq}[1]{\xmapsto[{\raisebox{1.25ex-\heightof{$\scriptstyle#1$}}[0pt]{$\scriptstyle#1$}}]{}}
+\newcommand{\disj}[0]{\operatorname{\#}}
+
+\newcommand{\full}[1]{\underline{#1}}
 
 % Iris
 \newcommand{\irisval}[0]{\ensuremath{\overline{\cal V}}}
 
-% Engine
-\newcommand{\consume}[0]{\code{consume}}
-\newcommand{\produce}[0]{\code{produce}}
+
+% State model
+\newcommand{\statemodel}[1]{\textsc{#1}}
+\newcommand{\statevar}[1]{\text{#1}}
+
+\newcommand{\Ex}[0]{\statemodel{Ex}}
+\newcommand{\ex}[1]{\statevar{ex}(#1)}
+\newcommand{\exP}[0]{\code{ex}}
+\newcommand{\load}[0]{\code{load}}
+\newcommand{\store}[0]{\code{store}}
+
+\newcommand{\Ag}[0]{\statemodel{Ag}}
+\newcommand{\ag}[1]{\statevar{ag}(#1)}
+
+\newcommand{\Frac}[0]{\statemodel{Frac}}
+\newcommand{\Sum}[0]{\statemodel{Sum}}
+\newcommand{\Product}[0]{\statemodel{Product}}
+\newcommand{\PMap}[0]{\statemodel{PMap}}
+\newcommand{\List}[0]{\statemodel{List}}
+\newcommand{\Freeable}[0]{\statemodel{Freeable}}
+
 
 % Util
 \renewcommand\tabularxcolumn[1]{m{#1}}% for vertical centering text in X column
+\newcommand{\todobox}[1]{
+\vspace{0.25cm}\color{red}
+\noindent\fbox{
+	\parbox{\textwidth}{
+	\textbf{TODO: }
+	\color{black}#1}
+}\vspace{0.25cm}\color{black}}
+

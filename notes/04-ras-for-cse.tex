@@ -1,0 +1,254 @@
+\chapter{Resource Algebras for a CSE}
+
+\section{Current State}
+
+
+\subsection{CSE}
+
+CSE and Sacha's thesis do the traditional choice of using Partial Commutative Monoids (PCMs) to model state. They are defined as the tuple $(M, (\cdot):M\times M \part M, 0)$. They are further equiped with a set of actions $\cal A$, an \execac{} function, a set of core predicates $\Delta$ and a pair of \consume{} and \produce{} functions.
+
+These additions are necessary for the engine to be parametric on the state model, as it provides an interfae for interaction with the state.
+
+The usage of PCMs comes with issues: the requirement of a single 0 for each state model means that state models such as the sum state model $\mmdl_1 + \mmdl_2$ come with unweildy requirements to prove soundness -- this comes into play for the \code{Freeable} memory model, that could use a sum (like what is done in \cite{iris-thesis}) but can't because of this.
+
+\subsection{Iris}
+
+Iris \cite{iris} departs from this tradition and introduces Resource Algebras (RAs) to model state, defined as a tuple $(M, \irisval: M\rarr \bools, |-|:M\rarr M^?, (\cdot):M\times M\rarr M)$, being respectively the state elements, a validity function, a partial core function and a composition function.
+
+This makes Iris states more powerful, in that they have more flexibility in what they can express; for instance sum state models can be easily and soundly expressed, which isn't possible with PCMs due to the requirement of a single $0$ element.
+
+Furthermore, Iris RAs comes with plenty proofs and properties making them easy to use and adapt, whereas PCMs can prove unwieldy even for simpler state models (eg. with the Freeable state model transformer).
+
+A similarity however is that the global RA in Iris must be unital, meaning it must have a single $\epsilon$ element, very much as it is the case with the 0 in PCMs. Any RA can be trivially extended to have a unit, which is what Iris defines as the option resource algebra \cite{iris-option}.
+
+\section{Partial RAs}
+
+A property of Iris RAs is that composition is \emph{total} -- to take into account invalid composition, states are usually extended with a $\lightning$ state, such that $\neg \irisval(\lightning)$ (while for states $\st\neq\lightning$, $\irisval(\st)$ holds). While this is needed in the Iris framework for higher-order ghost state and step-index, this doesn't come into play when only manipulating RAs. As such, because this is quite unweildy, we can remove it by adding partiality instead, such that invalid ($\lightning$) states simply don't exist and the need for a $\irisval$ function vanishes. This is also inline with the core function $(-)$ being partial.
+
+It is worth noting that \emph{partial} RAs are equivalent to regular RAs, \emph{so long as $\irisval$ always holds for valid states}\footnote{This, to our knowledge, is the case for all of the simpler RAs defined in Iris: Ex, Ag${}_0$, sum, product, etc.}. Indeed, compositions that yield $\lightning$ can be made undefined, and the validity function removed, to gain partiality, and inversely to go back to the Iris definition.
+
+An interesting property of this is that because validity is replaced by the fact composition is defined, the validity of a composition is equivalent to the fact two states are disjoint: $\irisval(a\cdot b) \iff a \# b$.
+
+We now define the properties of RAs taking this change into account -- see \autoref{fig:ra-def}. From now, the term RA will be used to refer to these partial RAs.
+\begin{figure}
+A \emph{resource algebra} (RA) is a triple $(M, |\!-\!|: M\rarr M^?, (\cdot): M\times M \part M)$	
+
+\begin{align}
+	\tag{RA-Assoc} \forall a,b,c&\ldotp (a\cdot b)\cdot c = a\cdot (b\cdot c)\\
+	\tag{RA-Comm} \forall a,b&\ldotp a\cdot b = b\cdot a\\
+	\tag{RA-Core-ID} \forall a&\ldotp |a| \in M \Rarr |a|\cdot a = a\\
+	\tag{RA-Core-Idem} \forall a&\ldotp |a|\in M\Rarr ||a|| = |a|\\
+	\tag{RA-Core-Mono} \forall a,b&\ldotp |a|\in M\land a\preo b \Rarr |b| \in M \land |a| \preo |b|
+\end{align}
+\begin{align*}
+	\text{where}\qquad
+	M^? &\defeq M \uplus \{\bot\}\text{, with }a\cdot \bot \defeq \bot\cdot a\defeq \bot\\
+	a \preo b &\defeq \exists c\ldotp b = a\cdot c\\
+	a\disj b &\defeq a \cdot b \text{ is defined}
+\end{align*}
+A \emph{unital} resource algebra is a resource algebra $M$ with an element $\epsilon\in M$ such that: 
+\begin{align*} 
+	\forall a\in M. \epsilon\cdot a = a&&
+	|\epsilon|=\epsilon
+\end{align*}
+\caption{Definition of Resource Algebras}
+\label{fig:ra-def}
+\end{figure}
+
+\section{CSE State Models + RAs}
+
+We now propose to redefine the notion of state models. To follow the spirit of CSE, that comes with a core engine, a compositional engine and a bi-abduction engine all built onto each other, we go through each layer, presenting what is for that part of the engine to function.
+
+\subsection{Core Engine}
+
+\newcommand{\vallist}[0]{\Val~\code{list}}
+
+The core engine enables whole-program symbolic execution. For this state models must firstly define the set of states the execution will happen on; this is done via a partial resource algebra: a tuple  $(M, |\!-\!|:M\rarr M^?,(\cdot):M\times M\part M)$. They are further equipped with a set of actions $\cal A$, and an \execac{} function. 
+\begin{align*}
+	\execac &: \pset(\code{SVar})\rarr \St^? \rarr {\cal A} \rarr \vallist \rarr \pset(\full\outcomes_e \times \St^? \times \vallist \times \Pi)
+\end{align*}
+The arguments of \execac{} are, in order: the set of existing symbolic variables (this allows the state model to generate fresh variables, for instance in allocation), the \emph{optional} state the action is executed on, the action, and the received arguments. It returns a set of branches, with an outcome, the new state, the returned values, and the path condition of that branch. It is pretty-printed as \ppexec{\alpha}{SV, \hat\st,\ins, o}{\hat\st', \outs, \hat\pi}, with $SV$ omitted when not necessary.
+
+Here, the outcome is an outcome in the set of \emph{full execution outcomes} $\full\outcomes_e=\{ \Ok,\Err \}$. In the next subsection, this set will be extended to account for misses and logical failures, but these do not exist with full semantics.
+
+The main difference here is that the state may be $\bot$, if the action is executed on empty state. This ensures non-unital RAs are not ruled out as invalid -- indeed, many useful RAs are not unital and sometimes don't have a unit at all, as is the case for instance for Ex, the exclusively owned cell. One could decide to internally make all RAs of state models unital, and have the state model provide an \code{empty} function that returns said unit. This is, for instance, what happens in Gillian. However this introduces unsoundness to certain state model constructions (in particular the sum), as this means the state cannot be \emph{exclusively owned} -- the empty state could always be composed with it.
+
+Whole-program symbolic execution is, by definition, non-compositional -- it thus operates on \emph{full state}, a notion introduced in \cite{sacha-phd}. As such, the only valid outcomes here are \Ok{} and \Err{}.
+
+\subsection{Compositional Engine}
+
+The compositional engine, built on top of the core engine, allows for verification of function specifications, and handles calling functions by their specification. As such, the state model must be extended with a set of core predicates $\Delta$ and a pair of \consume{} and \produce{} functions (equivalent, respectively, to a symbolic assert and assume).
+\begin{align*}
+	\text{for }M=\{\code{OX}, \code{UX}\}\\ 
+	\consume &: M\rarr \St^? \rarr \Delta \rarr \vallist \rarr \pset(\outcomes_l \times \St^? \times \vallist \times \Pi) \\
+	\produce &: \St^? \rarr \Delta \rarr \vallist \rarr \vallist \rarr \pset(\St^? \times \Pi)
+\end{align*}
+Similarly to \execac, the input state can be $\bot$. While intuitively one may assume that the input state of \consume{} and the output state of \produce{} may never be $\bot$, this would limit what core predicates can do. In particular, this means an $\emp$ predicate couldn't be defined, since it's production on an empty state results in an empty state.
+
+The arguments of \consume{} are, in order: the mode of execution to distinguish between under-approximate and over-approximate reasoning, the state, the core predicate being consumed, the ins of the predicate. It outputs a \emph{logical outcome}, the state with the matching predicate removed (which may result in an empty state $\bot$), the outs of the predicate and the associated path condition. It is pretty-printed as \ppcons{m,\hat\st,\delta,\ins}{o, \hat\st_f, \outs, \hat\pi}, and when the consumption is valid in both OX and UX the mode is omitted.
+
+For \produce{}, the arguments are the state, the core predicate being produced, the ins and the outs of the predicate, resulting in a set of new states and their associated path condition. As an example, producing $x \mapsto 0$ in a state $[1 \mapsto 2]$ results in a new state $[1\mapsto 2, x \mapsto 0]$ with the path condition $x \neq 1$. If the produced predicate is incompatible with the state (eg. by producing $1 \mapsto y$ in a state containing $1 \mapsto x$), the producer \emph{vanishes}. Inversely, if the assertion can be interpreted in several ways, the producer may branch. It is pretty-printeed as \ppprod{\hat\st,\delta,\ins,\outs}{\st', \hat\pi}.
+
+Here we define logical outcomes $\outcomes_l = \{\Ok, \LFail, \Miss \}$. These are outcomes that happen during reasoning; in particular, \LFail{} equates to a logical failure due to an incompatibility between the consumed predicate and the state. For instance, consuming $1 \mapsto 1$ when in state $1 \mapsto 2$ would yield a \LFail{}, while consuming it in state $5 \mapsto 3$ would yield a \Miss{}, as a state $1\mapsto x$ could be composed with it to yield a non-miss outcome.
+
+We must also modify the signature of \execac, to include \Miss{} outcomes, via the set of execution outcomes $\outcomes_e=\{\Ok,\Err,\Miss\}$.
+
+An addition to what CSE previously defined is thus the split of what was the \code{Abort} outcome into \LFail{} and \Miss{}, this improves the quality of error messages and allows fixing consumption errors due to missing state -- this will be described in the next subsection.
+
+A last change compared to CSE is that we drop the path condition parameter to consume and produce -- the function instead directly returns the path condition required for the resulting branches, and the engine can filter these. For instance, in UX all consumption branches that result in \LFail{} can be dropped, as dropping branches is allowed in UX anyways. This has the advantage of simplifying the axioms, as the path condition is strenghtened by definition; the function itself has no way of weakening it.
+
+\subsection{Bi-abduction Engine}
+
+To support bi-abduction in the style of Infer:Pulse \cite{pulse}, \Miss{} outcomes must be fixed. These outcomes may happen during consumption or during action execution. For this, the state model must provide a \fix{} function, that given the details of a miss error (these details being of type \Val{} and returned with the outcome) returns a list of sets of assertions that must be produced to fix the missing error.
+\begin{align*}
+	\fix &: \Val \rarr \pset(\text{Asrt}) ~\code{list}
+\end{align*}
+Note here we return a \emph{list} of different fixes, which themselves are a set of assertions -- this is because, for a given missing error, multiple fixes may be possible which causes branching. For instance, in the typical linear heap, accessing a cell that is not in the state fragment at address $a$ results in a miss that has two fixes: either the cell exists and points to some exisentially quantified variable (the fix is thus $\exists x\ldotp a \mapsto x$), or the cell exists and has been freed ($a\mapsto\varnothing$).
+
+This approach is different from how Gillian handles it. There the function \fix{} returns \emph{pure} assertions (type information, pure formulae) and arbitrary values of type \code{fix\_t}, which can then be used with the $\code{apply\_fix}:\Sigma \rarr \code{fix\_t} \rarr \Sigma$ method of the monadic state. This means fixes can be arbitrary modifications to the state that don't necessarily equate to new assertions to add to the anti-frame.
+
+This is a source of unsoundness, as the engine may interpret these modifications as fixes despite them not reliably modifying the state. This can be seen in \cite{sacha-phd}, where not finding the binding in a PMap(X) returns a \code{MissingBinding} error. While being labelled as a miss, this error can actually not be fixed; PMap simply \emph{lifts} predicates with an additional in parameter for the index. An implementation of that version of PMap(X) could attempt to fix this state by add a binding to $X.0$ (PMaps were originally made for PCMs, which always have a 0 element), which would then eventually lead to another error once the action gets called on the empty state. On top of being under-performing (as several fixes would need to be generated for one action), this requires PMap(X) to allow empty states in the codomain, which means a PMap is never exclusively owned (as a state with a singleton map to $X.0$ can always be composed with it), which limits its usability; aside from not being modellable using RAs, since $\bot$ is not an element of X's carrier set. Finally, if the underlying state model doesn't provide any additional fixes, then the fix for \code{MissingBinding} cannot be added to the UX specification of a function: there is no assertion generatable from within PMap to represent this modification. As such, having \fix{} returns assertions without modifying any state directly ensures fixes are always soundly handled. 
+
+To finish this, we may note the solution to the above bug is to proceed executing the action on the underlying state model, giving it an empty state -- it will then raise the appropriate \Miss{}, which can be fixed, as it is aware of what core predicates are needed to create the required state. For instance, for PMap(Exc) a \code{load} action on a missing binding would be executed against $\bot$, which would return a \code{MissingValue} error. The PMap could then wrap the error with information about the index at which the error occurred, $\code{SubError}(i, \code{MissingValue})$. When getting the fix, PMap can then call Exc.\fix, which returns $\exists x\ldotp \corepred{points\_to}{}{x}$, and lift the fix by adding the index as an in-argument, resulting in the final fix $\exists x\ldotp\corepred{points\_to}{i}{x}$, which is a valid assertion and can be added to the UX specification for this execution.
+
+\todobox{See how the Iris frame preserving transition $a \rightsquigarrow b$ relates to frame addition/substraction. Seems like a stronger version, ie. semantics that succesfully update state from $a$ to $b$ are necessarily frame preserving?}
+
+\subsection{Axioms}
+
+We may now go over the axioms that must be respected by the above defined functions for the soundness of the engine. 
+
+First, it is worth noting that Gillian supports both over-approximate (OX) and under-approximate (UX) reasoning -- for the former, \emph{frame substraction} must hold, while for the latter \emph{frame addition} must hold. In addition to the axioms in \cite{cse1} and the upcoming paper on an Abstract CSE, we also take inspiration from \cite{sacha-phd} and include the notion of \emph{compatibility}, linking full states to compositional states, as well as concrete states to symbolic states.
+
+Indeed there are two orthogonal concepts at play: one is \emph{compositionality}, that introduces \consume{} and \produce{}, frame addition and substraction, and ultimately compatibility. The other is \emph{symbolicness}, that introduces soundness and the $\vDash$ relation for symbolic state modelling. To simplify the axioms, we will only consider the symbolic compositional case, as it is a superset of the other cases.
+
+For all of the axioms we assume we have a state model $\mmdl$, made of the RA $\St \ni \st$.
+
+\subsubsection{Compositionality Axioms}
+
+\begin{equation}
+\tag{Frame Substraction}\label{eq:frame-sub}
+\begin{array}{l}
+\st\#\st_f \land \ppexec{\alpha}{\st\cdot\st_f,\ins}{o, \st',\outs,\pi} \implies \\
+\quad\exists \st'', o', \outs'\ldotp \ppexec{\alpha}{\st,\ins}{o', \st'', \outs', \pi'} ~\land \\
+\qquad(o' \neq \Miss \implies o' = o \land  \outs' = \outs \land \st' = \st'' \cdot \st_f \land \pi = \pi')
+\end{array}
+\end{equation}
+
+\begin{equation}
+\tag{Frame Addition}\label{eq:frame-add}
+\begin{array}{l}
+\ppexec{\alpha}{\st,\ins}{o, \st', \outs, \pi} \land o \neq \Miss \land \st'\#\st_f\implies\\
+\quad\st \# \st_f \land \ppexec{\alpha}{\st\cdot\st_f, \ins}{o, \st'\cdot\st_f, \outs, \pi}
+\end{array}
+\end{equation}
+
+Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from Iris is a form of frame substraction: it guarantees $\forall c\ldotp \irisval(a \cdot c)\Rarr \irisval(b\cdot c)$, with $c$ a frame that can be added to the state ($\st_f$ in the axiom). This becomes evident when noticing that disjointness of partial RAs equates to validity in Iris RAs, giving us $\forall c\ldotp a\# c\Rarr b\# c$. In fact, the Iris frame-preserving update implies frame substraction modulo action outcomes. This makes sense, as Iris is used for OX reasoning, and frame substraction is the property needed for OX soundness.
+
+%\section{Full States}
+%
+%In Sacha-Élie Ayoun's thesis \cite{sacha-phd}, the notion of \emph{full states} is introduced, as an additional step between different abstractions of states. This is distinct from previous works, that only considered compositional (concrete) and (compositional) symbolic states; the full (concrete) state is by definition not compositional and represents how the program actually runs.
+%
+%This addition comes with constraints, most notably that compositional states can be completed into full states \ref{eq:state-complet}, and full states are inextensible \ref{eq:state-inext}.
+%
+%\begin{figure}[H]
+%	Given the RA $(\St, |\!-\!|, (\cdot))$ and $\full\St\subseteq\St$, $\full\St$ is the set of full elements of $\St$ and $\St$ is the set of fragments of $\full\St$ if:
+%	\begin{align}
+%		\tag{State-Comp}
+%		\label{eq:state-complet}
+%		\forall \st\in\St\ldotp\exists\full\st\in\full\St&\ldotp a\preo \full\st\\
+%		\tag{State-Inext}
+%		\label{eq:state-inext}
+%		\forall \full\st_1,\full\st_2\in\full\St&\ldotp \full\st_1\preo \full\st_2 \Rarr \full\st_1=\full\st_2
+%	\end{align}
+%	\caption{Definition of full and partial state}
+%\end{figure}
+%
+%Furthermore, the existance of compositional state implies the \Miss{} outcome, meaning the state can be completed with another state fragment to give a non \Miss{} outcome. Compositional semantics are compatible with full semantics if evaluation on full states with compositional semantics is equivalent to evaluation with full semantics.
+%
+%For particular constructions such as PMaps and Lists however, this is done by adding a domain set or bound, respectively, to the compositional state -- on action execution on a cell that is not in the partial state, one can thus check whether the cell is simply not in this fragment of the state (resulting in a \Miss) or if the cell does not exist (resulting in an \Err). Without such additional information, the compositional semantics would need to resort to always evaluating to \Err{}, or to \Miss{} -- the former breaks frame substraction and addition making the state unsound, the latter means \Miss{} outcomes leak into full semantics.
+%
+%A PMap over a state model $\St$ with a sort $I$ is defined as $I \finmap \St \times \pset(I)$, with $\pset(I)$ the domain set as discussed above that is exclusively owned. Similarly, a List state model over $\St$ is defined as $\nats\finmap\St\times\nats$, with the second element of the product the exclusively owned bound (or size) of the list. While both states use the notion of a mapping $I \finmap \St$, this wouldn't form a valid state model, because as explained above the semantics would not be able to distinguish \Err{} from \Miss{} outcomes. This is a source of discomfort, as it goes against the idea of being able to soundly construct complex state models from simpler blocks -- one would need to redefine mappings for every such structure. Similarly, the product both state transformers use also exists as a state model, and both domain set and bound are exclusively owned and could be modelled with Exclusive, but aren't. Furthermore, Iris already defines finite partial maps, so we know these form valid RAs, but they do not form sound state models \emph{when full states are considered}.
+
+%While one could accept this and redefine the state models to make up for this difference, much work would need to be redone, and one would need to pass on the rich theory that already exists in Iris. We may note this difficulty comes from the unification of state models and the RAs (or PCMs, in previous works) that back them.
+%
+%We may introduce a split between RAs, that can be used for reasoning about the state just like in Iris, and fully fledged state models, that must also provides actions, core predicates and must be compatibile with the full state. By doing so, one can enjoy the constructions pre-existing in Iris, while enhancing them with actions and predicates when needed to form state models. A valid RA must satisfy the properties described in \autoref{fig:ra-def} (such that all RAs defined in Iris work), while a valid state model must both have a valid RA and come with \consume, \produce{} and \execac{} functions that are sound with regards to the backing RA. This idea is also inline with the goal of Iris and that was mentionned in \cite{next700seplogics}, where one full separation logic can be used without needing to reinvent the wheel at each inconvenience.
+
+\section{RAs and State Models}
+
+We now define the state transformers defined in \cite{sacha-phd}, taking advantage of RAs.
+
+\subsection{Exclusive}
+
+The exclusive state model \Ex{}(\Val) is a simple state model, that represent exclusively owned cells: the cell can can only be owned once, and cannot be composed with any other cell. It is parametric on the values it stores -- for the traditional symbolic execution cell, this would be \code{Sval}. When clear from context, the type of values is omitted. It's RA is defined as: \begin{align*}
+ 	\Ex(X) &\defeq	\ex{x: X}\\
+ 	|\ex{x}| &\defeq \bot\\
+ 	\ex{x_1} \cdot \ex{x_2}&~\text{is always undefined}
+ \end{align*}
+ Note that the above definition is identical to that in Iris \cite{iris}, showing that little to no modification is needed to adapt RAs to state models.
+ 
+It defines two actions, $\actions=\{\load, \store\}$ and a predicate $\preds=\{\exP\}$  We now define the functions for the state model: \execac, \produce, \consume{} and \fix.
+\begin{mathpar}
+\inferrule[ExLoadOk]{}{\ppexec{\load}{\ex{x},[]}{\Ok,\ex{x},[x],[]}}
+\and\inferrule[ExLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss, \ex{x},[], []}}
+\and\inferrule[ExStoreOk]{}{\ppexec{\store}{\ex{x}, [x']}{\Ok, \ex{x'}, [], []}}
+\and\inferrule[ExStoreMiss]{}{\ppexec{\store}{\bot,[x']}{\Miss,\ex{x},[],[]}}
+\and\inferrule[ExConsOk]{}{\ppcons{\ex{x}, \exP, []}{\Ok, \bot, [x], []}}
+\and\inferrule[ExConsMiss]{}{\ppcons{\bot,\exP, []}{\Miss, \bot, [], []}}
+\and\inferrule[ExProdOk]{}{\ppprod{\bot,\exP, [], [x]}{\Ok, \ex{x}}}
+\end{mathpar}
+
+\subsection{Partial Product}
+
+We may now attempt to unify the definitions of PMap and List. For this, we first need to define the RA of \emph{partial products}, denoted $A \bowtie B$. This product supports having one side be empty, but not both -- this is different from the usual product RA, that must have both sides have a value. This is needed, to allow for products that are \emph{exclusively owned}, meaning no additional resources can be composed with them, which is crucial for the soundness of freeing memory. Another interpretation of the partial product is that it is of type $A + B + (A * B)$. Given two RAs $A$ and $B$, their partial product RA is $A \bowtie B$, as defined in \autoref{fig:part-product-def}.
+
+\begin{figure}[h]
+\begin{align*}
+	A \bowtie B &\defeq l(a: A) ~|~ r(b: B) ~|~ lr(a: A, b: B)\\	
+	l(a) \cdot l(a') &\defeq l(a \cdot a')\\
+	r(b) \cdot r(b') &\defeq r(b \cdot b')\\
+	l(a) \cdot r(b) \defeq r(b) \cdot l(a) &\defeq lr(a, b)\\
+	lr(a, b)\cdot lr(a', b') &\defeq lr(a\cdot a', b\cdot b')\\
+	l(a) \cdot lr(a', b) \defeq lr(a', b) \cdot l(a) &\defeq lr(a \cdot a', b)\\
+	r(b) \cdot lr(a, b') \defeq lr(a, b') \cdot r(b) &\defeq lr(a, b\cdot b')\\
+	|l(a)| &\defeq \begin{cases}
+		\bot &\text{if }|a|=\bot\\
+		l(|a|) &\text{otherwise}
+ 	\end{cases}	\\
+ 	|r(b)| &\defeq \begin{cases}
+		\bot &\text{if }|b|=\bot\\
+		r(|b|) &\text{otherwise}
+ 	\end{cases}	\\
+ 	|lr(a,b)|&\defeq \begin{cases}
+ 		lr(|a|,|b| &\text{if }|a|\neq\bot \land |b|\neq\bot\\
+ 		l(|a|) & \text{if }|a|\neq\bot\\
+ 		r(|b|) & \text{if }|b|\neq\bot\\
+ 		\bot & \text{otherwise}
+ 	\end{cases}
+\end{align*}
+\caption{Definiton of the partial product RA}
+\label{fig:part-product-def}
+\end{figure}
+
+The advantage of this definition is twofold. Firstly, it allows expressing fragments of products, where one side may not have a defined core. For instance, given the product state $ex(a) \times ex(b)$, one can't express this as the composition of some $ex(a) \times \bot$ and $\bot \times ex(b)$, which becomes needed for some state transformers (notably, the map and list). This is in turn trivial with the partial product, with both states being. The second advantage of the partial product and one of the main motivations behind it is that it \emph{carries on the exclusivity of its components}. Given $\text{exclusive}(a) \defeq \forall c\ldotp \neg(a\# c)$, the following rule holds:
+\[
+\inferrule[PartProductEx]
+	{\text{exclusive}(a)\\\text{exclusive}(b)}
+	{\text{exclusive}(lr(a, b))}
+\]
+
+\subsection{General Map}
+
+Reusing the above examples, we may unify the PMap and List transformers, with the \emph{global map} transformer, shortened GMap. It is parametric on an indexing sort $I\subseteq \Val$, a codomain state model $\St$ and a \emph{discriminator} state model $\St_D$ that must expose a function $\code{is\_within}:\St_D\rarr I\rarr\bools$. It's states are then of the form $I\finmap \St$ for the full state model, and $I\finmap \St\bowtie \St_D$ for the compositional and symbolic state models.
+
+For soundness, the $\code{is\_within}$ function must be true if and only if a singleton partial map with the given index could be validly composed into the state while upholding the desired GMap's invariant. It is used when an index not present in the map is accessed, to tell apart misses from errors (out of bounds accesses). A consequence of this is that when the state is \emph{full}, $\code{is\_within}$ is only used for out of bounds accesses (as otherwise the key is already in the map, since we're dealing with full states), and as such it must always be false -- this explains why the full version of GMap can be $I\finmap \St$ without the discriminator. If we write $\dom \st$ the domain of a GMap's map, given a set of states $\St$ with the subset of full states $\full\St\subseteq\St$, we have that $i\not\in \dom\st \land \st \in \full\St \Rarr \neg(\code{is\_within}~\st~i)$.
+
+To replicate the usual PMap, one would have $\St_D=\text{Ex}(\pset(I))$, with $\code{is\_within}$ true if the value is in the set: $\code{is\_within}_\text{PMap}~\st_D~i=i\in\st_D$. For List, one has $\St_D=\text{Ex}(\nats)$ with $\code{is\_within}_\text{List}~\st_D~i=0 \leq i < \st_D$. Note here that state transformer may automatically assume the outcome is a \Miss{} if the key is not found in the map and the descriminator state isn't set (ie. the state is $l(x)$ for some $x$), as indeed a state fragment containing only the discriminator can always be composed with it to complete the \Miss{}.
+
+Another interesting point is that the discriminator is a state model; this allows it to define its own predicates to control its state. While here both examples use a Ex state model, one could imagine more complex discriminators where information is split across several predicates, which GMap would support too. However, one may note that the discriminator shouldn't define any: because it doesn't exist for the full version of GMap, allowing actions to only exist in the compositional state model would break compatibility.
+
+\todobox{Check the above with Sacha: must the discriminator be removed for the full state? Can we not just initialise it to a default value and go from there?}
+
+
+
+
+
