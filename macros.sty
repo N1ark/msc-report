@@ -17,25 +17,43 @@
 \newcommand{\preo}[0]{\preccurlyeq}
 \renewcommand{\part}[0]{\rightharpoonup}
 
+% Useful in maths 
+\newcommand{\If}[0]{\text{if}}
+\newcommand{\Otherwise}[0]{\text{otherwise}}
+
 % Semantics
 \newcommand{\execac}[0]{\code{execute\_action}}
 \newcommand{\consume}[0]{\code{consume}}
 \newcommand{\produce}[0]{\code{produce}}
 \newcommand{\fix}[0]{\code{fix}}
-\newcommand{\actions}[0]{\ensuremath{\cal{A}}}
+\newcommand{\actions}[0]{{\ensuremath{\cal{A}}}}
 \newcommand{\preds}[0]{\ensuremath{\Delta}}
 
 \newcommand{\mmdl}[0]{\ensuremath{\mathbb S}}
 \newcommand{\st}[0]{\sigma}
+\newcommand{\sst}[0]{\hat\st}
 \newcommand{\St}[0]{\Sigma}
+\newcommand{\Sst}[0]{\hat\St}
+
 \newcommand{\evalsto}[3]{\ensuremath{p\vdash(#1)\Downarrow_\theta#2:(#3)}}
 \newcommand{\execOLD}[5]{#1.#2(#3) \rightsquigarrow #4:(#5)}
 \newcommand{\ppexec}[3]{\ensuremath{#1(#2)\rightsquigarrow(#3)}}
 \newcommand{\ppcons}[2]{\ensuremath{\consume(#1)\rightsquigarrow (#2)}}
 \newcommand{\ppprod}[2]{\ensuremath{\produce(#1)\rightsquigarrow (#2)}}
-\newcommand{\corepred}[3]{\ensuremath{\left<\texttt{#1}\right>(#2;#3)}}
-\newcommand{\ins}[0]{\vec{v_i}}
-\newcommand{\outs}[0]{\vec{v_o}}
+\newcommand{\corepred}[3]{\ensuremath{\left<#1\right>\!(#2;#3)}}
+
+\newcommand{\ins}[0]{\vec{v}_i}
+\newcommand{\sins}[0]{\vec{\hat{v}}_i}
+\newcommand{\outs}[0]{\vec{v}_o}
+\newcommand{\souts}[0]{\vec{\hat{v}}_o}
+
+\newcommand{\pc}[0]{\pi}
+\newcommand{\Pc}[0]{\Pi}
+\newcommand{\SAT}[0]{\operatorname{\code{SAT}}}
+
+\newcommand{\SV}[0]{\textit{SV}}
+
+\newcommand{\expeval}[1]{\llbracket#1\rrbracket}
 
 \newcommand{\outcomes}[0]{{\cal O}}
 \newcommand{\Ok}[0]{\code{Ok}}
@@ -52,7 +70,6 @@
 
 \newcommand{\Wf}[0]{\ensuremath{{\cal W}\!f}}
 \newcommand{\Wfc}[0]{\ensuremath{{\cal W}\!f\!c}}
-\newcommand{\SAT}[0]{\texttt{SAT}}
 
 % Sep logic
 \newcommand{\SLtriple}[3]{\ensuremath{\left\{#1\right\}#2\left\{#3\right\}}}
@@ -82,13 +99,22 @@
 
 \newcommand{\Ag}[0]{\statemodel{Ag}}
 \newcommand{\ag}[1]{\statevar{ag}(#1)}
+\newcommand{\agP}[0]{\code{ag}}
 
 \newcommand{\Frac}[0]{\statemodel{Frac}}
+\newcommand{\fracc}[1]{\statevar{frac}(#1)}
+\newcommand{\fracP}[0]{\code{frac}}
+
 \newcommand{\Sum}[0]{\statemodel{Sum}}
 \newcommand{\Product}[0]{\statemodel{Product}}
+\newcommand{\PProduct}[0]{\statemodel{PProduct}}
 \newcommand{\PMap}[0]{\statemodel{PMap}}
 \newcommand{\List}[0]{\statemodel{List}}
+
 \newcommand{\Freeable}[0]{\statemodel{Freeable}}
+\newcommand{\free}[0]{\code{free}}
+\newcommand{\freed}[0]{\statevar{freed}}
+\newcommand{\freedP}[0]{\code{freed}}
 
 
 % Util
@@ -100,4 +126,5 @@
 	\textbf{TODO: }
 	\color{black}#1}
 }\vspace{0.25cm}\color{black}}
+\newcommand{\note}[1]{{\emph{\color{purple}{#1}}}}
 
