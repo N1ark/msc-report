@@ -90,25 +90,30 @@
 % State model
 \newcommand{\statemodel}[1]{\textsc{#1}}
 \newcommand{\statevar}[1]{\text{#1}}
+\newcommand{\statepred}[1]{\code{#1}}
 
 \newcommand{\Ex}[0]{\statemodel{Ex}}
 \newcommand{\ex}[1]{\statevar{ex}(#1)}
-\newcommand{\exP}[0]{\code{ex}}
+\newcommand{\exP}[0]{\statepred{ex}}
 \newcommand{\load}[0]{\code{load}}
 \newcommand{\store}[0]{\code{store}}
 
 \newcommand{\Ag}[0]{\statemodel{Ag}}
 \newcommand{\ag}[1]{\statevar{ag}(#1)}
-\newcommand{\agP}[0]{\code{ag}}
+\newcommand{\agP}[0]{\statepred{ag}}
 
 \newcommand{\Frac}[0]{\statemodel{Frac}}
 \newcommand{\fracc}[1]{\statevar{frac}(#1)}
-\newcommand{\fracP}[0]{\code{frac}}
+\newcommand{\fracP}[0]{\statepred{frac}}
 
 \newcommand{\Sum}[0]{\statemodel{Sum}}
 \newcommand{\Product}[0]{\statemodel{Product}}
 \newcommand{\PProduct}[0]{\statemodel{PProduct}}
+
 \newcommand{\PMap}[0]{\statemodel{PMap}}
+\newcommand{\domainset}[0]{\statepred{domainset}}
+\newcommand{\alloc}[0]{\code{alloc}}
+
 \newcommand{\List}[0]{\statemodel{List}}
 
 \newcommand{\Freeable}[0]{\statemodel{Freeable}}

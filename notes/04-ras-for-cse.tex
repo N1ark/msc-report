@@ -42,7 +42,7 @@ A \emph{resource algebra} (RA) is a triple $(M, |\!-\!|: M\rarr M^?, (\cdot): M\
 \end{align}
 \begin{align*}
 	\text{where}\qquad
-	M^? &\defeq M \uplus \{\bot\}\text{, with }a\cdot \bot \defeq \bot\cdot a\defeq \bot\\
+	M^? &\defeq M \uplus \{\bot\}\text{, with }a\cdot \bot \defeq \bot\cdot a\defeq a\\
 	a \preo b &\defeq \exists c\ldotp b = a\cdot c\\
 	a\disj b &\defeq a \cdot b \text{ is defined}
 \end{align*}
@@ -100,7 +100,7 @@ We must also modify the signature of \execac, to include \Miss{} outcomes, via t
 
 An addition to what CSE previously defined is thus the split of what was the \code{Abort} outcome into \LFail{} and \Miss{}, this improves the quality of error messages and allows fixing consumption errors due to missing state -- this will be described in the next subsection.
 
-A last change compared to CSE is that we drop the path condition parameter to consume and produce -- the function instead directly returns the path condition required for the resulting branches, and the engine can filter these. For instance, in UX all consumption branches that result in \LFail{} can be dropped, as dropping branches is allowed in UX. This has the advantage of simplifying the axioms, as the path condition is strengthened by definition; the function itself has no way of weakening it.
+A last change compared to CSE is that we drop the path condition parameter to consume and produce -- the function instead directly returns the path condition required for the resulting branches, and the engine can filter these. For instance, in UX all consumption branches that result in \LFail{} can be dropped, as dropping branches is allowed in UX. This has the advantage of simplifying the axioms, as the path condition is strengthened by definition; the function itself has no way of weakening it. \note{Mention that this also makes checkpointing with the SAT engine trivial -- just set a checkpoint before \consume/\produce, add whatever that returns. No need to separate the old from new, avoids duplicating/deduplicating, etc.}
 
 \subsection{Bi-abduction Engine}
 
@@ -280,7 +280,7 @@ The exclusive state model \Ex{}(\Val) is a simple state model, that represent ex
  Note that the above definition is identical to that in Iris \cite{iris}, showing that little to no modification is needed to adapt RAs to state models.
 
 It defines two actions, $\actions=\{\load, \store\}$ and a predicate $\preds=\{\exP\}$  We now define the functions for the state model: \execac, \produce, \consume{} and \fix.
-\begin{mathpar}
+\begin{mathparpagebreakable}
 \inferrule[ExLoadOk]{}{\ppexec{\load}{\ex{x},[]}{\Ok,\ex{x},[x],[]}}
 \and\inferrule[ExLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss, \ex{x},[], []}}
 \and\inferrule[ExStoreOk]{}{\ppexec{\store}{\ex{x}, [x']}{\Ok, \ex{x'}, [], []}}
@@ -289,7 +289,7 @@ It defines two actions, $\actions=\{\load, \store\}$ and a predicate $\preds=\{\
 \and\inferrule[ExConsMiss]{}{\ppcons{\bot,\exP, []}{\Miss, \bot, [], []}}
 \and\inferrule[ExProd]{}{\ppprod{\bot,\exP, [], [x]}{\ex{x}, []}}
 \and\inferrule[ExFix]{}{\fix ~[] = [\{ \exists x\ldotp \corepred{\exP}{}{x} \}]}
-\end{mathpar}
+\end{mathparpagebreakable}
 
 \subsection{Agreement}
 
@@ -304,7 +304,7 @@ The agreement state model \Ag{}(\Val) is the state model to represent an agreeme
 Again, this definition is identical to the one of $\Ag_0$ in Iris (the non-step-indexed version of agreement).
 
 Because knowledge is duplicable, it cannot be modified: indeed, one would need to modify all instances of the knowledge to ensure frame preservation still holds. Its actions are thus $\actions=\{\load\}$, and it has one predicate, $\Delta=\{\agP\}$.
-\begin{mathpar}
+\begin{mathparpagebreakable}
 \inferrule[AgLoadOk]{}{\ppexec{\load}{\ag{x},[]}{\Ok,\ag{x},[x],[]}}
 \and\inferrule[AgLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss,\bot,[],[]}}
 \and\inferrule[AgConsOk]{}{\ppcons{\ag{x},\agP,[]}{\Ok,\ag{x},[x],[]}}
@@ -312,7 +312,7 @@ Because knowledge is duplicable, it cannot be modified: indeed, one would need t
 \and\inferrule[AgProdBot]{}{\ppprod{\bot,\agP,[],[x]}{\ag{x}, []}}
 \and\inferrule[AgProdEq]{}{\ppprod{\ag{x},\agP,[],[x']}{\ag{x}, [x = x']}}
 \and\inferrule[AgFix]{}{\fix~[] = [\{\exists x\ldotp \corepred{\agP}{}{x}\}]}
-\end{mathpar}
+\end{mathparpagebreakable}
 
 \subsection{Fractional}
 
@@ -327,7 +327,7 @@ The fractional state model \Frac(\Val) is used to handle \emph{fractional permis
 We may note this definition is different from that in Iris, that chooses to define the fractional state model as $\textsc{Frac} \times \textsc{Ag}_0(\Val)$, where \Frac{} is the RA for strictly positive rationals. This work in their case, because they can define actions for any state model easily, so they can define \load{} for the product having knowledge of the underlying state models. However, because the state models presented here are aimed at being reused in a variety of contexts while minimising the need for defining new actions and predicates, using their approach would hurt usability, as the \load{} action would need to be redefined for this specific instantiation of the product. Furthermore, this construction would yield two predicates: \agP{} and \fracP{}, making its use unpractical.
 
 We instead define the actions $\actions=\{\load,\store\}$ and the core predicate $\Delta=\{\fracP\}$ as follows:
-\begin{mathpar}
+\begin{mathparpagebreakable}
 \inferrule[FracLoadOk]{}{\ppexec{\load}{\fracc{x,q},[]}{\Ok,\fracc{x,q},[x],[],[]}}
 \and\inferrule[FracLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss,\bot,[1],[]}}
 \and\inferrule[FracStoreOk]{}{\ppexec{\store}{\fracc{x,q},[x']}{\Ok,\fracc{x',q},[],[q=1]}}
@@ -340,7 +340,7 @@ We instead define the actions $\actions=\{\load,\store\}$ and the core predicate
 \and\inferrule[FracProdBot]{}{\ppprod{\bot,\fracP,[q],[x]}{\fracc{x,q},[0 < q \leq 1]}}
 \and\inferrule[FracProdEq]{}{\ppprod{\fracc{x,q},\fracP,[q'],[x']}{\fracc{x,q+q'},[x=x' \land 0<q' \land q+q' \leq 1]}}
 \and\inferrule[FracFix]{}{\fix~[q] = [\{ \exists x. \corepred{\fracP}{q}{x} \}]}
-\end{mathpar}
+\end{mathparpagebreakable}
 
 Here we note that the fraction part of the state is an in-parameter, whereas the value is an out-parameter. This allows one to explicitly specify the required fraction of the state that is consumed.
 
@@ -380,8 +380,7 @@ Similarly for the actions and predicates, we simply re-use the underlying functi
 \and\inferrule[SumLCons]{x=\mathit{unwrap}_l(x_l) \\ \ppcons{x,\delta_l,\sins}{o,x',\souts,\pc} \\ x_l' = \mathit{wrap}_l(x') \\ o \neq \Miss}{\ppcons{x_l,\delta_l,\sins}{o,x_l',\souts,\pc}}
 \and\inferrule[SumLConsMiss]{x=\mathit{unwrap}_l(x_l) \\ \ppcons{x,\delta_l,\sins}{o,x',\souts,\pc} \\ x_l' = \mathit{wrap}_l(x') \\ o = \Miss}{\ppcons{x_l,\delta_l,\sins}{o,x_l',\code{`l'::}\souts,\pc}}
 \and\inferrule[SumLConsIncompat]{}{\ppcons{r(y),\delta_l,\sins}{\LFail,r(y),[],[]}}
-\and\inferrule[SumLProd]{x=\mathit{unwrap}_l(x_l) \\ \ppprod{x,\delta_l,\sins}{x',\pc} \\ x_l'=\mathit{wrap}_l(x')}{\ppprod{x_l,\delta_l,\sins}{x_l',\pc}}
-\and\inferrule[SumLProdIncompat]{}{\ppcons{r(y),\delta_l,\sins}{r(y),[\vfalse]}}
+\and\inferrule[SumLProd]{x=\mathit{unwrap}_l(x_l) \\ \ppprod{x,\delta_l,\sins,\souts}{x',\pc} \\ x_l'=\mathit{wrap}_l(x')}{\ppprod{x_l,\delta_l,\sins,\souts}{x_l',\pc}}
 \and\inferrule[SumLFix]{\mmdl_1.\fix~\sins=a}{\fix~\code{`l'::}\sins=a}
 \end{mathparpagebreakable}
 
@@ -391,7 +390,7 @@ For fixes to be retrieved from the correct side of the sum, \Miss{} outcomes mus
 
 The sum is one of the main reasons for the switch from PCMs to RAs, as being able to handle $\bot$ separately is an advantage: it avoids situations where the underlying state may be \emph{observably empty}, but the state of the sum is $l(\mmdl_1.0)$ (if we use PCMs). This causes unsoundness, as for instance actions and predicates belonging to the right side of the sum would then yield \Err{} and \LFail{} respectively, despite the fact that if the state of the sum was simply $\bot$ they'd succeed.
 
-We may give an example to illustrate: let there be the state model $\Ex(\{1\}) + \Ex(\{2\})$. A valid function specification in this state model is \ESLtriple{\corepred{\exP_l}{}{1}}{\code{swap()}}{\corepred{\exP_r}{}{2}}\footnote{The signature of this \code{swap} function is exactly that of the \code{free} action, for the \Freeable{} state model that will later be described.}, where the \code{swap} function switches the state from the left hand side to the right hand side. Now if this was constructed using PCMs, the engine would first consume the core predicate for the precondition. The consumption for $\Ex(\{1\})$ is \ppcons{\ex1,\exP_l,[]}{\Ok,0_l,[1],[]}. The consumption for the sum would thus be \ppcons{l(\ex1),\exP_l,[]}{\Ok,l(0_l),[1],[]}. Note, here, that the sum state model has \emph{no way of knowing if the state became empty}, and must thus keep it as $l(0_l)$. The engine would then produce the postcondition, which is \corepred{\exP_r}{}{2} -- this would however result in the branch vanishing, as $\exP_r$ is not a predicate that can be produced into some $l(x)$. The function call would thus vanish, which is unsound in OX (and would result in no branches in UX, which is sound but useless). \note{I have a formal proof of this unsoundness, I'll add it here eventually, or put it in the appendix, TBD.}
+We may give an example to illustrate: let there be the state model $\Ex(\{1\}) + \Ex(\{2\})$. A valid function specification in this state model is \ESLtriple{\corepred{\exP_l}{}{1}}{\code{swap()}}{\corepred{\exP_r}{}{2}}\footnote{The signature of this \code{swap} function is analogous to that of the \code{free} action, for the \Freeable{} state model that will later be described.}, where the \code{swap} function switches the state from the left hand side to the right hand side. Now if this was constructed using PCMs, the engine would first consume the core predicate for the precondition. The consumption for $\Ex(\{1\})$ is \ppcons{\ex1,\exP_l,[]}{\Ok,0_l,[1],[]}. The consumption for the sum would thus be \ppcons{l(\ex1),\exP_l,[]}{\Ok,l(0_l),[1],[]}. Note, here, that the sum state model has \emph{no way of knowing if the state became empty}, and must thus keep it as $l(0_l)$. The engine would then produce the postcondition, which is \corepred{\exP_r}{}{2} -- this would however result in the branch vanishing, as $\exP_r$ is not a predicate that can be produced into some $l(x)$. The function call would thus vanish, which is unsound in OX (and would result in no branches in UX, which is sound but useless). \note{I have a formal proof of this unsoundness, I'll add it here eventually, or put it in the appendix, TBD.}
 
 Of course one may decide state models must expose an \code{is\_empty} function, and use that instead -- however this would needlessly complexify state models and would reinvent the wheel; multi-core resource algebras were specifically created to solve this problem \cite{sepalgebra}, and the partial core of Iris was \emph{also} created for this reason among others \cite{iris}.
 
@@ -447,50 +446,111 @@ Similarly to the sum, its actions are ${\actions = \{\alpha_l : \alpha \in \mmdl
 \and\inferrule[PProductLActionMiss]{(x,y)=\mathit{unwrap}(s) \\ \ppexec{\alpha}{x,\sins}{o,x',\souts,\pc} \\ s' = \mathit{wrap}(x',y) \\ o = \Miss}{\ppexec{\alpha_l}{s,\sins}{o,s',\code{`l'::}\souts,\pc}}
 \and\inferrule[PProductLCons]{(x,y)=\mathit{unwrap}(s) \\ \ppcons{x,\delta_l,\sins}{o,x',\souts,\pc} \\ s' = \mathit{wrap}(x',y) \\ o \neq \Miss}{\ppcons{s,\delta_l,\sins}{o,s',\souts,\pc}}
 \and\inferrule[PProductLConsMiss]{(x,y)=\mathit{unwrap}(s) \\ \ppcons{x,\delta_l,\sins}{o,x',\souts,\pc} \\ s' = \mathit{wrap}(x',y) \\ o = \Miss}{\ppcons{s,\delta_l,\sins}{o,s',\code{`l'::}\souts,\pc}}
-\and\inferrule[PProductLProd]{(x,y)=\mathit{unwrap}(s) \\ \ppprod{x,\delta_l,\sins}{x',\pc} \\ s'=\mathit{wrap}(x',y)}{\ppprod{s,\delta_l,\sins}{s',\pc}}
+\and\inferrule[PProductLProd]{(x,y)=\mathit{unwrap}(s) \\ \ppprod{x,\delta_l,\sins,\souts}{x',\pc} \\ s'=\mathit{wrap}(x',y)}{\ppprod{s,\delta_l,\sins,\souts}{s',\pc}}
 \and\inferrule[PProductLFix]{\mmdl_1.\fix~\sins=a}{\fix~\code{`l'::}\sins=a}
 \end{mathparpagebreakable}
 
 \subsection{Freeable}
 
-The \Freeable{}(X) state model transformer allows extending a state model with a \free{} action, that allows freeing a part of memory. The freed memory can then not be used, and attempting to access it raises a \code{UserAfterFree} error. This is similar to the \textsc{OneShot} RA of Iris, with the key difference that the \freedP{} predicate used to mark a resource as freed is \emph{not duplicable} -- whereas Iris defines \textsc{OneShot(X) $\defeq$ Frac + Ag(X)}, this definition is not UX-sound. \note{Maybe a small proof of this? Or is it evident?} This is not a problem for Iris, that is only concerned with OX soundness, but justifies this modification for this engine.
+The \Freeable(\mmdl) state model transformer allows extending a state model with a \free{} action, that allows freeing a part of memory. The freed memory can then not be used, and attempting to access it raises a \code{UserAfterFree} error. This is similar to the \textsc{OneShot} RA of Iris, with the key difference that the \freedP{} predicate used to mark a resource as freed is \emph{not duplicable} -- whereas Iris defines \textsc{OneShot(X) $\defeq$ Frac + Ag(X)}, this definition is not UX-sound. \note{Maybe a small proof of this? Or is it evident?} This is not a problem for Iris, that is only concerned with OX soundness, but justifies this modification for this engine.
 
-Furthermore, to ensure only full states are freed, the underlying state model must expose a $\code{is\_exclusively\_owned}:\Sst\rarr\code{LVal}$, which equates to the property \textsc{PartProductEx} presented before. Note here this returns a \emph{symbolic value}, that can be appended to the path condition (it must thus be a boolean). This allows symbolic ownership, for instance having the fraction of \Frac{} be a symbolic number. To also ensure all misses can be completed, the \Freeable{} state model transformer requires to underlying state model to be exclusively ownable (this is not the case, for instance, of \Ag).
+To ensure only full states are freed, the underlying state model must provide a function ${\code{is\_exclusively\_owned}:\Sst\rarr\code{LVal}}$, which equates to the property `exclusive' presented before. Note here this returns a \emph{symbolic value}, that can be appended to the path condition (it must thus be a boolean). This allows symbolic ownership, for instance having the fraction of \Frac{} be a symbolic number. 
 
-Its RA is as follows: \begin{align*}
-	\Freeable(X) &\defeq v(x: X) ~|~ \freed \\
-	v(x)\cdot v(x') &\defeq v(x\cdot x') \qquad\text{other compositions are invalid}\\
-	|v(x)| &\defeq \begin{cases}
-		\bot & \If ~ |x| = \bot\\
-		v(|x|)&\Otherwise
-	\end{cases}\\
-	|\freed| &\defeq \bot
-\end{align*}
+While not needed for the core and compositional engines, the bi-abductive engine requires that  misses may be fixed; \Freeable(\mmdl) however cannot access directly the core predicates of \mmdl{} to provide fixes when freeing an empty state. As such, the state model must also provide a ${\code{fix\_owned}:\St^?\rarr\pset(\text{Asrt})~\code{list}}$ function that returns possible fixes to make the given state exclusively owned. This also implies that full states of \mmdl{} are exclusively owned -- this is not the case, for instance, for \Ag. As such, constructions such as \Freeable(\Ag) are not sound.
 
-While one could define \Freeable(X) as a type of \Sum{} (in particular, $X + \Ex(\{ \freedP \})$), this makes adding the \free{} action and \freedP predicate unwieldy; it is thus easier here to redefine a state model transformer from 0. It's actions are thus $\actions=\{\free\} \uplus \mmdl_1.\actions$, and core predicates $\Delta=\{\freedP\}\uplus\mmdl_1.\Delta$.
-\begin{align*}
-	\text{Given }
-	\mathit{wrap}(x) = \begin{cases}
-		\bot &\If~x=\bot\\
-	 	v(x)&\Otherwise
-	 \end{cases} \text{ and }
-	 \mathit{unwrap}(x_v) = \begin{cases}
- 		\bot &\If ~x=\bot\\
- 		x_v &\If~x=v(x_v)\\
- 		\text{undefined}&\Otherwise
-	 \end{cases}
-\end{align*}
+Its RA is defined as a construction: $\Freeable(\mmdl) \defeq \mmdl + \Ex(\{\freed\})$, which allows all associated rules to be kept. For clarity, we rename the core predicate $\exP_r$ (defined by~$\Ex(\{\freed\})$) as $\freedP$. We also extend its actions with the $\free$ action.
+
+Because \Freeable{} is constructed via other state model transformers, we only need to describe the rules for \free{} -- the rest of the construction is already sound. This is an example of how simpler state models can be extended while alleviating the user from the burden of proving the soundness of the base construction.
+
 \begin{mathparpagebreakable}
-\inferrule[FreeableAction]{x=\mathit{unwrap}(x_v) \\ \ppexec{\alpha}{x,\sins}{o,x',\souts,\pc} \\ x_v' = \mathit{wrap}(x')}{\ppexec{\alpha}{x_v,\sins}{o,x_v',\souts,\pc}}
-\and\inferrule[FreeableActionUseAfterFree]{}{\ppexec{\alpha}{\freed,\sins}{\Err,x_v,[],[]}}
-\and\inferrule[FreeableActionFree]{}{\ppexec{\free}{v(x),[]}{\Ok,\freed,[],[\mmdl.\code{is\_exclusively\_owned}~x]}}
-\and\inferrule[FreeableActionFreeErr]{}{\ppexec{\free}{v(x),[]}{\Miss,v(x),\mmdl.\code{fix\_owned}~x,[\neg\mmdl.\code{is\_exclusively\_owned}~x]}}
+\inferrule[FreeableActionFree]{}{\ppexec{\free}{l(x),[]}{\Ok,r(\ex\freed),[],[\mmdl.\code{is\_exclusively\_owned}~x]}}
+\and\inferrule[FreeableActionFreeErr]{}{\ppexec{\free}{l(x),[]}{\Miss,l(x),\mmdl.\code{fix\_owned}~x,[\neg\mmdl.\code{is\_exclusively\_owned}~x]}}
 \and\inferrule[FreeableActionFreeMiss]{}{\ppexec{\free}{\bot,[]}{\Miss,\bot,\mmdl.\code{fix\_owned}~\bot,[]}}
-\and\inferrule[FreeableActionDoubleFree]{}{\ppexec{\free}{\freed,[]}{\Err,\freed,[],[]}}
-\and\inferrule[FreeableCons]{x=\mathit{unwrap}(x_v) \\ \ppcons{x,\delta,\sins}{o,x',\souts,\pc} \\ x_v'=\mathit{wrap}(x)}{\ppcons{x_v,\delta,\sins}{o,x_v',\souts,\pc}}
+\and\inferrule[FreeableActionDoubleFree]{}{\ppexec{\free}{r(\ex\freed),[]}{\Err,r(\ex\freed),[],[]}}
 \end{mathparpagebreakable}
 
-While not needed for the core and compositional engines, the bi-abductive engine requires misses to provides fixes; \Freeable{} however cannot access directly the core predicates of the underlying state model to provide fix when freeing an empty state. As such, the state model must also provide a $\code{fix\_owned}:\St^?\rarr\pset(\text{Asrt})~\code{list}$ function that returns possible fixes to make the given state exclusively owned.
+We may note that use-after-free errors are already handled by the sum construction, thanks to the \textsc{SumLActionIncompat} rule.
+
+\subsection{PMap}
+
+The partial map transformer, $\PMap(I,\mmdl)$, allows modelling partial finite maps. It receives a domain $I$, and the codomain memory model $\mmdl$. 
+\begin{align*}
+	\PMap(I,\mmdl) &\defeq I \finmap \mmdl.\Sigma \times \pset(I)^?\\
+	(h,d)\cdot (h',d') &\defeq (h'', d'') \\
+	\text{where } h''&\defeq \lambda i.\begin{cases}
+		h(i)\cdot h'(i)&\If~i\in \dom(h)\cap\dom(h')\\
+		h(i) &\If~i\in \dom(h) \backslash \dom(h')\\
+		h'(i) &\If~i\in \dom(h') \backslash \dom(h)\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }d''&\defeq\begin{cases}
+		d&\If~d'=\bot\\
+		d'&\If~d=\bot\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }& d'' = \bot \lor \dom(h'')\subseteq d''\\
+	|(h, d)| &\defeq \lambda i.\begin{cases}
+		|h(i)| &\If~ i\in\dom(h) \land |h(i)| \neq \bot\\
+		\text{undefined} &\Otherwise
+	\end{cases}
+\end{align*}
+
+The state is thus the bindings from index to substate, as well as a possibly unset \emph{domain set}. This domain set allows distinguishing, when an index is not found in the map, if the outcome is an \Err{} or \LFail{} (because the binding cannot exist), or if the state at that index is actually $\bot$ (in which case the \execac, \consume{} or \produce{} call is done with $\bot$ as an input). More than improving automation, this is a requirement, for compatiblity with the full state model (\ref{eq:compatibility}) and to preserve \ref{eq:frame-sub} and \ref{eq:frame-add}.
+
+\PMap{} has a well-formedness condition, to ensure the domain of the bindings is a subset of the domain set -- for instance, the state $(\{ 2 \mapsto x \}, \{ 1 \})$ is not valid, as $\{2\} \not\subseteq \{1\}$. If the domainset is missing, then there is no restrictions on the bindings.
+
+$\PMap(I,\mmdl)$ defines one action, \alloc, and one predicate, \domainset. Furthermore, it lifts all predicates of the wrapped state model, by adding the index of the cell as an in-parameter. Furthermore, to allow allocation, $\mmdl$ must provide an ${\code{instantiate}: \vallist \rarr \St}$ function, to instantiate a new state from a list of arguments. This is needed because \PMap{} has no awareness of how $\mmdl$ works, or or what it should be initialised to. \note{Maybe specify that CSE/Sacha don't mention this: PMap allocation requires an interface for allocation.}
+
+For the rules below, we define $h[i \leftarrow s]$ as setting the binding at index $i$ of $h$ to $s$, and $h[i \not\leftarrow]$ as removing the binding at $i$ from $h$.
+\begin{align*}
+	\text{Given }&\mathit{update}(h, i, s) = \begin{cases}
+		h[i \leftarrow s] &\If~s\neq \bot\\
+		h[i \not\leftarrow] &\Otherwise
+	\end{cases}\\
+	&\mathit{dom\_add}(d, i) = \begin{cases}
+		\bot &\If~d=\bot\\
+		d\uplus \{i\} &\Otherwise
+	\end{cases}\\
+	&i\in d^? \defeq \begin{cases}
+		\vtrue &\If~d^?=\bot\\
+		i\in d&\Otherwise
+	\end{cases}
+\end{align*}
+\begin{mathparpagebreakable}
+\inferrule[PMapAction]{i'\in\dom(h) \\ s=h(i') \\ \ppexec{\alpha}{s,\sins}{o,s',\souts,\pc} \\ h' = \mathit{update}(h, i', s')}{\ppexec{\alpha}{(h, d),i::\sins}{o,(h', d),i'::\souts, (i = i')::\pc}}
+\and\inferrule[PMapActionBot]{i\not\in\dom(h)\\d=\bot\lor d\neq\dom(h) \\ \ppexec{\alpha}{\bot,\sins}{o,s',\souts,\pc} \\ h'=\mathit{update}(h,i,s')}{\ppexec{\alpha}{(h, d),i::\sins}{o,(h',d),i::\souts, (i\notin\dom(h)\land i\in d)::\pc}}
+\and\inferrule[PMapActionOutOfBounds]{d\neq\bot \\ d=\dom(h)}{\ppexec{\alpha}{(h, d),\sins}{\Err, (h,d), [], [i\notin d]}}
+\and\inferrule[PMapAlloc]{i \notin \SV \\ i \notin \dom(h) \\ i \notin d \\ s=\code{instantiate}(\sins) \\ h' = h[i\leftarrow s] \\ d' = \mathit{dom\_add}(d, i)}{\ppexec{\alloc}{\SV, (h,d), \sins}{\Ok, (h', d'), [i], []}}
+\and\inferrule[PMapCons]{i'\in\dom(h) \\ s=h(i') \\ \ppcons{s,\delta,\sins}{o,s',\souts,\pc} \\ h' = \mathit{update}(h, i', s')}{\ppcons{(h, d),\delta,i::\sins}{o,(h', d),\souts, (i = i')::\pc}}
+\and\inferrule[PMapConsBot]{i\not\in\dom(h)\\d=\bot\lor d\neq\dom(h) \\ \ppcons{\bot,\delta,\sins}{o,s',\souts,\pc} \\ h'=\mathit{update}(h,i,s')}{\ppcons{(h, d),\delta,i::\sins}{o,(h',d),\souts, (i\notin\dom(h))::\pc}}
+\and\inferrule[PMapConsIncompat]{d\neq\bot \\ d=\dom(h)}{\ppcons{(h, d),\delta,\sins}{\LFail, (h,d), [], [i\notin d]}}
+\and\inferrule[PMapConsDomainSet]{d\neq \bot}{\ppcons{(h,d),\domainset,[]}{\Ok,(h,\bot), [d],[]}}
+\and\inferrule[PMapConsDomainSetMiss]{}{\ppcons{(h,\bot),\domainset,[]}{\Miss,(h,\bot), [\code{`domainset'}], []}}
+\and\inferrule[PMapProd]{i'\in\dom(h) \\ s=h(i') \\ \ppprod{s,\delta,\sins,\souts}{s',\pc} \\ h' = \mathit{update}(h, i', s')}{\ppprod{(h, d),\delta,i::\sins,\souts}{(h', d), (i = i')::\pc}}
+\and\inferrule[PMapProdBot]{i\not\in\dom(h)\\d=\bot\lor d\neq\dom(h) \\ \ppprod{\bot,\delta,\sins,\souts}{s',\pc} \\ h'=\mathit{update}(h,i,s')}{\ppprod{(h, d),\delta,i::\sins,\souts}{(h',d),(i\notin\dom(h))::\pc}}
+\and\inferrule[PMapProdDomainSet]{}{\ppprod{(h,\bot),\domainset,[],[d]}{(h,d),[\dom(h)\subseteq d]}}
+\and\inferrule[PMapFix]{\mmdl.\fix~\sins = a \\ a'=\mathit{lift}(a,i)}{\fix~i::\sins = a'}
+\and\inferrule[PMapFixDomainSet]{}{\fix~[\code{`domainset'}] = \exists d\ldotp \corepred{\domainset}{}{d}}
+\end{mathparpagebreakable}
+
+\note{I'm actually not sure allocation with a $\bot$ domainset is sound!! Because you lose information you can't get back so probably not EX and probably breaks some axiom. \textbf{Figure it out, prove it, outline it.}}
+
+This simple construction is thus enough to recreate the standard ``points to'' predicate of standard separation logic \cite{seplogic1, seplogic2}: with $\PMap(\nats, \Ex(\Val))$, one can formulate the core predicates \corepred{\exP}{i}{x}, which is equivalent to $i \mapsto x$.
+
+An interesting thing to outline here is that any action execution and predicate consumption and production can branch on the index. For instance, if the state is $(\{ 1\mapsto y \}, \{ 1,2\})$ and a \load{} action is executed with an unconstrained symbolic index $\hat x$, then three branches are created: one where $\hat x = 1$ and the action is executed on the cell $y$, one where $\hat x = 2$ and the action is executed on $\bot$, and finally one where $\hat x\notin \{1,2\}$, and an \Err{} is raised for out of bounds access. This outlines a key difficulty of \PMap{}, that will be discussed more in depth later: implementation-wise, it is a complex and expensive transformer that has the potential to create many branches -- this makes it an important target for optimisation.
+
+Using RAs rather than PCMs makes well-formedness easier to uphold, as a binding to $\bot$ is not valid, since $\bot \notin \mmdl.\Sigma$. To exemplify why this is helpful, consider the state model $\PMap(\nats, \Ex(\{1\}))$ and the function \code{move}, that relocates a memory cell: 
+\begin{align*}
+\ESLtriple{\corepred{\exP}{1}{1} \star \corepred{\domainset}{}{\{1\}}}{\code{move()}}{\corepred{\exP}{2}{1} \star \corepred{\domainset}{}{\{2\}}}
+\end{align*}
+Let the initial state be $(\{ 1\mapsto \ex1\}, \{ 1\} )$: a heap with one cell, at address $1$ -- this matches exactly the precondition of \code{move}. 
+
+If we are using PCMs, $\Ex({1})$ is defined as $\ex{1}~|~0$, with $0$ the unit of the PCM. Note here that executing actions, consuming and producing doesn't return an element of $\St^?$, but of $\St$ directly, since the $0$ is already in its carrier set; one has no reason to extend it with $\bot$. The engine first consumes the \exP{} predicate, at address $1$ -- this means the pointed-to state becomes $0$ (or empty), and the bigger (or outer) state becomes $(\{ 1\mapsto 0\}, \{ 1\})$. The \domainset{} predicate is then succesfuly consumed too, leaving $(\{ 1\mapsto 0\},\bot)$. Now, the post-condition is produced onto the state, as calling the function modified the state of our program. First, the engine thus produces \corepred{\exP}{2}{1}, which adds a binding to \PMap{} and creates the cell: our bigger state is now $(\{ 1\mapsto 0, 2\mapsto \ex1\},\bot)$. Finally, \corepred{\domainset}{}{\{2\}} is produced onto the state, however this \emph{doesn't succeed}. Indeed, the bindings of the heap are $\{1,2\}$, which are not a subset of the produced domainset $\{2\}$. This is because the engine cannot tell appart empty ($0$) states from non-empty states. Of course one could handle this by checking for $0$, or by explicitly excluding units from the codomain of \PMap{}. This however makes rules and definitions more complex and prone to error, as it is easy to forget to check for units.
+
+If this examples is now reproduced with RAs, the consumption of \corepred{\exP}{1}{1} makes the cell return $\bot$, which cannot be added into the heap -- the \PMap{} must thus remove the binding, and the postcondition can be produced properly, as the bindings of the heap is only $\{2\}$. RAs are a solution to the above problem, as they facilitate the sound construction of state models and state model transformers, by allowing unitless state models.
+
+
+%ensures there is only one observably empty state: $\bot$. Indeed, with PCMs a partial map that points to $0$ is possible, as $0$ is part of the carrier set of $\mmdl.\Sigma$ -- this is not the case in RAs, where $\bot$ is defined outside of the carrier set, making the representation $i\mapsto\bot$ invalid.
 
 \subsection{General Map}
 
@@ -503,4 +563,3 @@ For soundness, the $\code{is\_within}$ function must be true if and only if a si
 To replicate the usual PMap, one would have $\St_D=\text{Ex}(\pset(I))$, with $\code{is\_within}$ true if the value is in the set: $\code{is\_within}_\text{PMap}~\st_D~i=i\in\st_D$. For List, one has $\St_D=\text{Ex}(\nats)$ with $\code{is\_within}_\text{List}~\st_D~i=0 \leq i < \st_D$. Note here that state transformer may automatically assume the outcome is a \Miss{} if the key is not found in the map and the discriminator state isn't set (ie. the state is $l(x)$ for some $x$), as indeed a state fragment containing only the discriminator can always be composed with it to complete the \Miss{}.
 
 Another interesting point is that the discriminator is a state model; this allows it to define its own predicates to control its state. While here both examples use a Ex state model, one could imagine more complex discriminators where information is split across several predicates, which GMap would support too. However, one may note that the discriminator shouldn't define any: because it doesn't exist for the full version of GMap, allowing actions to only exist in the compositional state model would break compatibility.
-
