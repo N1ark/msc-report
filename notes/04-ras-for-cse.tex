@@ -9,7 +9,7 @@ CSE and Sacha's thesis do the traditional choice of using Partial Commutative Mo
 
 These additions are necessary for the engine to be parametric on the state model, as it provides an interface for interaction with the state.
 
-The usage of PCMs comes with issues: the requirement of a single 0 for each state model means that state models such as the sum state model $\mmdl_1 + \mmdl_2$ come with unwieldy requirements to prove soundness -- this comes into play for the \code{Freeable} memory model, that could use a sum (like what is done in \cite{iris-thesis}) but can't because of this.
+The usage of PCMs comes with issues: the requirement of a single 0 for each state model means that state models such as the sum state model $\mmdl_1 + \mmdl_2$ come with unwieldy requirements to prove soundness -- this comes into play for the \code{Freeable} state model, that could use a sum (like what is done in \cite{iris-thesis}) but can't because of this.
 
 \subsection{Iris}
 
@@ -75,7 +75,7 @@ The main difference here is that the state may be $\bot$, if the action is execu
 
 Whole-program symbolic execution is, by definition, non-compositional -- it thus operates on \emph{full state}, a notion introduced in \cite{sacha-phd}. As such, the only valid outcomes here are \Ok{} and \Err{}.
 
-Because we operate in symbolic memory, an additional piece of information is the \emph{path condition}, the set of constraints accumulated throughout execution. A path condition $\pc\in\Pc$ is a \emph{list} of symbolic values, that evalutes to a boolean. We decide to define it as a list rather than a single conjunction of boolean symbolic values, as this allows us to easily check if a path condition is an extension (or a strengthening) of another, with $\pc'\supseteq\pc$.
+Because we operate in symbolic memory, an additional piece of information is the \emph{path condition}, the set of constraints accumulated throughout execution. A path condition $\pc\in\Pc$ is a \emph{list} of symbolic values, that evaluates to a boolean. We decide to define it as a list rather than a single conjunction of boolean symbolic values, as this allows us to easily check if a path condition is an extension (or a strengthening) of another, with $\pc'\supseteq\pc$.
 
 \subsection{Compositional Engine}
 
@@ -256,7 +256,7 @@ Note here that we do not consider compatibility of the semantics of the language
 %	\caption{Definition of full and partial state}
 %\end{figure}
 %
-%Furthermore, the existance of compositional state implies the \Miss{} outcome, meaning the state can be completed with another state fragment to give a non \Miss{} outcome. Compositional semantics are compatible with full semantics if evaluation on full states with compositional semantics is equivalent to evaluation with full semantics.
+%Furthermore, the existence of compositional state implies the \Miss{} outcome, meaning the state can be completed with another state fragment to give a non \Miss{} outcome. Compositional semantics are compatible with full semantics if evaluation on full states with compositional semantics is equivalent to evaluation with full semantics.
 %
 %For particular constructions such as PMaps and Lists however, this is done by adding a domain set or bound, respectively, to the compositional state -- on action execution on a cell that is not in the partial state, one can thus check whether the cell is simply not in this fragment of the state (resulting in a \Miss) or if the cell does not exist (resulting in an \Err). Without such additional information, the compositional semantics would need to resort to always evaluating to \Err{}, or to \Miss{} -- the former breaks frame subtraction and addition making the state unsound, the latter means \Miss{} outcomes leak into full semantics.
 %
@@ -264,7 +264,7 @@ Note here that we do not consider compatibility of the semantics of the language
 
 %While one could accept this and redefine the state models to make up for this difference, much work would need to be redone, and one would need to pass on the rich theory that already exists in Iris. We may note this difficulty comes from the unification of state models and the RAs (or PCMs, in previous works) that back them.
 %
-%We may introduce a split between RAs, that can be used for reasoning about the state just like in Iris, and fully fledged state models, that must also provides actions, core predicates and must be compatibile with the full state. By doing so, one can enjoy the constructions pre-existing in Iris, while enhancing them with actions and predicates when needed to form state models. A valid RA must satisfy the properties described in \autoref{fig:ra-def} (such that all RAs defined in Iris work), while a valid state model must both have a valid RA and come with \consume, \produce{} and \execac{} functions that are sound with regards to the backing RA. This idea is also inline with the goal of Iris and that was mentionned in \cite{next700seplogics}, where one full separation logic can be used without needing to reinvent the wheel at each inconvenience.
+%We may introduce a split between RAs, that can be used for reasoning about the state just like in Iris, and fully fledged state models, that must also provides actions, core predicates and must be compatible with the full state. By doing so, one can enjoy the constructions pre-existing in Iris, while enhancing them with actions and predicates when needed to form state models. A valid RA must satisfy the properties described in \autoref{fig:ra-def} (such that all RAs defined in Iris work), while a valid state model must both have a valid RA and come with \consume, \produce{} and \execac{} functions that are sound with regards to the backing RA. This idea is also inline with the goal of Iris and that was mentioned in \cite{next700seplogics}, where one full separation logic can be used without needing to reinvent the wheel at each inconvenience.
 
 \section{RAs and State Models}
 
@@ -442,11 +442,11 @@ Similarly to the sum, its actions are ${\actions = \{\alpha_l : \alpha \in \mmdl
 	 \end{cases}
 \end{align*}
 \begin{mathparpagebreakable}
-\inferrule[PProductLAction]{(x,y)=\mathit{unwrap}(s) \\ \ppexec{\alpha}{x,\sins}{o,x',\souts,\pc} \\ s' = \mathit{wrap}(x',y) \\ o \neq \Miss}{\ppexec{\alpha_l}{s,\sins}{o,s',\souts,\pc}}
-\and\inferrule[PProductLActionMiss]{(x,y)=\mathit{unwrap}(s) \\ \ppexec{\alpha}{x,\sins}{o,x',\souts,\pc} \\ s' = \mathit{wrap}(x',y) \\ o = \Miss}{\ppexec{\alpha_l}{s,\sins}{o,s',\code{`l'::}\souts,\pc}}
-\and\inferrule[PProductLCons]{(x,y)=\mathit{unwrap}(s) \\ \ppcons{x,\delta_l,\sins}{o,x',\souts,\pc} \\ s' = \mathit{wrap}(x',y) \\ o \neq \Miss}{\ppcons{s,\delta_l,\sins}{o,s',\souts,\pc}}
-\and\inferrule[PProductLConsMiss]{(x,y)=\mathit{unwrap}(s) \\ \ppcons{x,\delta_l,\sins}{o,x',\souts,\pc} \\ s' = \mathit{wrap}(x',y) \\ o = \Miss}{\ppcons{s,\delta_l,\sins}{o,s',\code{`l'::}\souts,\pc}}
-\and\inferrule[PProductLProd]{(x,y)=\mathit{unwrap}(s) \\ \ppprod{x,\delta_l,\sins,\souts}{x',\pc} \\ s'=\mathit{wrap}(x',y)}{\ppprod{s,\delta_l,\sins,\souts}{s',\pc}}
+\inferrule[PProductLAction]{\muted{(x,y)=\mathit{unwrap}(s)} \\ \ppexec{\alpha}{x,\sins}{o,x',\souts,\pc} \\ \muted{s' = \mathit{wrap}(x',y)} \\ o \neq \Miss}{\ppexec{\alpha_l}{s,\sins}{o,s',\souts,\pc}}
+\and\inferrule[PProductLActionMiss]{\muted{(x,y)=\mathit{unwrap}(s)} \\ \ppexec{\alpha}{x,\sins}{o,x',\souts,\pc} \\ \muted{s' = \mathit{wrap}(x',y)} \\ o = \Miss}{\ppexec{\alpha_l}{s,\sins}{o,s',\code{`l'::}\souts,\pc}}
+\and\inferrule[PProductLCons]{\muted{(x,y)=\mathit{unwrap}(s)} \\ \ppcons{x,\delta_l,\sins}{o,x',\souts,\pc} \\ \muted{s' = \mathit{wrap}(x',y)} \\ o \neq \Miss}{\ppcons{s,\delta_l,\sins}{o,s',\souts,\pc}}
+\and\inferrule[PProductLConsMiss]{\muted{(x,y)=\mathit{unwrap}(s)} \\ \ppcons{x,\delta_l,\sins}{o,x',\souts,\pc} \\ \muted{s' = \mathit{wrap}(x',y)} \\ o = \Miss}{\ppcons{s,\delta_l,\sins}{o,s',\code{`l'::}\souts,\pc}}
+\and\inferrule[PProductLProd]{\muted{(x,y)=\mathit{unwrap}(s)} \\ \ppprod{x,\delta_l,\sins,\souts}{x',\pc} \\ \muted{s'=\mathit{wrap}(x',y)}}{\ppprod{s,\delta_l,\sins,\souts}{s',\pc}}
 \and\inferrule[PProductLFix]{\mmdl_1.\fix~\sins=a}{\fix~\code{`l'::}\sins=a}
 \end{mathparpagebreakable}
 
@@ -454,7 +454,7 @@ Similarly to the sum, its actions are ${\actions = \{\alpha_l : \alpha \in \mmdl
 
 The \Freeable(\mmdl) state model transformer allows extending a state model with a \free{} action, that allows freeing a part of memory. The freed memory can then not be used, and attempting to access it raises a \code{UserAfterFree} error. This is similar to the \textsc{OneShot} RA of Iris, with the key difference that the \freedP{} predicate used to mark a resource as freed is \emph{not duplicable} -- whereas Iris defines \textsc{OneShot(X) $\defeq$ Frac + Ag(X)}, this definition is not UX-sound. \note{Maybe a small proof of this? Or is it evident?} This is not a problem for Iris, that is only concerned with OX soundness, but justifies this modification for this engine.
 
-To ensure only full states are freed, the underlying state model must provide a function ${\code{is\_exclusively\_owned}:\Sst\rarr\code{LVal}}$, which equates to the property `exclusive' presented before. Note here this returns a \emph{symbolic value}, that can be appended to the path condition (it must thus be a boolean). This allows symbolic ownership, for instance having the fraction of \Frac{} be a symbolic number. 
+To ensure only full states are freed, the underlying state model must provide a function ${\code{is\_exclusively\_owned}:\Sst\rarr\code{LVal}}$, which equates to the property `exclusive' presented before. Note here this returns a \emph{symbolic value}, that can be appended to the path condition (it must thus be a boolean). This allows symbolic ownership, for instance having the fraction of \Frac{} be a symbolic number.
 
 While not needed for the core and compositional engines, the bi-abductive engine requires that  misses may be fixed; \Freeable(\mmdl) however cannot access directly the core predicates of \mmdl{} to provide fixes when freeing an empty state. As such, the state model must also provide a ${\code{fix\_owned}:\St^?\rarr\pset(\text{Asrt})~\code{list}}$ function that returns possible fixes to make the given state exclusively owned. This also implies that full states of \mmdl{} are exclusively owned -- this is not the case, for instance, for \Ag. As such, constructions such as \Freeable(\Ag) are not sound.
 
@@ -473,7 +473,7 @@ We may note that use-after-free errors are already handled by the sum constructi
 
 \subsection{PMap}
 
-The partial map transformer, $\PMap(I,\mmdl)$, allows modelling partial finite maps. It receives a domain $I$, and the codomain memory model $\mmdl$. 
+The partial map transformer, $\PMap(I,\mmdl)$, allows modelling partial finite maps. It receives a domain $I$, and the codomain state model $\mmdl$.
 \begin{align*}
 	\PMap(I,\mmdl) &\defeq I \finmap \mmdl.\Sigma \times \pset(I)^?\\
 	(h,d)\cdot (h',d') &\defeq (h'', d'') \\
@@ -489,77 +489,204 @@ The partial map transformer, $\PMap(I,\mmdl)$, allows modelling partial finite m
 		\text{undefined}&\Otherwise
 	\end{cases}\\
 	\text{and }& d'' = \bot \lor \dom(h'')\subseteq d''\\
-	|(h, d)| &\defeq \lambda i.\begin{cases}
+	|(h, d)| &\defeq \begin{cases}
+		\bot &\If~\dom(h')=\emptyset\\
+		(h', \bot) &\Otherwise
+	\end{cases}\\
+	\text{where }h'&\defeq \lambda i.\begin{cases}
 		|h(i)| &\If~ i\in\dom(h) \land |h(i)| \neq \bot\\
 		\text{undefined} &\Otherwise
 	\end{cases}
 \end{align*}
 
-The state is thus the bindings from index to substate, as well as a possibly unset \emph{domain set}. This domain set allows distinguishing, when an index is not found in the map, if the outcome is an \Err{} or \LFail{} (because the binding cannot exist), or if the state at that index is actually $\bot$ (in which case the \execac, \consume{} or \produce{} call is done with $\bot$ as an input). More than improving automation, this is a requirement, for compatiblity with the full state model (\ref{eq:compatibility}) and to preserve \ref{eq:frame-sub} and \ref{eq:frame-add}.
+The state is thus the bindings from index to substate, as well as a possibly unset \emph{domain set}. This domain set allows distinguishing, when an index is not found in the map, if the outcome is an \Err{} or \LFail{} (because the binding cannot exist), or if the state at that index is actually $\bot$ (in which case the \execac, \consume{} or \produce{} call is done with $\bot$ as an input). More than improving automation, this is a requirement, for compatibility with the full state model (\ref{eq:compatibility}) and to preserve \ref{eq:frame-sub} and \ref{eq:frame-add}.
 
 \PMap{} has a well-formedness condition, to ensure the domain of the bindings is a subset of the domain set -- for instance, the state $(\{ 2 \mapsto x \}, \{ 1 \})$ is not valid, as $\{2\} \not\subseteq \{1\}$. If the domainset is missing, then there is no restrictions on the bindings.
 
 $\PMap(I,\mmdl)$ defines one action, \alloc, and one predicate, \domainset. Furthermore, it lifts all predicates of the wrapped state model, by adding the index of the cell as an in-parameter. Furthermore, to allow allocation, $\mmdl$ must provide an ${\code{instantiate}: \vallist \rarr \St}$ function, to instantiate a new state from a list of arguments. This is needed because \PMap{} has no awareness of how $\mmdl$ works, or or what it should be initialised to. \note{Maybe specify that CSE/Sacha don't mention this: PMap allocation requires an interface for allocation.}
 
 For the rules below, we define $h[i \leftarrow s]$ as setting the binding at index $i$ of $h$ to $s$, and $h[i \not\leftarrow]$ as removing the binding at $i$ from $h$.
+
+We first define a helper methods \code{get} and \code{set}, that allows modifying a symbolic map with branching. After a look up, it returns the value at the location (which may be $\bot$ if it's not found), and the path condition corresponding to the branch. This allows simplifying shared rules for \execac, \produce{} and \consume{} for \PMap{}.
 \begin{align*}
-	\text{Given }&\mathit{update}(h, i, s) = \begin{cases}
-		h[i \leftarrow s] &\If~s\neq \bot\\
-		h[i \not\leftarrow] &\Otherwise
+	\code{get}&: ((I \finmap X) \times \pset(I)^?) \rarr I \rarr \pset(I \times X \times \Pc) \\
+	\code{set}&: ((I \finmap X) \times \pset(I)^?) \rarr I \rarr X \rarr (I \finmap X \times \pset(I)^?)
+\end{align*}
+We pretty-print \code{get} and \code{set} as \ppget{s,i}{i',x,\pc} and \ppset{s,i,x}{s'}.
+\begin{align*}
+	\text{Given }
+	\mathit{wrap}(h, d) &\defeq \begin{cases}
+		\bot &\If~\dom(h)=\emptyset \land d=\bot\\
+		(h,d)&\Otherwise
 	\end{cases}\\
-	&\mathit{dom\_add}(d, i) = \begin{cases}
-		\bot &\If~d=\bot\\
-		d\uplus \{i\} &\Otherwise
+	\mathit{unwrap}(s) & \defeq \begin{cases}
+		([], \bot) &\If~s=\bot\\
+		(h, d) &\If~s=(h,d)
 	\end{cases}\\
-	&i\in d^? \defeq \begin{cases}
-		\vtrue &\If~d^?=\bot\\
-		i\in d&\Otherwise
+\end{align*}
+\begin{mathparpagebreakable}
+\inferrule[PMapGetMatch]{(h,d)=\mathit{unwrap}(s) \\ i'\in\dom(h) \\ s_{i'}=h(i')}{\ppget{s, i}{i', s_{i'}, [i=i']}}
+\and\inferrule[PMapGetAdd]{(h,d)=\mathit{unwrap}(s) \\ i\notin\dom(h) \\ d\neq\bot}{\ppget{s, i}{i,\bot, [i\notin\dom(h) \land i\in d]}}
+\and\inferrule[PMapGetBotDomain]{(h,d)=\mathit{unwrap}(s) \\ i\notin \dom(h) \\ d=\bot}{\ppget{s,i}{i,\bot,[i\notin\dom(h)]}}
+\and\inferrule[PMapSetSome]{(h,d)=\mathit{unwrap}(s) \\ s_i\neq\bot \\ h'=h[i\leftarrow s_i] \\ s'=\mathit{wrap}(h', d)}{\ppset{s,i,s_i}{s'}}
+\and\inferrule[PMapSetNone]{(h,d)=\mathit{unwrap}(s) \\ s_i=\bot \\ h'=h[i\not\leftarrow] \\ s'=\mathit{wrap}(h', d)}{\ppset{s,i,s_i}{s'}}
+\end{mathparpagebreakable}
+
+An interesting thing to outline here is that we may branch in three different ways when retrieving a binding: \begin{compactitem}
+\item \textsc{PMapGetMatch}: the index is equal to some index in the map, and we execute the action for that location -- note here the resulting path condition has $i=i'$, such that branches where the index isn't equal will be cut. This allows taking into account symbolic values.
+\item \textsc{PMapGetAdd}: the index is not already in the map, but is part of the domain set; this means the state is $\bot$.
+\item \textsc{PMapGetBotDomain}: the index is not already in the map, and the domain set is not owned; the given index may thus be valid, and we again return $\bot$.
+ \end{compactitem}
+ There is no branching when setting the binding, as the index is already known.
+
+We now define the rules for \PMap(I,\mmdl):
+
+\begin{align*}
+	\text{Given }
+	\mathit{lift\_if\_miss}(o, i, \sins) &\defeq \begin{cases}
+		i :: \sins &\If~o=\Miss\\
+		\sins &\Otherwise
 	\end{cases}
 \end{align*}
 \begin{mathparpagebreakable}
-\inferrule[PMapAction]{i'\in\dom(h) \\ s=h(i') \\ \ppexec{\alpha}{s,\sins}{o,s',\souts,\pc} \\ h' = \mathit{update}(h, i', s')}{\ppexec{\alpha}{(h, d),i::\sins}{o,(h', d),i'::\souts, (i = i')::\pc}}
-\and\inferrule[PMapActionBot]{i\not\in\dom(h)\\d=\bot\lor d\neq\dom(h) \\ \ppexec{\alpha}{\bot,\sins}{o,s',\souts,\pc} \\ h'=\mathit{update}(h,i,s')}{\ppexec{\alpha}{(h, d),i::\sins}{o,(h',d),i::\souts, (i\notin\dom(h)\land i\in d)::\pc}}
-\and\inferrule[PMapActionOutOfBounds]{d\neq\bot \\ d=\dom(h)}{\ppexec{\alpha}{(h, d),\sins}{\Err, (h,d), [], [i\notin d]}}
-\and\inferrule[PMapAlloc]{i \notin \SV \\ i \notin \dom(h) \\ i \notin d \\ s=\code{instantiate}(\sins) \\ h' = h[i\leftarrow s] \\ d' = \mathit{dom\_add}(d, i)}{\ppexec{\alloc}{\SV, (h,d), \sins}{\Ok, (h', d'), [i], []}}
-\and\inferrule[PMapCons]{i'\in\dom(h) \\ s=h(i') \\ \ppcons{s,\delta,\sins}{o,s',\souts,\pc} \\ h' = \mathit{update}(h, i', s')}{\ppcons{(h, d),\delta,i::\sins}{o,(h', d),\souts, (i = i')::\pc}}
-\and\inferrule[PMapConsBot]{i\not\in\dom(h)\\d=\bot\lor d\neq\dom(h) \\ \ppcons{\bot,\delta,\sins}{o,s',\souts,\pc} \\ h'=\mathit{update}(h,i,s')}{\ppcons{(h, d),\delta,i::\sins}{o,(h',d),\souts, (i\notin\dom(h))::\pc}}
-\and\inferrule[PMapConsIncompat]{d\neq\bot \\ d=\dom(h)}{\ppcons{(h, d),\delta,\sins}{\LFail, (h,d), [], [i\notin d]}}
+\inferrule[PMapAction]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppexec{\alpha}{s_{i'},\sins}{o,s'_{i'},\souts,\pc'} \\ \ppset{s,i',s'_{i'}}{s'}}{\ppexec{\alpha}{s,i::\sins}{o,s',i'::\souts, \pc :: \pc'}}
+\and\inferrule[PMapActionOutOfBounds]{d\neq\bot}{\ppexec{\alpha}{(h,d),i::\sins}{\Err, (h,d), [], [i\notin d]}}
+\and\inferrule[PMapAlloc]{d\neq \bot \\ i \notin \SV \\ i \notin \dom(h) \\ i \notin d \\ s_i=\code{instantiate}(\sins) \\ h' = h[i\leftarrow s_i] \\ d' = d\uplus i}{\ppexec{\alloc}{\SV, (h,d), \sins}{\Ok, (h',d'), [i], [i=i]}}
+\and\inferrule[PMapAllocMiss]{\muted{(h,d)=\mathit{unwrap}(s)} \\ d=\bot}{\ppexec{\alloc}{\SV,s,\sins}{\Miss,s,[\code{`domainset'}],[]}}
+\and\inferrule[PMapCons]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppcons{s_{i'},\delta,\sins}{o,s'_{i'},\souts,\pc'} \\ \ppset{s,i',s'_{i'}}{s'} \\ \souts'=\mathit{lift\_if\_miss}(o,i',\souts)}{\ppcons{s,\delta,i::\sins}{o,s',\souts', \pc::\pc'}}
+\and\inferrule[PMapConsIncompat]{d\neq\bot}{\ppcons{(h,d),\delta,i::\sins}{\LFail, (h,d), [], [i\notin d]}}
 \and\inferrule[PMapConsDomainSet]{d\neq \bot}{\ppcons{(h,d),\domainset,[]}{\Ok,(h,\bot), [d],[]}}
-\and\inferrule[PMapConsDomainSetMiss]{}{\ppcons{(h,\bot),\domainset,[]}{\Miss,(h,\bot), [\code{`domainset'}], []}}
-\and\inferrule[PMapProd]{i'\in\dom(h) \\ s=h(i') \\ \ppprod{s,\delta,\sins,\souts}{s',\pc} \\ h' = \mathit{update}(h, i', s')}{\ppprod{(h, d),\delta,i::\sins,\souts}{(h', d), (i = i')::\pc}}
-\and\inferrule[PMapProdBot]{i\not\in\dom(h)\\d=\bot\lor d\neq\dom(h) \\ \ppprod{\bot,\delta,\sins,\souts}{s',\pc} \\ h'=\mathit{update}(h,i,s')}{\ppprod{(h, d),\delta,i::\sins,\souts}{(h',d),(i\notin\dom(h))::\pc}}
-\and\inferrule[PMapProdDomainSet]{}{\ppprod{(h,\bot),\domainset,[],[d]}{(h,d),[\dom(h)\subseteq d]}}
+\and\inferrule[PMapConsDomainSetMiss]{\muted{(h,d)=\mathit{unwrap}(s)} \\ d=\bot}{\ppcons{s,\domainset,[]}{\Miss,s, [\code{`domainset'}], []}}
+\and\inferrule[PMapProd]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppprod{s_{i'},\delta,\sins,\souts}{s'_{i'},\pc} \\ \ppset{s,i',s'_{i'}}{s'}}{\ppprod{s,\delta,i::\sins,\souts}{s', (i = i')::\pc}}
+\and\inferrule[PMapProdDomainSet]{(h,\bot)=\mathit{unwrap}(s)}{\ppprod{s,\domainset,[],[d]}{(h,d),[\dom(h)\subseteq d]}}
 \and\inferrule[PMapFix]{\mmdl.\fix~\sins = a \\ a'=\mathit{lift}(a,i)}{\fix~i::\sins = a'}
 \and\inferrule[PMapFixDomainSet]{}{\fix~[\code{`domainset'}] = \exists d\ldotp \corepred{\domainset}{}{d}}
 \end{mathparpagebreakable}
 
-\note{I'm actually not sure allocation with a $\bot$ domainset is sound!! Because you lose information you can't get back so probably not EX and probably breaks some axiom. \textbf{Figure it out, prove it, outline it.}}
-
 This simple construction is thus enough to recreate the standard ``points to'' predicate of standard separation logic \cite{seplogic1, seplogic2}: with $\PMap(\nats, \Ex(\Val))$, one can formulate the core predicates \corepred{\exP}{i}{x}, which is equivalent to $i \mapsto x$.
 
-An interesting thing to outline here is that any action execution and predicate consumption and production can branch on the index. For instance, if the state is $(\{ 1\mapsto y \}, \{ 1,2\})$ and a \load{} action is executed with an unconstrained symbolic index $\hat x$, then three branches are created: one where $\hat x = 1$ and the action is executed on the cell $y$, one where $\hat x = 2$ and the action is executed on $\bot$, and finally one where $\hat x\notin \{1,2\}$, and an \Err{} is raised for out of bounds access. This outlines a key difficulty of \PMap{}, that will be discussed more in depth later: implementation-wise, it is a complex and expensive transformer that has the potential to create many branches -- this makes it an important target for optimisation.
+Note here we must unwrap and re-wrap the state model after every action, to properly handle the case where there are no bindings and no domain set as $\bot$. For the \fix{} function we must also lift all core predicates, by recursing through the assertions and adding the index to the in-values of all assertions of type $\corepred{\delta}{\sins}{\souts}$.
 
-Using RAs rather than PCMs makes well-formedness easier to uphold, as a binding to $\bot$ is not valid, since $\bot \notin \mmdl.\Sigma$. To exemplify why this is helpful, consider the state model $\PMap(\nats, \Ex(\{1\}))$ and the function \code{move}, that relocates a memory cell: 
+We note here that action execution and predicate consumption and production may branch. For instance, if the state is $(\{ 1\mapsto y \}, \{ 1,2\})$ and a \load{} action is executed with an unconstrained symbolic index $\hat x$, then three branches are created: one where $\hat x = 1$ and the action is executed on the cell $y$, one where $\hat x = 2$ and the action is executed on $\bot$, and finally one where $\hat x\notin \{1,2\}$, and an \Err{} is raised for out of bounds access. A fourth branch also gets created, with $\hat x\notin \{ 1,2\} \land \hat x\in \{1,2\}$ -- it however gets cut because of course this path condition is false. This outlines a key difficulty of \PMap{}, that will be discussed more in depth later: implementation-wise, it is a complex and expensive transformer that has the potential to create many branches -- this makes it an important target for optimisation.
+
+Using RAs rather than PCMs makes well-formedness easier to uphold, as a binding to $\bot$ is not valid, since $\bot \notin \mmdl.\Sigma$. To exemplify why this is helpful, consider the state model $\PMap(\nats, \Ex(\{1\}))$ and the function \code{move}, that relocates a memory cell:
 \begin{align*}
 \ESLtriple{\corepred{\exP}{1}{1} \star \corepred{\domainset}{}{\{1\}}}{\code{move()}}{\corepred{\exP}{2}{1} \star \corepred{\domainset}{}{\{2\}}}
 \end{align*}
-Let the initial state be $(\{ 1\mapsto \ex1\}, \{ 1\} )$: a heap with one cell, at address $1$ -- this matches exactly the precondition of \code{move}. 
+Let the initial state be $(\{ 1\mapsto \ex1\}, \{ 1\} )$: a heap with one cell, at address $1$ -- this matches exactly the precondition of \code{move}.
 
-If we are using PCMs, $\Ex({1})$ is defined as $\ex{1}~|~0$, with $0$ the unit of the PCM. Note here that executing actions, consuming and producing doesn't return an element of $\St^?$, but of $\St$ directly, since the $0$ is already in its carrier set; one has no reason to extend it with $\bot$. The engine first consumes the \exP{} predicate, at address $1$ -- this means the pointed-to state becomes $0$ (or empty), and the bigger (or outer) state becomes $(\{ 1\mapsto 0\}, \{ 1\})$. The \domainset{} predicate is then succesfuly consumed too, leaving $(\{ 1\mapsto 0\},\bot)$. Now, the post-condition is produced onto the state, as calling the function modified the state of our program. First, the engine thus produces \corepred{\exP}{2}{1}, which adds a binding to \PMap{} and creates the cell: our bigger state is now $(\{ 1\mapsto 0, 2\mapsto \ex1\},\bot)$. Finally, \corepred{\domainset}{}{\{2\}} is produced onto the state, however this \emph{doesn't succeed}. Indeed, the bindings of the heap are $\{1,2\}$, which are not a subset of the produced domainset $\{2\}$. This is because the engine cannot tell appart empty ($0$) states from non-empty states. Of course one could handle this by checking for $0$, or by explicitly excluding units from the codomain of \PMap{}. This however makes rules and definitions more complex and prone to error, as it is easy to forget to check for units.
+If we are using PCMs, $\Ex({1})$ is defined as $\ex{1}~|~0$, with $0$ the unit of the PCM. Note here that executing actions, consuming and producing doesn't return an element of $\St^?$, but of $\St$ directly, since the $0$ is already in its carrier set; one has no reason to extend it with $\bot$. The engine first consumes the \exP{} predicate, at address $1$ -- this means the pointed-to state becomes $0$ (or empty), and the bigger (or outer) state becomes $(\{ 1\mapsto 0\}, \{ 1\})$. The \domainset{} predicate is then successfully consumed too, leaving $(\{ 1\mapsto 0\},\bot)$. Now, the post-condition is produced onto the state, as calling the function modified the state of our program. First, the engine thus produces \corepred{\exP}{2}{1}, which adds a binding to \PMap{} and creates the cell: our bigger state is now $(\{ 1\mapsto 0, 2\mapsto \ex1\},\bot)$. Finally, \corepred{\domainset}{}{\{2\}} is produced onto the state, however this \emph{doesn't succeed}. Indeed, the bindings of the heap are $\{1,2\}$, which are not a subset of the produced domainset $\{2\}$. This is because the engine cannot tell apart empty ($0$) states from non-empty states. Of course one could handle this by checking for $0$, or by explicitly excluding units from the codomain of \PMap{}. This however makes rules and definitions more complex and prone to error, as it is easy to forget to check for units.
 
-If this examples is now reproduced with RAs, the consumption of \corepred{\exP}{1}{1} makes the cell return $\bot$, which cannot be added into the heap -- the \PMap{} must thus remove the binding, and the postcondition can be produced properly, as the bindings of the heap is only $\{2\}$. RAs are a solution to the above problem, as they facilitate the sound construction of state models and state model transformers, by allowing unitless state models.
+If this examples is now reproduced with RAs, the consumption of \corepred{\exP}{1}{1} makes the cell return $\bot$, which cannot be added into the heap -- the \PMap{} must thus removes the binding, and the postcondition can be produced properly, as the bindings of the heap is only $\{2\}$. RAs are a solution to the above problem, as they facilitate the sound construction of state models and state model transformers, by allowing unitless state models.
 
+\subsection{List}
 
-%ensures there is only one observably empty state: $\bot$. Indeed, with PCMs a partial map that points to $0$ is possible, as $0$ is part of the carrier set of $\mmdl.\Sigma$ -- this is not the case in RAs, where $\bot$ is defined outside of the carrier set, making the representation $i\mapsto\bot$ invalid.
+The \List{} state model transformer is similar to \PMap, but instead of receiving an domain $I$ as a parameter it only operates on positive integers. It allows representing a list of cells, up to a bounded size -- it can be used, for instance, to represent a block of memory, with the index serving as the offset of the base address of the block. Similarly to \PMap{}, it represents state as a finite partial map from integers to state, as well as a \emph{bound}: a strictly positive integer specifying the size of the list, and allowing one to distinguish out of bounds from $\bot$ elements.
+
+\begin{align*}
+	\List(\mmdl) &\defeq \nats \finmap \mmdl.\Sigma \times \nats^?\\
+	(b,n)\cdot (b',n') &\defeq (b'', n'')\\
+	\text{where } b''&\defeq \lambda i.\begin{cases}
+		b(i)\cdot b'(i)&\If~i\in \dom(b)\cap\dom(b')\\
+		b(i) &\If~i\in \dom(b) \backslash \dom(b')\\
+		b'(i) &\If~i\in \dom(b') \backslash \dom(b)\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }n''&\defeq\begin{cases}
+		n&\If~n'=\bot\\
+		n'&\If~n=\bot\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }& \forall i\in\dom(b'')\ldotp 0\leq i \land (n'' = \bot \lor i < n'')\\
+	|(b, n)| &\defeq \begin{cases}
+		\bot &\If~\dom(b')=\emptyset\\
+		(b',\bot) &\Otherwise
+	\end{cases}\\
+	\text{where }b'&\defeq\lambda i.\begin{cases}
+		|b(i)| &\If~ i\in\dom(b) \land |b(i)| \neq \bot\\
+		\text{undefined} &\Otherwise
+	\end{cases}
+\end{align*}
+
+Just like in \PMap{}, all core predicates are lifted, and a \bound{} core predicate is added for the bound. It does not include an \alloc{} action -- instead, all cells are created when the list is instantiated (or taken from the specification of the executed function).
+
+For brevity, its rules will not be outlined -- they are analogous to those of \PMap{}, with the main difference being that checks for the membership of an index in the domain set are replaced with checks for the index in the range $[0,n)$ with the bound $n$.
 
 \subsection{General Map}
 
-\todobox{Write down the RA and the proper rules using the below description.}
+In \cite{sacha-phd}, the \PMap{} and \List{} transformers are presented as two different transformers, however they can both be merged into a single transformer quite succinctly, to prove the modularity of transformers.
 
-Reusing the above examples, we may unify the PMap and List transformers, with the \emph{global map} transformer, shortened GMap. It is parametric on an indexing sort $I\subseteq \Val$, a codomain state model $\St$ and a \emph{discriminator} state model $\St_D$ that must expose a function $\code{is\_within}:\St_D\rarr I\rarr\bools$. It's states are then of the form $I\finmap \St$ for the full state model, and $I\finmap \St\bowtie \St_D$ for the compositional and symbolic state models.
+We thus introduce the \emph{general map} transformer, $\GMap(I,\mmdl,\mmdl_D)$. It is built from a domain set $I$, a codomain state model $\mmdl$ and a \emph{discriminator} state model $\mmdl_D$. This last state model serves as a way to tell apart invalid accesses from $\bot$ elements -- modelling it as a state model allows us to make it more flexible on what predicates and state are used to represent it.
 
-For soundness, the $\code{is\_within}$ function must be true if and only if a singleton partial map with the given index could be validly composed into the state while upholding the desired GMap's invariant. It is used when an index not present in the map is accessed, to tell apart misses from errors (out of bounds accesses). A consequence of this is that when the state is \emph{full}, $\code{is\_within}$ is only used for out of bounds accesses (as otherwise the key is already in the map, since we're dealing with full states), and as such it must always be false -- this explains why the full version of GMap can be $I\finmap \St$ without the discriminator. If we write $\dom \st$ the domain of a GMap's map, given a set of states $\St$ with the subset of full states $\full\St\subseteq\St$, we have that $i\not\in \dom\st \land \st \in \full\St \Rarr \neg(\code{is\_within}~\st~i)$.
+The discriminator state model $\mmdl_D$ must also provide a $\code{is\_within}:\mmdl_D.\St\rarr I\rarr \code{LVal}$ function. $\code{is\_within}$ returns a symbolic boolean, that evaluates to true if and only if a state fragment containing a singleton partial map with the given index could be validly composed into the state while upholding the desired GMap's invariant. A consequence of this is that when the state is a\emph{full} state, $\code{is\_within}$ is only used for out of bounds accesses (as otherwise the key is already in the map, since we're dealing with full states), and as such always returns false. If we write $\dom \st$ the domain of a GMap's map, given a set of states $\St$ with the subset of full states $\full\St\subseteq\St$, we have that $i\not\in \dom\st \land \st \in \full\St \Rarr \SAT(\neg\code{is\_within}~\st~i)$.
 
-To replicate the usual PMap, one would have $\St_D=\text{Ex}(\pset(I))$, with $\code{is\_within}$ true if the value is in the set: $\code{is\_within}_\text{PMap}~\st_D~i=i\in\st_D$. For List, one has $\St_D=\text{Ex}(\nats)$ with $\code{is\_within}_\text{List}~\st_D~i=0 \leq i < \st_D$. Note here that state transformer may automatically assume the outcome is a \Miss{} if the key is not found in the map and the discriminator state isn't set (ie. the state is $l(x)$ for some $x$), as indeed a state fragment containing only the discriminator can always be composed with it to complete the \Miss{}.
+To replicate the usual PMap, one would have $\mmdl_D=\Ex(\pset(I))$, with $\code{is\_within}$ true if the value is in the set: $\code{is\_within}_\PMap~\st_D~i=i\in\st_D$. For List, one has $\mmdl_D=\Ex(\nats)$ with $\code{is\_within}_\List~\st_D~i=0 \leq i < \st_D$. Note here that state transformer may automatically assume the cell can exist if the key is not found in the map and the discriminator state is $\bot$ in the state tuple. Note for both of the above examples the \load{} and \store{} actions of \Ex{} should be removed, as modifying the domain set or bound directly is not sound -- the discriminator is used for the compositional state to distinguish outcomes, and \emph{does not exist in full states}, so actions to modify the discriminator directly cannot exist in the full state either. Allowing them to exist in the compositional state model would break compatibility.
 
-Another interesting point is that the discriminator is a state model; this allows it to define its own predicates to control its state. While here both examples use a Ex state model, one could imagine more complex discriminators where information is split across several predicates, which GMap would support too. However, one may note that the discriminator shouldn't define any: because it doesn't exist for the full version of GMap, allowing actions to only exist in the compositional state model would break compatibility.
+\begin{align*}
+	\GMap(I, \mmdl, \mmdl_D) &\defeq I \finmap \mmdl.\Sigma \times \mmdl_D.\Sigma^?\\
+	(h,d)\cdot (h',d') &\defeq (h'', d'')\\
+	\text{where } h''&\defeq \lambda i.\begin{cases}
+		h(i)\cdot h'(i)&\If~i\in \dom(h)\cap\dom(h')\\
+		h(i) &\If~i\in \dom(h) \backslash \dom(h')\\
+		h'(i) &\If~i\in \dom(h') \backslash \dom(h)\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }d''&\defeq d\cdot d'\\
+	\text{and }& d'' = \bot \lor (\forall i\in\dom(h'')\ldotp \code{is\_within}~d''~i)\\
+	|(h, d)| &\defeq \begin{cases}
+		\bot &\If~ \dom(h')=\emptyset \land d'=\bot\\
+		(h',d') &\Otherwise
+	\end{cases} \\
+	\text{where } h' &\defeq\lambda i.\begin{cases}
+		|h(i)| &\If~ i\in\dom(h) \land |h(i)| \neq \bot\\
+		\text{undefined} &\Otherwise
+	\end{cases} \\
+	\text{and }d' &\defeq |d|
+\end{align*}
+
+We now define the rules for $\GMap(I,\mmdl,\mmdl_D)$. Its actions are only that of $\mmdl$ (not that of the discriminator state model), as explained previously; it does however inherit predicates from both. As such, $\actions = \mmdl.\actions$, and ${\Delta =\mmdl.\Delta \uplus \{\delta_D : \delta \in \mmdl_D.\Delta \}}$.
+
+We also redefine the \code{get} and \code{set} helper functions, with \code{get} branching again. This requires lifting \code{get} to do checks using \code{is\_within} (the rest of the rule is unaffected).
+
+
+We first define a helper methods \code{get} and \code{set}, that allows modifying a symbolic map with branching. After a look up, it returns the value at the location (which may be $\bot$ if it's not found), and the path condition corresponding to the branch. This allows simplifying shared rules for \execac, \produce{} and \consume{} for \PMap{}.
+\begin{align*}
+	\code{get}&: ((I \finmap X) \times \mmdl_D.\Sigma^?) \rarr I \rarr \pset(I \times X \times \Pc) \\
+	\code{set}&: ((I \finmap X) \times \mmdl_D.\Sigma^?) \rarr I \rarr X \rarr (I \finmap X \times \mmdl_D.\Sigma^?)
+\end{align*}
+\begin{align*}
+	\text{Given }
+	\mathit{wrap}(h, d) &\defeq \begin{cases}
+		\bot &\If~\dom(h)=\emptyset \land d=\bot\\
+		(h,d)&\Otherwise
+	\end{cases}\\
+	\mathit{unwrap}(s) & \defeq \begin{cases}
+		([], \bot) &\If~s=\bot\\
+		(h, d) &\If~s=(h,d)
+	\end{cases}\\
+	\mathit{lift\_if\_miss}(o, i, \sins) &\defeq \begin{cases}
+		i :: \sins &\If~o=\Miss\\
+		\sins &\Otherwise
+	\end{cases}
+\end{align*}
+\begin{mathparpagebreakable}
+\inferrule[GMapGetMatch]{(h,d)=\mathit{unwrap}(s) \\ i'\in\dom(h) \\ s_{i'}=h(i')}{\ppget{s, i}{i', s_{i'}, [i=i']}}
+\and\inferrule[GMapGetAdd]{(h,d)=\mathit{unwrap}(s) \\ i\notin\dom(h) \\ d\neq\bot}{\ppget{s, i}{i,\bot, [i\notin\dom(h) \land \highlight{\code{is\_within}~d~i}]}}
+\and\inferrule[GMapGetBotDomain]{(h,d)=\mathit{unwrap}(s) \\ i\notin \dom(h) \\ d=\bot}{\ppget{s,i}{i,\bot,[i\notin\dom(h)]}}
+\and\inferrule[GMapSetSome]{(h,d)=\mathit{unwrap}(s) \\ s_i\neq\bot \\ h'=h[i\leftarrow s_i] \\ s'=\mathit{wrap}(h', d)}{\ppset{s,i,s_i}{s'}}
+\and\inferrule[GMapSetNone]{(h,d)=\mathit{unwrap}(s) \\ s_i=\bot \\ h'=h[i\not\leftarrow] \\ s'=\mathit{wrap}(h', d)}{\ppset{s,i,s_i}{s'}}
+\and\inferrule[GMapAction]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppexec{\alpha}{s_{i'},\sins}{o,s'_{i'},\souts,\pc'} \\ \ppset{s,i',s'_{i'}}{s'}}{\ppexec{\alpha}{s,i::\sins}{o,s',i'::\souts, \pc::\pc'}}
+\and\inferrule[GMapActionOutOfBounds]{d\neq\bot}{\ppexec{\alpha}{(h,d),\sins}{\Err, s, [], [\highlight{\neg \code{is\_within}~d~i}]}}
+\and\inferrule[GMapCons]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppcons{s_{i'},\delta,\sins}{o,s'_{i'},\souts,\pc'} \\ \souts'=\mathit{lift\_if\_miss}(o,i',\souts) \\ \ppset{s,i',s'_{i'}}{s'}}{\ppcons{s,\delta,i::\sins}{o,s',\souts', \pc::\pc'}}
+\and\inferrule[GMapConsIncompat]{d\neq\bot}{\ppcons{(h,d),\delta,i::\sins}{\LFail, (h,d), [], [\highlight{\neg \code{is\_within}~d~i}]}}
+\and\inferrule[GMapConsDiscr]{\muted{(h,d)=\mathit{unwrap}(s)} \\ \ppcons{d,\delta_d,\sins}{o,d',\souts,\pc} \\ o\neq\Miss \\ \muted{s'=\mathit{wrap}(h,d')}}{\ppcons{s,\delta_D,\sins}{\Ok,s',\souts,\pc}}
+\and\inferrule[GMapConsDiscrMiss]{\muted{(h,d)=\mathit{unwrap}(s)} \\ \ppcons{d,\delta_d,\sins}{o,d',\souts,\pc} \\ o=\Miss \\ \muted{s'=\mathit{wrap}(h,d')}}{\ppcons{s,\delta_D,\sins}{\Ok,s',\code{`D'}::\souts,\pc}}
+\and\inferrule[GMapProd]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppprod{s_{i'},\delta,\sins,\souts}{s'_{i'},\pc'} \\ \ppset{s,i',s'_{i'}}{s'}}{\ppprod{s,\delta,i::\sins,\souts}{s', \pc::\pc'}}
+\and\inferrule[GMapProdDiscr]{(h,d)=\mathit{unwrap}(s) \\ \ppprod{d,\delta_D,\sins,\souts}{d',\pc}}{\ppprod{s,\delta_D,\sins,\souts}{s',\highlight{[\forall i\in\dom(h)\ldotp \code{is\_within}~d~i]} :: \pc}}
+\and\inferrule[GMapFix]{\mmdl.\fix~\sins = a \\ a'=\mathit{lift}(a,i)}{\fix~i::\sins = a'}
+\and\inferrule[GMapFixDiscr]{\mmdl_D.\fix~\sins = a}{\fix~\code{`D'} :: \sins = a}
+\end{mathparpagebreakable}
+
+These rules are very similar to those of \PMap, or the rules \List{} would have, only with the discriminator check instead, as well as more generic \consume, \produce{} and \fix{} rules for the discriminator. We also do not provide an \alloc{} action with \GMap, as the discriminator may need to be modified with a new index; it is up to the user to define any additional actions over it.
+
+An example instantiation of \GMap{} is with the empty state model \textsc{Emp}, a state model that provides no actions or predicates, and that can only be $\bot$. \code{is\_within} may then always return \vtrue. This allows emulating the traditional separation logic linear heap, where one can always do allocation (this is not the case in \PMap{}, where one must own the domain set to allocate). We note that this instantiation does not uphold \ref{eq:compatibility}: any out of bounds access will result in a \Miss{}, rather that properly separating misses from errors.

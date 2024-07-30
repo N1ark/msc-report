@@ -113,13 +113,18 @@
 \newcommand{\PMap}[0]{\statemodel{PMap}}
 \newcommand{\domainset}[0]{\statepred{domainset}}
 \newcommand{\alloc}[0]{\code{alloc}}
+\newcommand{\ppget}[2]{\ensuremath{\code{get}(#1)\rightsquigarrow(#2)}}
+\newcommand{\ppset}[2]{\ensuremath{\code{set}(#1)\rarr #2}}
 
 \newcommand{\List}[0]{\statemodel{List}}
+\newcommand{\bound}[0]{\statepred{bound}}
 
 \newcommand{\Freeable}[0]{\statemodel{Freeable}}
 \newcommand{\free}[0]{\code{free}}
 \newcommand{\freed}[0]{\statevar{freed}}
 \newcommand{\freedP}[0]{\code{freed}}
+
+\newcommand{\GMap}[0]{\statemodel{GMap}}
 
 
 % Util
@@ -132,4 +137,5 @@
 	\color{black}#1}
 }\vspace{0.25cm}\color{black}}
 \newcommand{\note}[1]{{\emph{\color{purple}{#1}}}}
-
+\newcommand{\muted}[1]{{\color{gray}{#1}}}
+\newcommand{\highlight}[1]{{\color{blue}{#1}}}
