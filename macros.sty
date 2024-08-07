@@ -63,6 +63,7 @@
 
 \newcommand{\Nat}[0]{\text{Nat}}
 \newcommand{\Val}[0]{\text{Val}}
+\newcommand{\Str}[0]{\text{Str}}
 
 \newcommand{\bools}[0]{\mathbb{B}}
 \newcommand{\vtrue}[0]{\texttt{true}}
@@ -111,6 +112,7 @@
 \newcommand{\PProduct}[0]{\statemodel{PProduct}}
 
 \newcommand{\PMap}[0]{\statemodel{PMap}}
+\newcommand{\DynPMap}[0]{\statemodel{DynPMap}}
 \newcommand{\domainset}[0]{\statepred{domainset}}
 \newcommand{\alloc}[0]{\code{alloc}}
 \newcommand{\ppget}[2]{\ensuremath{\code{get}(#1)\rightsquigarrow(#2)}}
@@ -125,7 +127,9 @@
 \newcommand{\freedP}[0]{\code{freed}}
 
 \newcommand{\GMap}[0]{\statemodel{GMap}}
-
+\newcommand{\SplitPMap}[0]{\statemodel{PMap}_{\statemodel{Split}}}
+\newcommand{\ALocPMap}[0]{\statemodel{PMap}_{\statemodel{ALoc}}}
+\newcommand{\aloc}[1]{\text{aloc}(#1)}
 
 % Util
 \renewcommand\tabularxcolumn[1]{m{#1}}% for vertical centering text in X column

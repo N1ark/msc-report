@@ -2,7 +2,6 @@
 
 \section{Current State}
 
-
 \subsection{CSE}
 
 CSE and Sacha's thesis do the traditional choice of using Partial Commutative Monoids (PCMs) to model state. They are defined as the tuple $(M, (\cdot):M\times M \part M, 0)$. They are further equipped with a set of actions $\cal A$, an \execac{} function, a set of core predicates $\Delta$ and a pair of \consume{} and \produce{} functions.
@@ -277,7 +276,9 @@ The exclusive state model \Ex{}(\Val) is a simple state model, that represent ex
  	|\ex{x}| &\defeq \bot\\
  	\ex{x_1} \cdot \ex{x_2}&~\text{is always undefined}
  \end{align*}
- Note that the above definition is identical to that in Iris \cite{iris}, showing that little to no modification is needed to adapt RAs to state models.
+The first notation, $\Ex(X)$ is the state model instantiation from the set $X$ to the $\Ex$ resource algebra. The notation $\ex{x:X}$ stands for $\{\ex{x} : \forall x\in X \}$ -- here `$\ex{x}$' refers to the particular element of the $\Ex(X)$ RA where the value is $x\in X$.
+ 
+ Note that the above definition is identical\footnote{Modulo partiality of composition and the validity function, as explained previously.} to that in Iris \cite{iris}, showing that little to no modification is needed to adapt RAs to state models.
 
 It defines two actions, $\actions=\{\load, \store\}$ and a predicate $\preds=\{\exP\}$  We now define the functions for the state model: \execac, \produce, \consume{} and \fix.
 \begin{mathparpagebreakable}
@@ -579,6 +580,12 @@ If we are using PCMs, $\Ex({1})$ is defined as $\ex{1}~|~0$, with $0$ the unit o
 
 If this examples is now reproduced with RAs, the consumption of \corepred{\exP}{1}{1} makes the cell return $\bot$, which cannot be added into the heap -- the \PMap{} must thus removes the binding, and the postcondition can be produced properly, as the bindings of the heap is only $\{2\}$. RAs are a solution to the above problem, as they facilitate the sound construction of state models and state model transformers, by allowing unitless state models.
 
+\subsection{Dynamic PMap}
+
+The \emph{dynamic} partial map state transformer, $\DynPMap(I,\mmdl)$ is similar to the regular (or \emph{static}) $\PMap$ transformer, but allows modelling ``dynamic'' maps that can be modified without allocation. This is used, for instance, to model the JavaScript memory model, where one can set a field of an object directly if it doens't exist, and where reading a field that doesn't exist does not raise an error but simply returns a default \code{undefined} value.
+
+This transformer has the same RA as $\PMap$, as well as the same predicates. It however only lifts the actions of the underlying state model $\mmdl$, without adding an \alloc{} action (since allocation does not exist; the field is just created on access). However, since this requires instantiating the underlying state model, it must still implement an ${\code{instantiate}: \vallist \rarr \St}$ function. Here we keep $\vallist$ for compatibility with $\PMap$, but in fact the arguments are always the empty list.
+
 \subsection{List}
 
 The \List{} state model transformer is similar to \PMap, but instead of receiving an domain $I$ as a parameter it only operates on positive integers. It allows representing a list of cells, up to a bounded size -- it can be used, for instance, to represent a block of memory, with the index serving as the offset of the base address of the block. Similarly to \PMap{}, it represents state as a finite partial map from integers to state, as well as a \emph{bound}: a strictly positive integer specifying the size of the list, and allowing one to distinguish out of bounds from $\bot$ elements.
@@ -690,3 +697,162 @@ We first define a helper methods \code{get} and \code{set}, that allows modifyin
 These rules are very similar to those of \PMap, or the rules \List{} would have, only with the discriminator check instead, as well as more generic \consume, \produce{} and \fix{} rules for the discriminator. We also do not provide an \alloc{} action with \GMap, as the discriminator may need to be modified with a new index; it is up to the user to define any additional actions over it.
 
 An example instantiation of \GMap{} is with the empty state model \textsc{Emp}, a state model that provides no actions or predicates, and that can only be $\bot$. \code{is\_within} may then always return \vtrue. This allows emulating the traditional separation logic linear heap, where one can always do allocation (this is not the case in \PMap{}, where one must own the domain set to allocate). We note that this instantiation does not uphold \ref{eq:compatibility}: any out of bounds access will result in a \Miss{}, rather that properly separating misses from errors.
+
+\section{Optimising maps}
+
+As mentioned above, \GMap{} is an ideal target for optimisation: it is a common transformer (used once in the C and WISL memory models, and twice in the JS memory model) that has a high performance cost, due to branching: for instance, executing an action in a map with $n$ cells can lead to $n + 2$ branches. While most of these branches eventually get dropped, as the path condition doesn't hold, there is a cost to checking the satisfiability of the path condition. The \emph{ideal} \GMap{} transformer only returns feasible branches, minimising SAT checks.
+
+Another aspect of optimisation is the need for simplifying \emph{substitution}. While not described here, substituting a \GMap's state requires recursing through all key-value pairs, and applying the substitution to both the key and the value, before rebuilding a binding and possibly composing values that end with the same key. For instance, given a construction $\GMap(\nats, \Ex(\{1\}) \bowtie \Ex(\{2\}))$ (we ignore the discriminator for brevity) applying the substitution $\theta[\hat x\rarr 0]$ to the mappings $[ \hat x \mapsto (1, \bot), 0 \mapsto (\bot, 2)]$ would yield $[0 \mapsto (1,2)]$. Evaluation of Gillian with different state model constructions has shown that, especially for states with large partial maps (as is the case in JavaScript), substitution can take up to \emph{50\%} of the execution time directly within the state model (here, we ignore the difference in total execution time of the engine). 
+
+We will here explore three different optimisations of \PMap{} that have been ported to Gillian, by justifying their theoretical soundness. While they have been adapted for \PMap{}, they could also be adapted for \GMap{} with little additional effort -- we choose not to, to keep the presentation simpler.
+
+\subsection{Syntactic Checking}
+
+A technique introduced in \cite{sacha-phd} that we may reuse is syntactic equality checking for a matching key before attempting to branch on symbolic equality. This means that if the map contains the exact key already, we do not need to do any branching. This method also benefits from \emph{hash consing}, where a hash is associated to every expression's AST, avoiding the need for recursing through possibly deep trees. \note{We note hash consing for expressions is currently not implemented in Gillian.}
+
+We present here the rules for this technique. We \highlight{highlight} the new rule and condition, noting the last two rules are unchanged.
+
+\begin{mathparpagebreakable}
+\color{blue}
+\inferrule[SyntacticPMapGetMatch]{(h,d)=\mathit{unwrap}(s) \\ i\in\dom(h) \\ s_{i}=h(i)}{\ppget{s, i}{i, s_{i}, []}}
+\color{black}
+\and\inferrule[SyntacticPMapGetBranch]{(h,d)=\mathit{unwrap}(s) \\ \highlight{i\notin\dom(h)} \\ i'\in\dom(h) \\ s_{i'}=h(i')}{\ppget{s, i}{i', s_{i'}, [i=i']}}
+\color{gray}
+\and\inferrule[SyntacticPMapGetAdd]{(h,d)=\mathit{unwrap}(s) \\ i\notin\dom(h) \\ d\neq\bot}{\ppget{s, i}{i,\bot, [i\notin\dom(h) \land i\in d]}}
+\and\inferrule[SyntacticPMapGetBotDomain]{(h,d)=\mathit{unwrap}(s) \\ i\notin \dom(h) \\ d=\bot}{\ppget{s,i}{i,\bot,[i\notin\dom(h)]}}
+\end{mathparpagebreakable}
+
+This optimisation is also the reason why actions on \PMap{} always return the accessed index; it allows further accesses to the same element to benefit from this syntactic equality check, and thus avoids repetitive SAT checks.
+
+\subsection{Split PMap}
+
+The idea behind this first optimisation is to split the bindings of the map between \emph{concrete} and \emph{symbolic}, effectively storing two maps at once. This has a few advantages: firstly, substitution must only be done on the symbolic part of the map, as only symbolic variables can be substituted. The second effect this has is that when doing lookups of a key, if the key is not concrete we may avoid checking for syntactic equality in the concrete part of the map, since the binding cannot be there. Note this doesn't hold for the opposite: the key may be concrete, but if the associated value is symbolic then the binding will be in the symbolic map -- a concrete key does thus require doing a lookup on both maps.
+
+Of course, to distinguish concrete from non-concrete cells, it requires the underlying state model to provide an $\code{is\_concrete}_\St: \St\rarr \bools$ function.
+
+We first define the resource algebra of this state model, where $h_c$ denotes the concrete part of the map and $h_s$ the symbolic (or better said, non-concrete) part: 
+\begin{align*}
+	\SplitPMap(I,\mmdl) &\defeq I \finmap \mmdl.\Sigma \times I \finmap\mmdl.\Sigma \times \pset(I)^?\\
+	(h_c, h_s, d)\cdot (h_c', h_s', d') &\defeq (h_c'', h_s'', d'')\\
+	\text{where } h_{all}&\defeq h_c\cup h_s,\quad h_{all}'\defeq h_c'\cup h_s'\\
+	\text{where } h_c''&\defeq \lambda i.\begin{cases}
+		h_{all}(i)\cdot h_{all}'(i)&\begin{aligned}
+			\If~&i\in \dom(h_{all})\cap\dom(h_{all}') ~\land \\
+			&\code{is\_concrete}_\St~(h_{all}(i)\cdot h_{all}'(i)) ~\land \\
+			&\code{is\_concrete}~i
+		\end{aligned}\\
+		h_c(i) &\If~i\in \dom(h_c) \backslash \dom(h_{all}')\\
+		h_c'(i) &\If~i\in \dom(h_c') \backslash \dom(h_{all})\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }h_s'' &\defeq \lambda i.\begin{cases}
+		h_{all}(i)\cdot h_{all}'(i)&\begin{aligned}
+			\If~&i\in \dom(h_{all})\cap\dom(h_{all}') ~\land \\
+			&\neg(\code{is\_concrete}_\St~(h_{all}(i)\cdot h_{all}'(i)) ~\land \\
+			&~~~\code{is\_concrete}~i)
+		\end{aligned}\\
+		h_s(i) &\If~i\in \dom(h_s) \backslash \dom(h_{all}')\\
+		h_s'(i) &\If~i\in \dom(h_s') \backslash \dom(h_{all})\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }d''&\defeq\begin{cases}
+		d&\If~d'=\bot\\
+		d'&\If~d=\bot\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }& d'' = \bot \lor \dom(h_c'')\cup\dom(h_s'')\subseteq d''\\
+	|(h_c, h_s, d)| &\defeq \begin{cases}
+		\bot &\If~\dom(h_c')=\emptyset \land \dom(h_s')=\emptyset\\
+		(h_c', h_s', \bot) &\Otherwise
+	\end{cases}\\
+	\text{where }h_c'&\defeq \lambda i.\begin{cases}
+		|h_c(i)| &\If~ i\in\dom(h_c) \land |h_c(i)| \neq \bot\\
+		\text{undefined} &\Otherwise
+	\end{cases} \\
+	\text{and }h_s'&\defeq \text{likewise}
+\end{align*}
+
+We note that composition requires checking for the presence of the index in both maps; if the first state has a binding in its concrete heap while the second has a binding in its symbolic heap, both need to be composed and then verify again if the result of the composition is concrete or symbolic.
+
+Its predicates and actions are the same as for \PMap{}: $\actions = \mmdl.\actions$ and ${\Delta = \mmdl.\Delta \uplus \{\domainset\}}$. We assume the engine also provides an \code{is\_concrete} function that given an expression returns true if it is concrete; this can be implemented by recursing through the expression's AST.
+
+We again only define the rules for the \code{get} and \code{set} helper functions -- everything else behaves the same (showing the advantage of having these two functions abstracted away).
+
+\begin{align*}
+	\text{Given }
+	\mathit{wrap}(h_c, h_s, d) &\defeq \begin{cases}
+		\bot &\If~\dom(h_c)=\emptyset \land \dom(h_s)=\emptyset \land d=\emptyset\\
+		(h_c,h_s,d)&\Otherwise
+	\end{cases}\\
+	\mathit{unwrap}(s) & \defeq \begin{cases}
+		([], [], \emptyset) &\If~s=\bot\\
+		(h_c, h_s, d) &\If~s=(h_c,h_s,d)
+	\end{cases}\\
+\end{align*}
+\begin{mathparpagebreakable}
+\inferrule[SplitPMapGetMatchCon]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ \highlight{\code{is\_concrete}~i} \\ i\in\dom(h_c) \\ s_{i}=h_c(i)}{\ppget{s, i}{i, s_{i}, []}}
+\and\inferrule[SplitPMapGetMatchSym]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ i\in\dom(h_s) \\ s_{i}=h_s(i)}{\ppget{s, i}{i, s_{i}, []}}
+\and\inferrule[SplitPMapGetBranch]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ h_{all}=h_c\cup h_s \\ i\notin \dom(h_{all}) \\ i'\in\dom(h_{all}) \\ s_{i'}=h_{all}(i')}{\ppget{s, i}{i', s_{i'}, [i=i']}}
+\and\inferrule[SplitPMapGetAdd]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ h_{all}=h_c\cup h_s \\ i\notin\dom(h_{all}) \\ d\neq\bot}{\ppget{s, i}{i,\bot, [i\notin\dom(h_{all}) \land i\in d]}}
+\and\inferrule[SplitPMapGetBotDomain]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ h_{all}=h_c\cup h_s \\ i\notin \dom(h_{all}) \\ d=\bot}{\ppget{s,i}{i,\bot,[i\notin\dom(h_{all})]}}
+\and\inferrule[SplitPMapSetSomeCon]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ s_i\neq\bot \\ \highlight{\code{is\_concrete}_\St~s_i} \\ \highlight{\code{is\_concrete}~i} \\ h'_c=h_c[i\leftarrow s_i] \\ h'_s=h_s[i\not\leftarrow] \\ s'=\mathit{wrap}(h'_c, h'_s, d)}{\ppset{s,i,s_i}{s'}}
+\and\inferrule[SplitPMapSetSomeSym]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ s_i\neq\bot \\ \highlight{\neg(\code{is\_concrete}_\St~s_i \lor \code{is\_concrete}~i)} \\ h'_c=h_c[i\not\leftarrow] \\ h'_s=h_s[i\leftarrow s_i] \\ s'=\mathit{wrap}(h'_c, h'_s, d)}{\ppset{s,i,s_i}{s'}}
+\and\inferrule[SplitPMapSetNone]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ s_i=\bot \\ h'_c=h_c[i\not\leftarrow] \\ h'_s=h_s[i\not\leftarrow] \\ s'=\mathit{wrap}(h'_c, h'_s, d)}{\ppset{s,i,s_i}{s'}}
+\end{mathparpagebreakable}
+
+We note here that this optimisation comes with a cost: if syntactic matches are rare, then the two maps need to be merged for the branching check. Furthermore, modifying the map also requires removing the binding from the other map, as the state might have been there and changed (for instance, if the wrapped state was symbolic, but was modified to be concrete, then it needs to be removed from the symbolic map). Verifying if a given state fragment is concrete or not also comes with a cost, as it requires traversing the entire state, which may be expensive -- though this could be partly solved by caching whether it's concrete or not, and invalidating or modifying the cache when the state is modified. This caching has not been implemented, as in practice the cost of verifying concreteness is less than the gain of the optimisation.
+
+In evaluation we will discuss the impact this optimisation has. \note{I need to measure the proportion of size between concrete/symbolic, to see in what executions it's more useful and in which it's not. Similarly, need to profile the time for a lookup according depending on the size of the joined map!}
+
+\subsection{Abstract location PMap}
+
+This second optimisation is new to Gillian, and uses \emph{abstract locations} (ALocs). We expand the definition of symbolic values, \code{SVal}, with values of type ``\code{ALoc}'', akin to symbolic variables. These are a form of \emph{semantic hash consing}: they can be used to distinguish different locations from their name, when not doing ``matching''. \emph{Matching} is a mode that is enabled when consuming or producing, and that is disabled when executing actions and doing substitutions. When matching is disabled, two given abstract locations that are syntactically different (have different names) are semantically different (are distinct), whereas when matching is enabled then two syntactically different abstract locations may be equal, depending on the current path condition, which may lead to branching (in which cases the two states at the clashing locations are composed). This is a powerful optimisation: inside the body of a function, all lookups are branchless, as two syntactically different ALocs are considered different (matching is disabled), however once the post-condition is consumed then locations may clash and we thus merge together states at clashing locations; this ensures branching caused by addresses only happens at the very start and very end of the verification of a function.
+
+This has the advantage of allowing storing locations in the map as a string (their name) rather than an expression, and checking for the presence of the string rather than requiring to attempt SAT checks for every index. The cost of this is when resolving an expression into an ALoc: if it already is of type \code{ALoc} then nothing is needed, but in the case in which it is a symbolic variable we must first check if it already equals an ALoc in the path condition, and if not instantiate a new ALoc, add the fact it is equal to the symbolic variable in the symbolic variable, and proceed.
+
+A limitation of this optimisation is that only abstract locations may be used as the domain type; it is thus a specialisation of $\PMap$, where $\SplitPMap$ was a more general optimisation.
+
+Let's first define the RA for this optimisation, $\ALocPMap$. 
+\begin{align*}
+	\ALocPMap(\mmdl) &\defeq \Str \finmap \mmdl.\Sigma \times \pset(\Str)^?\\
+		(h,d)\cdot (h',d') &\defeq (h'', d'') \\
+	\text{where } h''&\defeq \lambda i.\begin{cases}
+		h(i)\cdot h'(i)&\If~i\in \dom(h)\cap\dom(h')\\
+		h(i) &\If~i\in \dom(h) \backslash \dom(h')\\
+		h'(i) &\If~i\in \dom(h') \backslash \dom(h)\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }d''&\defeq\begin{cases}
+		d&\If~d'=\bot\\
+		d'&\If~d=\bot\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }& d'' = \bot \lor \dom(h'')\subseteq d''\\
+	|(h, d)| &\defeq \begin{cases}
+		\bot &\If~\dom(h')=\emptyset\\
+		(h', \bot) &\Otherwise
+	\end{cases}\\
+	\text{where }h'&\defeq \lambda i.\begin{cases}
+		|h(i)| &\If~ i\in\dom(h) \land |h(i)| \neq \bot\\
+		\text{undefined} &\Otherwise
+	\end{cases}
+\end{align*}
+
+We make use of the helper function ${\code{to\_aloc}:\Pc\rarr \Val\rarr \Str^?}$, which returns the name of the abstract location matching a given value, if it exists.  This function receives the path condition, as for instance given a symbolic variable $\hat x$ with the path condition $\hat x = \aloc{\code{loc\_x}}$, the path condition is required to know what abstract location is associated to $\hat x$. The engine presented thus far however never receives the path condition, as to ensure it can only be strengthened -- this is not the case in Gillian, where this optimisation was first implemented. We thus assume that $\code{to\_aloc}$ is capable of reading the current path condition without getting it as an input, to avoid modifying the previously defined signatures, noting it is trivial to add the path condition as a parameter of \execac, \consume{} and \produce. We thus instead use the signature ${\code{to\_aloc}: \Val\rarr\Str^?}$. We also use the auxiliary function $\code{fresh\_aloc}: \code{unit} \rarr \Str$ to generate fresh abstract location names.
+
+We now present the rules for this state model; in particular, we again only need to concern ourselves with the \code{get} and \code{set} internal methods; actions and predicate consumption and production remain the same.
+\begin{mathparpagebreakable}
+\inferrule[ALocPMapGetMatch]{(h,d)=\mathit{unwrap}(s) \\\highlight{a = \code{to\_aloc}~i} \\ \highlight{a \neq \bot} \\ a\in\dom(h) \\ s_{a}=h(a)}{\ppget{s, i}{\aloc{a}, s_{a}, []}}
+\and\inferrule[ALocPMapGetMatchBot]{(h,d)=\mathit{unwrap}(s) \\\highlight{a = \code{to\_aloc}~i} \\ \highlight{a \neq \bot} \\ a\notin\dom(h) \\ d\neq\bot}{\ppget{s, i}{\aloc{a}, \bot, [\aloc{a}\in d]}}
+\and\inferrule[ALocPMapGetNewLoc]{(h,d)=\mathit{unwrap}(s) \\ \highlight{a = \code{to\_aloc}~i} \\ \highlight{a = \bot} \\  d=\bot \\ \highlight{a'=\code{fresh\_aloc ()}}}{\ppget{s, i}{\aloc{a'}, \bot, [i=\aloc{a'}]}}
+\and\inferrule[ALocPMapSetSome]{(h,d)=\mathit{unwrap}(s) \\ \highlight{a = \code{to\_aloc}~i} \\ \highlight{a\neq\bot} \\ s_i\neq\bot \\ h'=h[a\leftarrow s_i] \\ s'=\mathit{wrap}(h', d)}{\ppset{s,i,s_i}{s'}}
+\and\inferrule[ALocPMapSetNone]{(h,d)=\mathit{unwrap}(s) \\ \highlight{a = \code{to\_aloc}~i} \\ \highlight{a\neq\bot} \\ s_i=\bot \\ h'=h[a\not\leftarrow] \\ s'=\mathit{wrap}(h',d)}{\ppset{s,i,s_i}{s'}}
+\end{mathparpagebreakable}
+
+The main advantage of $\ALocPMap$ is made evident from the rules: looking up an index does not branch; it either is found directly in the map, or can be added. Branching is instead delegated to the SAT-solver of the engine, that when matching may decide two abstract locations are equal or not, resulting in two branches: one where they're different and one where they're equal and the states at both locations are composed.
+
+
+
+
+
+

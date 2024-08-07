@@ -1,0 +1,84 @@
+\chapter{Soundness of allocation in PMap}
+
+\section{Current State}
+
+We initially defined \PMap{} as:
+\begin{align*}
+	\PMap(I,\mmdl) &\defeq I \finmap \mmdl.\Sigma \times \pset(I)^?\\
+	(h,d)\cdot (h',d') &\defeq (h'', d'') \\
+	\text{where } h''&\defeq \lambda i.\begin{cases}
+		h(i)\cdot h'(i)&\If~i\in \dom(h)\cap\dom(h')\\
+		h(i) &\If~i\in \dom(h) \backslash \dom(h')\\
+		h'(i) &\If~i\in \dom(h') \backslash \dom(h)\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }d''&\defeq\begin{cases}
+		d&\If~d'=\bot\\
+		d'&\If~d=\bot\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }& d'' = \bot \lor \dom(h'')\subseteq d''\\
+	|(h, d)| &\defeq \begin{cases}
+		\bot &\If~\dom(h')=\emptyset\\
+		(h', \bot) &\Otherwise
+	\end{cases}\\
+	\text{where }h'&\defeq \lambda i.\begin{cases}
+		|h(i)| &\If~ i\in\dom(h) \land |h(i)| \neq \bot\\
+		\text{undefined} &\Otherwise
+	\end{cases}
+\end{align*}
+
+The \alloc{} action could then be executed; if the domain set was present, it was simply extended with the new index:
+
+\begin{mathpar}
+\and\inferrule[PMapAlloc]{d\neq \bot \\ i \notin \SV \\ i \notin \dom(h) \\ i \notin d \\ s_i=\code{instantiate}(\sins) \\ h' = h[i\leftarrow s_i] \\ d' = d\uplus \{i\}}{\ppexec{\alloc}{\SV, (h,d), \sins}{\Ok, (h',d'), [i], [i=i]}}
+\and\inferrule[PMapAllocBot]{\muted{(h,d)=\mathit{unwrap}(s)} \\ d=\bot \\ i \notin \SV \\ i \notin \dom(h) \\ s_i=\code{instantiate}(\sins) \\ h' = h[i\leftarrow s_i]}{\ppexec{\alloc}{\SV,s,\sins}{\Ok,(h',\bot),[i],[i=i]}}
+\end{mathpar}
+
+This however breaks \ref{eq:frame-sub}:
+\begin{align*}
+    \text{Let }\st &= ([0\mapsto a], \bot), \quad \st_f=([],\{0\}) \\
+    \st\cdot\st_f&=([0\mapsto a],\bot) \cdot ([], \{0\})=([0\mapsto a],\{0\}) \\
+    \text{We have that }&\ppexec{\alloc}{\st\cdot\st_f,[]}{o,([0\mapsto a,1\mapsto b], \{0, 1\}),[]}\text{ with }o=\Ok\\
+    \text{and }&\ppexec{\alloc}{(\st,\bot),[]}{o',([0\mapsto a, 1\mapsto b], \bot), []} \text{ with }o'=\Ok\\
+    \text{$o'\neq\Miss$ but } 
+    &([0\mapsto a, 1\mapsto b], \{0, 1\}) \neq ([0\mapsto a, 1\mapsto b], \bot)\cdot  ([], \{1\}) \text{ since that's undefined, because }\\
+    &\dom([0\mapsto a,1\mapsto b])=\{0,1\}\not\subseteq \{1\}
+\end{align*}
+
+To solve this, \alloc{} on a missing domain set should result in a \Miss, and only succeed when owning the domain set:
+\begin{mathpar}
+\and\inferrule[PMapAllocMiss]{\muted{(h,d)=\mathit{unwrap}(s)} \\ d=\bot}{\ppexec{\alloc}{\SV,s,\sins}{\Miss,s,[\code{`domainset'}],[]}}
+\end{mathpar}
+
+\section{Concurrency}
+
+This however does not work in a concurrency setting, as two threads cannot simultaneously own and modify the domain set. This means that the partial semantics of \alloc{} shown above are not compatible with full semantics in which this is permitted (as is the case, for instance, in the traditional model of separation logic).
+
+A solution to this is to make the domain set a set of all indices \emph{known} to exist -- indices not in it don't necessarily mean an out of bounds, but may mean the index was created in another thread that hasn't ``rejoined'' into the current thread. Its RA is defined as:
+\begin{align*}
+	\PMap_{\textsc{Fixed}}(I,\mmdl) &\defeq I \finmap \mmdl.\Sigma \times \pset(I)\\
+	(h,d)\cdot (h',d') &\defeq (h'', d\cup d') \\
+	\text{where } h''&\defeq \lambda i.\begin{cases}
+		h(i)\cdot h'(i)&\If~i\in \dom(h)\cap\dom(h')\\
+		h(i) &\If~i\in \dom(h) \backslash \dom(h')\\
+		h'(i) &\If~i\in \dom(h') \backslash \dom(h)\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }& \dom(h'')\subseteq (d\cup d')\\
+	|(h, d)| &\defeq (h', d)\\
+	\text{where }h'&\defeq \lambda i.\begin{cases}
+		|h(i)| &\If~ i\in\dom(h) \land |h(i)| \neq \bot\\
+		\text{undefined} &\Otherwise
+	\end{cases}
+\end{align*}
+
+This means however that $\PMap_\textsc{Fixed}$ cannot be exclusively owned, as a partial map with a subset of its domain can always be composed with it. Its rule for allocation is the same as before, except there is no miss case: 
+\begin{mathpar}
+\and\inferrule[PMapFixedAlloc]{i \notin \SV \\ i \notin \dom(h) \\ i \notin d \\ s_i=\code{instantiate}(\sins) \\ h' = h[i\leftarrow s_i] \\ d' = d\cup \{i\}}{\ppexec{\alloc}{\SV, (h,d), \sins}{\Ok, (h',d'), [i], [i=i]}}
+\end{mathpar}
+
+Rules are otherwise similar, with consuming the domainset not modifying it, and producing it producing the union with the current domain set.
+
+While allowing concurrent allocation, this state model does not fulfill \ref{eq:compatibility} in its current state. Indeed, it cannot reliably distinguish out of bounds from missing outcomes on accesses - as the index not being in the domain set may mean it still exists in another thread.
+
