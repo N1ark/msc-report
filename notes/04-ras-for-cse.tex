@@ -582,9 +582,33 @@ If this examples is now reproduced with RAs, the consumption of \corepred{\exP}{
 
 \subsection{Dynamic PMap}
 
-The \emph{dynamic} partial map state transformer, $\DynPMap(I,\mmdl)$ is similar to the regular (or \emph{static}) $\PMap$ transformer, but allows modelling ``dynamic'' maps that can be modified without allocation. This is used, for instance, to model the JavaScript memory model, where one can set a field of an object directly if it doens't exist, and where reading a field that doesn't exist does not raise an error but simply returns a default \code{undefined} value.
+The \emph{dynamic} partial map state transformer, $\DynPMap(I,\mmdl)$ is similar to the regular (or \emph{static}) $\PMap$ transformer, but allows modelling ``dynamic'' maps that can be modified without allocation. This is used, for instance, to model the JavaScript memory model, where one can set a field of an object directly if it doens't exist, and where reading a field that doesn't exist does not raise an error but simply returns a default \code{undefined} value. In other words, the domain set is used not to distinguish \Miss{} from \Err{} but \Miss{} from \Ok{}.
 
 This transformer has the same RA as $\PMap$, as well as the same predicates. It however only lifts the actions of the underlying state model $\mmdl$, without adding an \alloc{} action (since allocation does not exist; the field is just created on access). However, since this requires instantiating the underlying state model, it must still implement an ${\code{instantiate}: \vallist \rarr \St}$ function. Here we keep $\vallist$ for compatibility with $\PMap$, but in fact the arguments are always the empty list.
+
+We now present the rules for $\DynPMap(I,\mmdl)$, \hl{highlighting} the differences with $\PMap(I,\mmdl)$. We reuse the definition of \code{get} and \code{set}.
+
+\begin{align*}
+	\text{Given }
+	\mathit{lift\_if\_miss}(o, i, \sins) &\defeq \begin{cases}
+		i :: \sins &\If~o=\Miss\\
+		\sins &\Otherwise
+	\end{cases}
+\end{align*}
+\begin{mathparpagebreakable}
+\inferrule[DynPMapAction]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppexec{\alpha}{s_{i'},\sins}{o,s'_{i'},\souts,\pc'} \\ \ppset{s,i',s'_{i'}}{s'}}{\ppexec{\alpha}{s,i::\sins}{o,s',i'::\souts, \pc :: \pc'}}
+\and\inferrule[DynPMapActionOutOfBounds]{d\neq\bot \\ \hl{s_i=\code{instantiate}~[]} \\ \hl{\ppexec{\alpha}{s_i,\sins}{o,s'_i,\souts,\pc}} \\ \hl{h'=h[i\leftarrow s_i']} \\ \hl{d'=d\uplus \{i\}}}{\ppexec{\alpha}{(h,d),i::\sins}{\hl{o, (h',d')}, \souts, [i\notin d]\hl{::\pc}}}
+\and\inferrule[DynPMapCons]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppcons{s_{i'},\delta,\sins}{o,s'_{i'},\souts,\pc'} \\ \ppset{s,i',s'_{i'}}{s'} \\ \souts'=\mathit{lift\_if\_miss}(o,i',\souts)}{\ppcons{s,\delta,i::\sins}{o,s',\souts', \pc::\pc'}}
+\and\inferrule[DynPMapConsOutOfBounds]{d\neq\bot \\ \hl{s_i=\code{instantiate}~[]} \\ \hl{\ppcons{s_i,\delta,\sins}{o,s'_i,\souts,\pc}} \\ \hl{h'=h[i\leftarrow s_i']} \\ \hl{d'=d\uplus \{i\}}}{\ppcons{(h,d),\delta,i::\sins}{o, (h',d'), \souts, [i\notin d]\hl{::\pc}}}
+\and\inferrule[DynPMapConsDomainSet]{d\neq \bot}{\ppcons{(h,d),\domainset,[]}{\Ok,(h,\bot), [d],[]}}
+\and\inferrule[DynPMapConsDomainSetMiss]{\muted{(h,d)=\mathit{unwrap}(s)} \\ d=\bot}{\ppcons{s,\domainset,[]}{\Miss,s, [\code{`domainset'}], []}}
+\and\inferrule[DynPMapProd]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppprod{s_{i'},\delta,\sins,\souts}{s'_{i'},\pc} \\ \ppset{s,i',s'_{i'}}{s'}}{\ppprod{s,\delta,i::\sins,\souts}{s', (i = i')::\pc}}
+\and\inferrule[DynPMapProdDomainSet]{(h,\bot)=\mathit{unwrap}(s)}{\ppprod{s,\domainset,[],[d]}{(h,d),[\dom(h)\subseteq d]}}
+\and\inferrule[PMapFix]{\mmdl.\fix~\sins = a \\ a'=\mathit{lift}(a,i)}{\fix~i::\sins = a'}
+\and\inferrule[DynPMapFixDomainSet]{}{\fix~[\code{`domainset'}] = \exists d\ldotp \corepred{\domainset}{}{d}}
+\end{mathparpagebreakable}
+
+We see here the difference in behaviour is minimal, as only the \consume{} and \execac{} functions are affected, and only in the out of bounds case. In fact, the implementation of \PMap{} for Gillian receives a \code{mode} flag that allows one to instantiate the transformer to static or dynamic mode, avoiding code repetition.
 
 \subsection{List}
 
@@ -678,18 +702,18 @@ We first define a helper methods \code{get} and \code{set}, that allows modifyin
 \end{align*}
 \begin{mathparpagebreakable}
 \inferrule[GMapGetMatch]{(h,d)=\mathit{unwrap}(s) \\ i'\in\dom(h) \\ s_{i'}=h(i')}{\ppget{s, i}{i', s_{i'}, [i=i']}}
-\and\inferrule[GMapGetAdd]{(h,d)=\mathit{unwrap}(s) \\ i\notin\dom(h) \\ d\neq\bot}{\ppget{s, i}{i,\bot, [i\notin\dom(h) \land \highlight{\code{is\_within}~d~i}]}}
+\and\inferrule[GMapGetAdd]{(h,d)=\mathit{unwrap}(s) \\ i\notin\dom(h) \\ d\neq\bot}{\ppget{s, i}{i,\bot, [i\notin\dom(h) \land \hl{\code{is\_within}~d~i}]}}
 \and\inferrule[GMapGetBotDomain]{(h,d)=\mathit{unwrap}(s) \\ i\notin \dom(h) \\ d=\bot}{\ppget{s,i}{i,\bot,[i\notin\dom(h)]}}
 \and\inferrule[GMapSetSome]{(h,d)=\mathit{unwrap}(s) \\ s_i\neq\bot \\ h'=h[i\leftarrow s_i] \\ s'=\mathit{wrap}(h', d)}{\ppset{s,i,s_i}{s'}}
 \and\inferrule[GMapSetNone]{(h,d)=\mathit{unwrap}(s) \\ s_i=\bot \\ h'=h[i\not\leftarrow] \\ s'=\mathit{wrap}(h', d)}{\ppset{s,i,s_i}{s'}}
 \and\inferrule[GMapAction]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppexec{\alpha}{s_{i'},\sins}{o,s'_{i'},\souts,\pc'} \\ \ppset{s,i',s'_{i'}}{s'}}{\ppexec{\alpha}{s,i::\sins}{o,s',i'::\souts, \pc::\pc'}}
-\and\inferrule[GMapActionOutOfBounds]{d\neq\bot}{\ppexec{\alpha}{(h,d),\sins}{\Err, s, [], [\highlight{\neg \code{is\_within}~d~i}]}}
+\and\inferrule[GMapActionOutOfBounds]{d\neq\bot}{\ppexec{\alpha}{(h,d),\sins}{\Err, s, [], [\hl{\neg \code{is\_within}~d~i}]}}
 \and\inferrule[GMapCons]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppcons{s_{i'},\delta,\sins}{o,s'_{i'},\souts,\pc'} \\ \souts'=\mathit{lift\_if\_miss}(o,i',\souts) \\ \ppset{s,i',s'_{i'}}{s'}}{\ppcons{s,\delta,i::\sins}{o,s',\souts', \pc::\pc'}}
-\and\inferrule[GMapConsIncompat]{d\neq\bot}{\ppcons{(h,d),\delta,i::\sins}{\LFail, (h,d), [], [\highlight{\neg \code{is\_within}~d~i}]}}
+\and\inferrule[GMapConsIncompat]{d\neq\bot}{\ppcons{(h,d),\delta,i::\sins}{\LFail, (h,d), [], [\hl{\neg \code{is\_within}~d~i}]}}
 \and\inferrule[GMapConsDiscr]{\muted{(h,d)=\mathit{unwrap}(s)} \\ \ppcons{d,\delta_d,\sins}{o,d',\souts,\pc} \\ o\neq\Miss \\ \muted{s'=\mathit{wrap}(h,d')}}{\ppcons{s,\delta_D,\sins}{\Ok,s',\souts,\pc}}
 \and\inferrule[GMapConsDiscrMiss]{\muted{(h,d)=\mathit{unwrap}(s)} \\ \ppcons{d,\delta_d,\sins}{o,d',\souts,\pc} \\ o=\Miss \\ \muted{s'=\mathit{wrap}(h,d')}}{\ppcons{s,\delta_D,\sins}{\Ok,s',\code{`D'}::\souts,\pc}}
 \and\inferrule[GMapProd]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppprod{s_{i'},\delta,\sins,\souts}{s'_{i'},\pc'} \\ \ppset{s,i',s'_{i'}}{s'}}{\ppprod{s,\delta,i::\sins,\souts}{s', \pc::\pc'}}
-\and\inferrule[GMapProdDiscr]{(h,d)=\mathit{unwrap}(s) \\ \ppprod{d,\delta_D,\sins,\souts}{d',\pc}}{\ppprod{s,\delta_D,\sins,\souts}{s',\highlight{[\forall i\in\dom(h)\ldotp \code{is\_within}~d~i]} :: \pc}}
+\and\inferrule[GMapProdDiscr]{(h,d)=\mathit{unwrap}(s) \\ \ppprod{d,\delta_D,\sins,\souts}{d',\pc}}{\ppprod{s,\delta_D,\sins,\souts}{s',\hl{[\forall i\in\dom(h)\ldotp \code{is\_within}~d~i]} :: \pc}}
 \and\inferrule[GMapFix]{\mmdl.\fix~\sins = a \\ a'=\mathit{lift}(a,i)}{\fix~i::\sins = a'}
 \and\inferrule[GMapFixDiscr]{\mmdl_D.\fix~\sins = a}{\fix~\code{`D'} :: \sins = a}
 \end{mathparpagebreakable}
@@ -710,13 +734,13 @@ We will here explore three different optimisations of \PMap{} that have been por
 
 A technique introduced in \cite{sacha-phd} that we may reuse is syntactic equality checking for a matching key before attempting to branch on symbolic equality. This means that if the map contains the exact key already, we do not need to do any branching. This method also benefits from \emph{hash consing}, where a hash is associated to every expression's AST, avoiding the need for recursing through possibly deep trees. \note{We note hash consing for expressions is currently not implemented in Gillian.}
 
-We present here the rules for this technique. We \highlight{highlight} the new rule and condition, noting the last two rules are unchanged.
+We present here the rules for this technique. We \hl{highlight} the new rule and condition, noting the last two rules are unchanged.
 
 \begin{mathparpagebreakable}
 \color{blue}
 \inferrule[SyntacticPMapGetMatch]{(h,d)=\mathit{unwrap}(s) \\ i\in\dom(h) \\ s_{i}=h(i)}{\ppget{s, i}{i, s_{i}, []}}
 \color{black}
-\and\inferrule[SyntacticPMapGetBranch]{(h,d)=\mathit{unwrap}(s) \\ \highlight{i\notin\dom(h)} \\ i'\in\dom(h) \\ s_{i'}=h(i')}{\ppget{s, i}{i', s_{i'}, [i=i']}}
+\and\inferrule[SyntacticPMapGetBranch]{(h,d)=\mathit{unwrap}(s) \\ \hl{i\notin\dom(h)} \\ i'\in\dom(h) \\ s_{i'}=h(i')}{\ppget{s, i}{i', s_{i'}, [i=i']}}
 \color{gray}
 \and\inferrule[SyntacticPMapGetAdd]{(h,d)=\mathit{unwrap}(s) \\ i\notin\dom(h) \\ d\neq\bot}{\ppget{s, i}{i,\bot, [i\notin\dom(h) \land i\in d]}}
 \and\inferrule[SyntacticPMapGetBotDomain]{(h,d)=\mathit{unwrap}(s) \\ i\notin \dom(h) \\ d=\bot}{\ppget{s,i}{i,\bot,[i\notin\dom(h)]}}
@@ -790,13 +814,13 @@ We again only define the rules for the \code{get} and \code{set} helper function
 	\end{cases}\\
 \end{align*}
 \begin{mathparpagebreakable}
-\inferrule[SplitPMapGetMatchCon]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ \highlight{\code{is\_concrete}~i} \\ i\in\dom(h_c) \\ s_{i}=h_c(i)}{\ppget{s, i}{i, s_{i}, []}}
+\inferrule[SplitPMapGetMatchCon]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ \hl{\code{is\_concrete}~i} \\ i\in\dom(h_c) \\ s_{i}=h_c(i)}{\ppget{s, i}{i, s_{i}, []}}
 \and\inferrule[SplitPMapGetMatchSym]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ i\in\dom(h_s) \\ s_{i}=h_s(i)}{\ppget{s, i}{i, s_{i}, []}}
 \and\inferrule[SplitPMapGetBranch]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ h_{all}=h_c\cup h_s \\ i\notin \dom(h_{all}) \\ i'\in\dom(h_{all}) \\ s_{i'}=h_{all}(i')}{\ppget{s, i}{i', s_{i'}, [i=i']}}
 \and\inferrule[SplitPMapGetAdd]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ h_{all}=h_c\cup h_s \\ i\notin\dom(h_{all}) \\ d\neq\bot}{\ppget{s, i}{i,\bot, [i\notin\dom(h_{all}) \land i\in d]}}
 \and\inferrule[SplitPMapGetBotDomain]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ h_{all}=h_c\cup h_s \\ i\notin \dom(h_{all}) \\ d=\bot}{\ppget{s,i}{i,\bot,[i\notin\dom(h_{all})]}}
-\and\inferrule[SplitPMapSetSomeCon]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ s_i\neq\bot \\ \highlight{\code{is\_concrete}_\St~s_i} \\ \highlight{\code{is\_concrete}~i} \\ h'_c=h_c[i\leftarrow s_i] \\ h'_s=h_s[i\not\leftarrow] \\ s'=\mathit{wrap}(h'_c, h'_s, d)}{\ppset{s,i,s_i}{s'}}
-\and\inferrule[SplitPMapSetSomeSym]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ s_i\neq\bot \\ \highlight{\neg(\code{is\_concrete}_\St~s_i \lor \code{is\_concrete}~i)} \\ h'_c=h_c[i\not\leftarrow] \\ h'_s=h_s[i\leftarrow s_i] \\ s'=\mathit{wrap}(h'_c, h'_s, d)}{\ppset{s,i,s_i}{s'}}
+\and\inferrule[SplitPMapSetSomeCon]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ s_i\neq\bot \\ \hl{\code{is\_concrete}_\St~s_i} \\ \hl{\code{is\_concrete}~i} \\ h'_c=h_c[i\leftarrow s_i] \\ h'_s=h_s[i\not\leftarrow] \\ s'=\mathit{wrap}(h'_c, h'_s, d)}{\ppset{s,i,s_i}{s'}}
+\and\inferrule[SplitPMapSetSomeSym]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ s_i\neq\bot \\ \hl{\neg(\code{is\_concrete}_\St~s_i \lor \code{is\_concrete}~i)} \\ h'_c=h_c[i\not\leftarrow] \\ h'_s=h_s[i\leftarrow s_i] \\ s'=\mathit{wrap}(h'_c, h'_s, d)}{\ppset{s,i,s_i}{s'}}
 \and\inferrule[SplitPMapSetNone]{(h_c,h_s,d)=\mathit{unwrap}(s) \\ s_i=\bot \\ h'_c=h_c[i\not\leftarrow] \\ h'_s=h_s[i\not\leftarrow] \\ s'=\mathit{wrap}(h'_c, h'_s, d)}{\ppset{s,i,s_i}{s'}}
 \end{mathparpagebreakable}
 
@@ -806,7 +830,7 @@ In evaluation we will discuss the impact this optimisation has. \note{I need to 
 
 \subsection{Abstract location PMap}
 
-This second optimisation is new to Gillian, and uses \emph{abstract locations} (ALocs). We expand the definition of symbolic values, \code{SVal}, with values of type ``\code{ALoc}'', akin to symbolic variables. These are a form of \emph{semantic hash consing}: they can be used to distinguish different locations from their name, when not doing ``matching''. \emph{Matching} is a mode that is enabled when consuming or producing, and that is disabled when executing actions and doing substitutions. When matching is disabled, two given abstract locations that are syntactically different (have different names) are semantically different (are distinct), whereas when matching is enabled then two syntactically different abstract locations may be equal, depending on the current path condition, which may lead to branching (in which cases the two states at the clashing locations are composed). This is a powerful optimisation: inside the body of a function, all lookups are branchless, as two syntactically different ALocs are considered different (matching is disabled), however once the post-condition is consumed then locations may clash and we thus merge together states at clashing locations; this ensures branching caused by addresses only happens at the very start and very end of the verification of a function.
+This second optimisation is new to Gillian, and uses \emph{abstract locations} (ALocs). We expand the definition of symbolic values, \code{SVal}, with values of type ``\code{ALoc}'', akin to symbolic variables. These are a form of \emph{semantic hash consing}: they can be used to distinguish different locations from their name, when not doing ``matching''. \emph{Matching} is a mode that is enabled when consuming or producing, and that is disabled when executing actions and doing substitutions. When matching is disabled, two given abstract locations that are syntactically different (have different names) are semantically different (are distinct), whereas when matching is enabled then two syntactically different abstract locations may be equal, depending on the current path condition, which may lead to branching (in which cases the two states at the clashing locations are composed). This is a powerful optimisation: inside the body of a function, all lookups are branchless, as two syntactically different ALocs are considered different (matching is disabled), however when producing the pre-condition or consuming the post-condition then locations may clash and we thus merge together states at clashing locations.
 
 This has the advantage of allowing storing locations in the map as a string (their name) rather than an expression, and checking for the presence of the string rather than requiring to attempt SAT checks for every index. The cost of this is when resolving an expression into an ALoc: if it already is of type \code{ALoc} then nothing is needed, but in the case in which it is a symbolic variable we must first check if it already equals an ALoc in the path condition, and if not instantiate a new ALoc, add the fact it is equal to the symbolic variable in the symbolic variable, and proceed.
 
@@ -838,18 +862,21 @@ Let's first define the RA for this optimisation, $\ALocPMap$.
 	\end{cases}
 \end{align*}
 
-We make use of the helper function ${\code{to\_aloc}:\Pc\rarr \Val\rarr \Str^?}$, which returns the name of the abstract location matching a given value, if it exists.  This function receives the path condition, as for instance given a symbolic variable $\hat x$ with the path condition $\hat x = \aloc{\code{loc\_x}}$, the path condition is required to know what abstract location is associated to $\hat x$. The engine presented thus far however never receives the path condition, as to ensure it can only be strengthened -- this is not the case in Gillian, where this optimisation was first implemented. We thus assume that $\code{to\_aloc}$ is capable of reading the current path condition without getting it as an input, to avoid modifying the previously defined signatures, noting it is trivial to add the path condition as a parameter of \execac, \consume{} and \produce. We thus instead use the signature ${\code{to\_aloc}: \Val\rarr\Str^?}$. We also use the auxiliary function $\code{fresh\_aloc}: \code{unit} \rarr \Str$ to generate fresh abstract location names.
+We make use of the helper function ${\code{to\_aloc}:\Pc\rarr \Val\rarr \Str^?}$, which returns the name of the abstract location matching a given value, if it exists.  This function receives the path condition, as for instance given a symbolic variable $\hat x$ with the path condition ${\hat x = \aloc{\code{loc\_x}}}$, the path condition is required to know what abstract location is associated to $\hat x$. The engine presented thus far however never receives the path condition, as to ensure it can only be strengthened -- this is not the case in Gillian, where this optimisation was first implemented. We thus assume that $\code{to\_aloc}$ is capable of reading the current path condition without getting it as an input, to avoid modifying the previously defined signatures, noting it is trivial to add the path condition as a parameter of \execac, \consume{} and \produce. We thus instead use the signature ${\code{to\_aloc}: \Val\rarr\Str^?}$. We also use the auxiliary function $\code{fresh\_aloc}: \code{unit} \rarr \Str$ to generate fresh abstract location names.
 
-We now present the rules for this state model; in particular, we again only need to concern ourselves with the \code{get} and \code{set} internal methods; actions and predicate consumption and production remain the same.
+We now present the rules for this state model; in particular, we again only need to concern ourselves with the \code{get} and \code{set} internal methods; actions and predicate consumption and production remain the same. We also extend \code{get} to receive a mode ${M= \{\code{MATCH},\code{NO\_MATCH}\}}$; it is \code{MATCH} in \produce{} and \consume{}, and \code{NO\_MATCH} otherwise.
+
 \begin{mathparpagebreakable}
-\inferrule[ALocPMapGetMatch]{(h,d)=\mathit{unwrap}(s) \\\highlight{a = \code{to\_aloc}~i} \\ \highlight{a \neq \bot} \\ a\in\dom(h) \\ s_{a}=h(a)}{\ppget{s, i}{\aloc{a}, s_{a}, []}}
-\and\inferrule[ALocPMapGetMatchBot]{(h,d)=\mathit{unwrap}(s) \\\highlight{a = \code{to\_aloc}~i} \\ \highlight{a \neq \bot} \\ a\notin\dom(h) \\ d\neq\bot}{\ppget{s, i}{\aloc{a}, \bot, [\aloc{a}\in d]}}
-\and\inferrule[ALocPMapGetNewLoc]{(h,d)=\mathit{unwrap}(s) \\ \highlight{a = \code{to\_aloc}~i} \\ \highlight{a = \bot} \\  d=\bot \\ \highlight{a'=\code{fresh\_aloc ()}}}{\ppget{s, i}{\aloc{a'}, \bot, [i=\aloc{a'}]}}
-\and\inferrule[ALocPMapSetSome]{(h,d)=\mathit{unwrap}(s) \\ \highlight{a = \code{to\_aloc}~i} \\ \highlight{a\neq\bot} \\ s_i\neq\bot \\ h'=h[a\leftarrow s_i] \\ s'=\mathit{wrap}(h', d)}{\ppset{s,i,s_i}{s'}}
-\and\inferrule[ALocPMapSetNone]{(h,d)=\mathit{unwrap}(s) \\ \highlight{a = \code{to\_aloc}~i} \\ \highlight{a\neq\bot} \\ s_i=\bot \\ h'=h[a\not\leftarrow] \\ s'=\mathit{wrap}(h',d)}{\ppset{s,i,s_i}{s'}}
+\inferrule[ALocPMapGetMatch]{(h,d)=\mathit{unwrap}(s) \\ \hl{a = \code{to\_aloc}~i} \\ \hl{a \neq \bot} \\ a\in\dom(h) \\ s_{a}=h(a)}{\ppget{s, i, m}{\aloc{a}, s_{a}, []}}
+\and\inferrule[ALocPMapGetMatchBot]{(h,d)=\mathit{unwrap}(s) \\ \hl{a = \code{to\_aloc}~i} \\ \hl{a \neq \bot} \\ a\notin\dom(h) \\ d\neq\bot}{\ppget{s, i, m}{\aloc{a}, \bot, [\aloc{a}\in d]}}
+\and\inferrule[ALocPMapGetNewLoc]{(h,d)=\mathit{unwrap}(s) \\ \hl{a = \code{to\_aloc}~i} \\ \hl{a = \bot} \\  d=\bot \\ \hl{a'=\code{fresh\_aloc ()}}}{\ppget{s, i, m}{\aloc{a'}, \bot, [i=\aloc{a'}]}}
+\and\inferrule[ALocPMapMatching]{(h,d)=\mathit{unwrap}(s) \\ \hl{a = \code{to\_aloc}~i} \\ a \neq\bot \\ a\notin \dom(h) \\ a'\in\dom(h) \\ s_{a'}=h(a')}{\ppget{s, i,\hl{\code{MATCH}}}{\aloc{a'},s_{a'},[\hl{\aloc{a}=\aloc{a'}}]}}
+\and\inferrule[ALocPMapMatchingBot]{(h,d)=\mathit{unwrap}(s) \\ \hl{a = \code{to\_aloc}~i} \\ a=\bot \\ a'\in\dom(h) \\ s_{a'}=h(a')}{\ppget{s, i,\hl{\code{MATCH}}}{\aloc{a'},s_{a'},[\hl{i=\aloc{a'}}]}}
+\and\inferrule[ALocPMapSetSome]{(h,d)=\mathit{unwrap}(s) \\ \hl{a = \code{to\_aloc}~i} \\ \hl{a\neq\bot} \\ s_i\neq\bot \\ h'=h[a\leftarrow s_i] \\ s'=\mathit{wrap}(h', d)}{\ppset{s,i,s_i}{s'}}
+\and\inferrule[ALocPMapSetNone]{(h,d)=\mathit{unwrap}(s) \\ \hl{a = \code{to\_aloc}~i} \\ \hl{a\neq\bot} \\ s_i=\bot \\ h'=h[a\not\leftarrow] \\ s'=\mathit{wrap}(h',d)}{\ppset{s,i,s_i}{s'}}
 \end{mathparpagebreakable}
 
-The main advantage of $\ALocPMap$ is made evident from the rules: looking up an index does not branch; it either is found directly in the map, or can be added. Branching is instead delegated to the SAT-solver of the engine, that when matching may decide two abstract locations are equal or not, resulting in two branches: one where they're different and one where they're equal and the states at both locations are composed.
+The main advantage of $\ALocPMap$ is made evident from the rules: looking up an index does not branch when not matching; it either is found directly in the map, or can be added. This is sound, because abstract locations cannot be calculated or generated freely by the program: they can only be created when producing or consuming predicates (in which case we enable matching and the performance is similar to that of the unoptimised \PMap{}), or when allocating (at which point the we know it is a new ALoc different to all others, since it is a fresh ALoc, by definition). It is also noteworthy that we index on strings, rather than expressions; this makes other implementation-specific optimisations easy to apply, for instance using a prefix map or a hash map.
 
 
 
