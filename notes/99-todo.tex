@@ -2,17 +2,34 @@
 
 \begin{tabularx}{\textwidth}{c|X}
 	\thead{Priority} & \thead{Name}\\ \hline\hline
-	0 & \textbf{Redefine state models}: \sout{Exc, Ag, Frac, PMap, List,  GMap, Freeable, Sum, Product}, DynPMap \\ \hline
-	0 & \textbf{Define optimised state models}: \sout{ALocPMap, SplitPMap} \\ \hline
+	0 & \sout{\textbf{Redefine state models}: Ex, Ag, Frac, PMap, DynPMap, List, GMap, Freeable, Sum, Product} \\ \hline
+	0 & \sout{\textbf{Define optimised state models}: ALocPMap, SplitPMap} \\ \hline
+	0 & \textbf{Proof of equivalence}: ALocPMap, SplitPMap \\ \hline
 	1 & \textbf{Define stacks}: WISL, JS, C \\ \hline
-	1 & \textbf{Write comparative evaluation}: WISL, JS, C, (Viper?) \\ \hline
-	1 & \textbf{Write absolute evaluation}: PMap perf according to size, split PMap split rate \\
-	2 & \textbf{Define ea/consume/produce for $\bot$}: rules, proofs? \\ \hline
+	1 & \textbf{Write comparative evaluation}: WISL, \sout{JS, C}, (Viper?) \\ \hline
+	1 & \textbf{Write proofs}: \sout{Ex}, Ag, Frac, PMap, List, GMap, Freeable, Sum, Product, DynPMap \\ \hline
+	2 & \textbf{Results table}: make a large table for appendix, with for each tested file: mode, number of procedures, number of GIL commands, Gillian time to verify, instantiation time to verify \\ \hline
+	2 & \textbf{Soudness of JS construction} \\ \hline
+	2 & \textbf{Write absolute evaluation}: PMap perf according to size, split PMap split rate \\ \hline
+	3 & \textbf{Define ea/consume/produce for $\bot$}: rules, proofs? \\ \hline
 	3 & \textbf{Add \LFail{} and \Miss{} to consume}: rules, proofs? \\ \hline
 	4 & \textbf{Redefine fixes as purely assertions}: signature, biabduction rules, proof of soundness \\ \hline
 \end{tabularx}
 
 Small things to do/fix: \begin{compactitem}
- \item Mention that CSE2 has \SV, but keep it implicit here.
- \item Remove notion of compatibility	
+ \item \sout{Mention that CSE2 has $\SV$, but keep it implicit here.}
+ \item Remove notion of compatibility / update: maybe Sacha has a fix?
+ \item Explain the difference between \LFail{} and \Err{}, maybe with that Venn diagram
+ \item Give an example where \Miss{} is relevant for \consume.
+ \item Explain what core predicates are -- relevant: \cite{abstractseplogic}
+ \item Mention the \code{emp} ``core predicate'', if it has a relation with intuistic vs classic SL.
+ \item Mention why we can't just lift \execac{} (actions on $\bot$ don't only yield $\bot$).
+ \item Figure out if JSIL is wrong with \Ag{} for metadata (as it makes \code{delete} UX unsound) -- replace with \Frac{} without \store{}? See \cite{towardsjs}
+ \item Explain/understand why we can't prove soundness of C construction like we can for JavaScript. Is there something about C that makes it incompatible with our nice proofs?
+ \item Give example of why the sum is hard to define with PCMs
+ \item Mention why although we can define the core as $M\finmap M$, it's more pleasing to have $M\mapsto M^?$
+ \item Find the tests in C that are consistently slower, emit hypothesis and/or find why and explain
+ \item Mention the example of boolean formula state models, where $|a| \cdot |b| \preo |a\cdot b|$
+ \item For every state model transformer make it clear the different wrt PCMs
+ \item Give an example of how ALocPMap works
  \end{compactitem}
