@@ -29,31 +29,35 @@
 \newcommand{\actions}[0]{{\ensuremath{\cal{A}}}}
 \newcommand{\preds}[0]{\ensuremath{\Delta}}
 
+\newcommand{\sym}[1]{\hat{#1}}
+
 \newcommand{\mmdl}[0]{\ensuremath{\mathbb S}}
 \newcommand{\st}[0]{\sigma}
-\newcommand{\sst}[0]{\hat\st}
+\newcommand{\sst}[0]{\sym\st}
 \newcommand{\St}[0]{\Sigma}
-\newcommand{\Sst}[0]{\hat\St}
+\newcommand{\Sst}[0]{\sym\St}
 
 \newcommand{\evalsto}[3]{\ensuremath{p\vdash(#1)\Downarrow_\theta#2:(#3)}}
 \newcommand{\execOLD}[5]{#1.#2(#3) \rightsquigarrow #4:(#5)}
 \newcommand{\ppexec}[3]{\ensuremath{#1(#2)\rightsquigarrow(#3)}}
+\newcommand{\ppexecc}[3]{\ensuremath{#1(#2)=(#3)}}
 \newcommand{\ppcons}[2]{\ensuremath{\consume(#1)\rightsquigarrow (#2)}}
 \newcommand{\ppprod}[2]{\ensuremath{\produce(#1)\rightsquigarrow (#2)}}
 \newcommand{\corepred}[3]{\ensuremath{\left<#1\right>\!(#2;#3)}}
 
 \newcommand{\ins}[0]{\vec{v}_i}
-\newcommand{\sins}[0]{\vec{\hat{v}}_i}
+\newcommand{\sins}[0]{\vec{\sym{v}}_i}
 \newcommand{\outs}[0]{\vec{v}_o}
-\newcommand{\souts}[0]{\vec{\hat{v}}_o}
+\newcommand{\souts}[0]{\vec{\sym{v}}_o}
 
 \newcommand{\pc}[0]{\pi}
 \newcommand{\Pc}[0]{\Pi}
 \newcommand{\SAT}[0]{\operatorname{\code{SAT}}}
-
+\newcommand{\OX}[0]{\code{OX}}
+\newcommand{\UX}[0]{\code{UX}}
 \newcommand{\SV}[0]{\textit{SV}}
 
-\newcommand{\expeval}[1]{\llbracket#1\rrbracket}
+\newcommand{\expeval}[2][\theta,s]{\llbracket#2\rrbracket_{#1}}
 
 \newcommand{\outcomes}[0]{{\cal O}}
 \newcommand{\Ok}[0]{\code{Ok}}
@@ -61,9 +65,13 @@
 \newcommand{\Err}[0]{\code{Err}}
 \newcommand{\LFail}[0]{\code{LFail}}
 
-\newcommand{\Nat}[0]{\text{Nat}}
-\newcommand{\Val}[0]{\text{Val}}
-\newcommand{\Str}[0]{\text{Str}}
+\newcommand{\type}[1]{\text{#1}}
+\newcommand{\Nat}[0]{\type{Nat}}
+\newcommand{\Val}[0]{\type{Val}}
+\newcommand{\Str}[0]{\type{Str}}
+\newcommand{\LVal}[0]{\type{LVal}}
+\newcommand{\Loc}[0]{\type{Loc}}
+\newcommand{\ALoc}[0]{\type{ALoc}}
 
 \newcommand{\bools}[0]{\mathbb{B}}
 \newcommand{\vtrue}[0]{\texttt{true}}
@@ -129,7 +137,12 @@
 \newcommand{\GMap}[0]{\statemodel{GMap}}
 \newcommand{\SplitPMap}[0]{\statemodel{PMap}_{\statemodel{Split}}}
 \newcommand{\ALocPMap}[0]{\statemodel{PMap}_{\statemodel{ALoc}}}
+\newcommand{\SplitDynPMap}[0]{\statemodel{DynPMap}_{\statemodel{Split}}}
+\newcommand{\ALocDynPMap}[0]{\statemodel{DynPMap}_{\statemodel{ALoc}}}
 \newcommand{\aloc}[1]{\text{aloc}(#1)}
+
+\newcommand{\BlockTree}[0]{\statemodel{BlockTree}}
+\newcommand{\CGEnv}[0]{\statemodel{CGEnv}}
 
 % Util
 \renewcommand\tabularxcolumn[1]{m{#1}}% for vertical centering text in X column

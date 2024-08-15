@@ -123,7 +123,7 @@ We also remind the frame substraction property, defined as:
 \end{align*}
 
 \newcommand{\swap}[0]{\code{swap}}
-\newcommand{\execswap}[3]{\exec{#1}{\swap}{}{#2}{#3}}
+\newcommand{\execswap}[3]{\ppexec{\swap}{#1}{#2,#3}}
 
 \begin{proof}
 
@@ -135,7 +135,7 @@ Assuming
 \hypvitem{pcm2} $\mmdl_2$ is a well formed PCM, $\mmdl_2 \defeq (\St_2, 0_2, \cdot)$
 \hypvitem{swap} There is an action \swap{} that may flip the side of a sum from one side to the other, ie.
 	\begin{align*}
-		\exists \st_1,\st_2',v.~ \execswap{\sone\st_1}\Ok{\stwo\st_2',v}
+		\exists \st_1,\st_2',v.~ \execswap{\sone\st_1}{\Ok}{\stwo\st_2',v}
 	\end{align*}
 
 \end{hypvlist}

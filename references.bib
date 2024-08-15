@@ -1,12 +1,71 @@
 %% This BibTeX bibliography file was created using BibDesk.
 %% https://bibdesk.sourceforge.io/
 
-%% Created for Opale Sjöstedt at 2024-08-09 16:12:28 +0200 
+%% Created for Opale Sjöstedt at 2024-08-15 19:17:31 +0100 
 
 
 %% Saved with string encoding Unicode (UTF-8) 
 
 
+
+@inproceedings{towardsjs,
+	abstract = {JavaScript has become the most widely used language for client-side web programming. The dynamic nature of JavaScript makes understanding its code notoriously difficult, leading to buggy programs and a lack of adequate static-analysis tools. We believe that logical reasoning has much to offer JavaScript: a simple description of program behaviour, a clear understanding of module boundaries, and the ability to verify security contracts.
+  
+  We introduce a program logic for reasoning about a broad subset of JavaScript, including challenging features such as prototype inheritance and with. We adapt ideas from separation logic to provide tractable reasoning about JavaScript code: reasoning about easy programs is easy; reasoning about hard programs is possible. We prove a strong soundness result. All libraries written in our subset and proved correct with respect to their specifications will be well-behaved, even when called by arbitrary JavaScript code.},
+	author = {Gardner, Philippa and Maffeis, Sergio and Smith, Gareth},
+	booktitle = {Proceedings of the 39\textsuperscript{th} {ACM} {SIGPLAN-SIGACT} Symposium on Principles of Programming Languages ({POPL'12})},
+	date-added = {2024-08-15 19:17:21 +0100},
+	date-modified = {2024-08-15 19:17:27 +0100},
+	doi = {10.1145/2103656.2103663},
+	editor = {Field, John and Hicks, Michael},
+	month = jan,
+	pages = {31--44},
+	publisher = {{ACM}},
+	title = {{Towards a Program Logic for JavaScript}},
+	year = {2012},
+	bdsk-url-1 = {https://doi.org/10.1145/2103656.2103663}}
+
+@inproceedings{sljungle,
+	abstract = {Research results from so-called ``classical'' separation logics are not easily ported to so-called ``intuitionistic'' separation logics, and vice versa. Basic questions like, ``Can the frame rule be proved independently of whether the programming language is garbage-collected?'' ``Can amortized resource analysis be ported from one separation logic to another?'' should be straightforward. But they are not. Proofs done in a particular separation logic are difficult to generalize. We argue that this limitation is caused by incompatible semantics. For example, emp sometimes holds everywhere and sometimes only on units.},
+	address = {Cham},
+	author = {Cao, Qinxiang and Cuellar, Santiago and Appel, Andrew W.},
+	booktitle = {Programming Languages and Systems},
+	date-added = {2024-08-09 20:35:30 +0200},
+	date-modified = {2024-08-09 20:35:34 +0200},
+	editor = {Chang, Bor-Yuh Evan},
+	isbn = {978-3-319-71237-6},
+	pages = {190--211},
+	publisher = {Springer International Publishing},
+	title = {Bringing Order to the Separation Logic Jungle},
+	year = {2017},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhYYm9va21hcmtfEFAuLi8uLi8uLi9EZXNrdG9wL21zY2kvZXh0ZXJuYWwvQnJpbmdpbmcgT3JkZXIgdG8gdGhlIFNlcGFyYXRpb24gTG9naWMgSnVuZ2xlLnBkZk8RBDBib29rMAQAAAAABBAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAsAwAABQAAAAEBAABVc2VycwAAAAUAAAABAQAAb3NjYXIAAAAHAAAAAQEAAERlc2t0b3AABAAAAAEBAABtc2NpCAAAAAEBAABleHRlcm5hbDEAAAABAQAAQnJpbmdpbmcgT3JkZXIgdG8gdGhlIFNlcGFyYXRpb24gTG9naWMgSnVuZ2xlLnBkZgAAABgAAAABBgAABAAAABQAAAAkAAAANAAAAEAAAABQAAAACAAAAAQDAACeWAAAAAAAAAgAAAAEAwAA85oDAAAAAAAIAAAABAMAAPiaAwAAAAAACAAAAAQDAAAXrQQIAAAAAAgAAAAEAwAAQgQaCQAAAAAIAAAABAMAABXkrwoAAAAAGAAAAAEGAACsAAAAvAAAAMwAAADcAAAA7AAAAPwAAAAIAAAAAAQAAEHGNzBwrB2SGAAAAAECAAABAAAAAAAAAA8AAAAAAAAAAAAAAAAAAAAIAAAABAMAAAQAAAAAAAAABAAAAAMDAAD1AQAACAAAAAEJAABmaWxlOi8vLwwAAAABAQAATWFjaW50b3NoIEhECAAAAAQDAAAAUKEbcwAAAAgAAAAABAAAQcX1BKwAAAAkAAAAAQEAAEQ1MzU3NEMxLUE3REItNEY2Qy1CMzVGLTNFMjNCMjJDMTBFOBgAAAABAgAAgQAAAAEAAADvEwAAAQAAAAAAAAAAAAAAAQAAAAEBAAAvAAAAAAAAAAEFAAAGAQAAAQIAAGZiNmJkN2EyOTkxZWYwZTY4ODgwZjc1MzY2ZDE0NjRiMTY4NjgzZTNiYjA4ZDFiZGZiMTRiNTFjNTk0Njk0Y2U7MDA7MDAwMDAwMDA7MDAwMDAwMDA7MDAwMDAwMDA7MDAwMDAwMDAwMDAwMDAyMDtjb20uYXBwbGUuYXBwLXNhbmRib3gucmVhZC13cml0ZTswMTswMTAwMDAxMDswMDAwMDAwMDBhYWZlNDE1OzU1Oy91c2Vycy9vc2Nhci9kZXNrdG9wL21zY2kvZXh0ZXJuYWwvYnJpbmdpbmcgb3JkZXIgdG8gdGhlIHNlcGFyYXRpb24gbG9naWMganVuZ2xlLnBkZgAAAMwAAAD+////AQAAAAAAAAAQAAAABBAAAIwAAAAAAAAABRAAAAwBAAAAAAAAEBAAADwBAAAAAAAAQBAAACwBAAAAAAAAAiAAAAgCAAAAAAAABSAAAHgBAAAAAAAAECAAAIgBAAAAAAAAESAAALwBAAAAAAAAEiAAAJwBAAAAAAAAEyAAAKwBAAAAAAAAICAAAOgBAAAAAAAAMCAAABQCAAAAAAAAAcAAAFwBAAAAAAAAEcAAABQAAAAAAAAAEsAAAGwBAAAAAAAAgPAAABwCAAAAAAAAAAgADQAaACMAdgAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAASq}}
+
+@inbook{hosltofol,
+	author = {Mansky, William and Honor{\'e}, Wolf and Appel, Andrew},
+	date-added = {2024-08-09 19:53:44 +0200},
+	date-modified = {2024-08-09 19:53:59 +0200},
+	doi = {10.1007/978-3-030-44914-8_16},
+	isbn = {978-3-030-44913-1},
+	month = {04},
+	pages = {428-455},
+	title = {Connecting Higher-Order Separation Logic to a First-Order Outside World},
+	year = {2020},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhYYm9va21hcmtfEGouLi8uLi8uLi9EZXNrdG9wL21zY2kvZXh0ZXJuYWwvQ29ubmVjdGluZyBIaWdoZXItT3JkZXIgU2VwYXJhdGlvbiBMb2dpYyB0byBhIEZpcnN0LU9yZGVyIE91dHNpZGUgV29ybGQucGRmTxEEnGJvb2ucBAAAAAAEEDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIwDAAAFAAAAAQEAAFVzZXJzAAAABQAAAAEBAABvc2NhcgAAAAcAAAABAQAARGVza3RvcAAEAAAAAQEAAG1zY2kIAAAAAQEAAGV4dGVybmFsSwAAAAEBAABDb25uZWN0aW5nIEhpZ2hlci1PcmRlciBTZXBhcmF0aW9uIExvZ2ljIHRvIGEgRmlyc3QtT3JkZXIgT3V0c2lkZSBXb3JsZC5wZGYAGAAAAAEGAAAEAAAAFAAAACQAAAA0AAAAQAAAAFAAAAAIAAAABAMAAJ5YAAAAAAAACAAAAAQDAADzmgMAAAAAAAgAAAAEAwAA+JoDAAAAAAAIAAAABAMAABetBAgAAAAACAAAAAQDAABCBBoJAAAAAAgAAAAEAwAA2jilCgAAAAAYAAAAAQYAAMQAAADUAAAA5AAAAPQAAAAEAQAAFAEAAAgAAAAABAAAQcYzR4e3iMMYAAAAAQIAAAEAAAAAAAAADwAAAAAAAAAAAAAAAAAAAAgAAAAEAwAABAAAAAAAAAAEAAAAAwMAAPUBAAAIAAAAAQkAAGZpbGU6Ly8vDAAAAAEBAABNYWNpbnRvc2ggSEQIAAAABAMAAABQoRtzAAAACAAAAAAEAABBxfUErAAAACQAAAABAQAARDUzNTc0QzEtQTdEQi00RjZDLUIzNUYtM0UyM0IyMkMxMEU4GAAAAAECAACBAAAAAQAAAO8TAAABAAAAAAAAAAAAAAABAAAAAQEAAC8AAAAAAAAAAQUAABoAAAABAQAATlNVUkxEb2N1bWVudElkZW50aWZpZXJLZXkAAAQAAAADAwAAngMAACABAAABAgAAYzg4ZDlmZWM1MTA3NGQ0ZTBkMTNlY2IzZDhlOWI4ZTNjZTM4ZTNjYTAzNGE1MzIzNDcxNWU1ZWYwMDNkZmRlYTswMDswMDAwMDAwMDswMDAwMDAwMDswMDAwMDAwMDswMDAwMDAwMDAwMDAwMDIwO2NvbS5hcHBsZS5hcHAtc2FuZGJveC5yZWFkLXdyaXRlOzAxOzAxMDAwMDEwOzAwMDAwMDAwMGFhNTM4ZGE7NTU7L3VzZXJzL29zY2FyL2Rlc2t0b3AvbXNjaS9leHRlcm5hbC9jb25uZWN0aW5nIGhpZ2hlci1vcmRlciBzZXBhcmF0aW9uIGxvZ2ljIHRvIGEgZmlyc3Qtb3JkZXIgb3V0c2lkZSB3b3JsZC5wZGYA2AAAAP7///8BAAAAAAAAABEAAAAEEAAApAAAAAAAAAAFEAAAJAEAAAAAAAAQEAAAVAEAAAAAAABAEAAARAEAAAAAAAACIAAAIAIAAAAAAAAFIAAAkAEAAAAAAAAQIAAAoAEAAAAAAAARIAAA1AEAAAAAAAASIAAAtAEAAAAAAAATIAAAxAEAAAAAAAAgIAAAAAIAAAAAAAAwIAAALAIAAAAAAAABwAAAdAEAAAAAAAARwAAAFAAAAAAAAAASwAAAhAEAAAAAAACA8AAAZAIAAAAAAAA0AgCAWAIAAAAAAAAACAANABoAIwCQAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAABTA=},
+	bdsk-url-1 = {https://doi.org/10.1007/978-3-030-44914-8_16}}
+
+@inproceedings{backforwardsl,
+	abstract = {The use of Hoare logic in combination with weakest preconditions and strongest postconditions is a standard tool for program verification, known as backward and forward reasoning. In this paper we extend these techniques to allow backward and forward reasoning for separation logic. While the former is derived directly from the standard operators of separation logic, the latter uses a new one. We implement our framework in the interactive proof assistant Isabelle/HOL, and enable automation with several interactive proof tactics.},
+	address = {Cham},
+	author = {Bannister, Callum and H{\"o}fner, Peter and Klein, Gerwin},
+	booktitle = {Interactive Theorem Proving},
+	date-added = {2024-08-09 19:50:53 +0200},
+	date-modified = {2024-08-09 19:51:03 +0200},
+	editor = {Avigad, Jeremy and Mahboubi, Assia},
+	isbn = {978-3-319-94821-8},
+	pages = {68--87},
+	publisher = {Springer International Publishing},
+	title = {Backwards and Forwards with Separation Logic},
+	year = {2018}}
 
 @misc{viperfoundations,
 	archiveprefix = {arXiv},
@@ -370,9 +429,9 @@
 	abstract = {The dynamic nature of JavaScript and its complex semantics make it a difficult target for logic-based verification. We introduce JaVerT, a semi-automatic JavaScript Verification Toolchain, based on separation logic and aimed at the specialist developer wanting rich, mechanically verified specifications of critical JavaScript code. To specify JavaScript programs, we design abstractions that capture its key heap structures (for example, prototype chains and function closures), allowing the developer to write clear and succinct specifications with minimal knowledge of the JavaScript internals. To verify JavaScript programs, we develop JaVerT, a verification pipeline consisting of: JS-2-JSIL, a well-tested compiler from JavaScript to JSIL, an intermediate goto language capturing the fundamental dynamic features of JavaScript; JSIL Verify, a semi-automatic verification tool based on a sound JSIL separation logic; and verified axiomatic specifications of the JavaScript internal functions. Using JaVerT, we verify functional correctness properties of: data-structure libraries (key-value map, priority queue) written in an object-oriented style; operations on data structures such as binary search trees (BSTs) and lists; examples illustrating function closures; and test cases from the official ECMAScript test suite. The verification times suggest that reasoning about larger, more complex code using JaVerT is feasible.},
 	address = {New York, NY, USA},
 	articleno = {50},
-	author = {Fragoso Santos, Jos\'{e} and Maksimovi\'{c}, Petar and Naud\v{z}i\={u}nienundefined, Daiva and Wood, Thomas and Gardner, Philippa},
+	author = {{Fragoso Santos}, Jos{\'{e}} and Maksimovic, Petar and Naudziuniene, Daiva and Wood, Thomas and Gardner, Philippa},
 	date-added = {2024-05-29 11:48:08 +0100},
-	date-modified = {2024-05-29 11:48:11 +0100},
+	date-modified = {2024-08-14 15:35:20 +0100},
 	doi = {10.1145/3158138},
 	issue_date = {January 2018},
 	journal = {Proc. ACM Program. Lang.},
@@ -776,6 +835,7 @@
 	url = {https://doi.org/10.1145/363235.363259},
 	volume = {12},
 	year = {1969},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhYYm9va21hcmtfEDwuLi8uLi8uLi9Eb3dubG9hZHMvMTAuMTAwN185NzgtMy0zMTktNzEyMzctNl8xMC1jaXRhdGlvbi5iaWJPEQPMYm9va8wDAAAAAAQQMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyAIAAAUAAAABAQAAVXNlcnMAAAAFAAAAAQEAAG9zY2FyAAAACQAAAAEBAABEb3dubG9hZHMAAAApAAAAAQEAADEwLjEwMDdfOTc4LTMtMzE5LTcxMjM3LTZfMTAtY2l0YXRpb24uYmliAAAAEAAAAAEGAAAEAAAAFAAAACQAAAA4AAAACAAAAAQDAACeWAAAAAAAAAgAAAAEAwAA85oDAAAAAAAIAAAABAMAACabAwAAAAAACAAAAAQDAABnRaUKAAAAABAAAAABBgAAhAAAAJQAAACkAAAAtAAAAAgAAAAABAAAQcYzTG5M39sYAAAAAQIAAAEAAAAAAAAADwAAAAAAAAAAAAAAAAAAAAgAAAAEAwAAAgAAAAAAAAAEAAAAAwMAAPUBAAAIAAAAAQkAAGZpbGU6Ly8vDAAAAAEBAABNYWNpbnRvc2ggSEQIAAAABAMAAABQoRtzAAAACAAAAAAEAABBxfUErAAAACQAAAABAQAARDUzNTc0QzEtQTdEQi00RjZDLUIzNUYtM0UyM0IyMkMxMEU4GAAAAAECAACBAAAAAQAAAO8TAAABAAAAAAAAAAAAAAABAAAAAQEAAC8AAAAAAAAAAQUAAPIAAAABAgAAZjQ4MDBjODIzMzVmZDQzM2RmODFmMTU5ZTMyZDEwYWE4MDA2ZjQxMmM1YWY2NzllZDYyYThmZjNjMDQ3ZTU4YjswMDswMDAwMDAwMDswMDAwMDAwMDswMDAwMDAwMDswMDAwMDAwMDAwMDAwMDIwO2NvbS5hcHBsZS5hcHAtc2FuZGJveC5yZWFkLXdyaXRlOzAxOzAxMDAwMDEwOzAwMDAwMDAwMGFhNTQ1Njc7NWM7L3VzZXJzL29zY2FyL2Rvd25sb2Fkcy8xMC4xMDA3Xzk3OC0zLTMxOS03MTIzNy02XzEwLWNpdGF0aW9uLmJpYgAAAMwAAAD+////AQAAAAAAAAAQAAAABBAAAGwAAAAAAAAABRAAAMQAAAAAAAAAEBAAAOwAAAAAAAAAQBAAANwAAAAAAAAAAiAAALgBAAAAAAAABSAAACgBAAAAAAAAECAAADgBAAAAAAAAESAAAGwBAAAAAAAAEiAAAEwBAAAAAAAAEyAAAFwBAAAAAAAAICAAAJgBAAAAAAAAMCAAAMQBAAAAAAAAAcAAAAwBAAAAAAAAEcAAABQAAAAAAAAAEsAAABwBAAAAAAAAgPAAAMwBAAAAAAAAAAgADQAaACMAYgAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAQy},
 	bdsk-url-1 = {https://doi.org/10.1145/363235.363259}}
 
 @inproceedings{isl,

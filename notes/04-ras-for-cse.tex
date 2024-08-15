@@ -26,7 +26,7 @@ A property of Iris RAs is that composition is \emph{total} -- to take into accou
 
 It is worth noting that \emph{partial} RAs are equivalent to regular RAs, \emph{so long as $\irisval$ always holds for valid states}\footnote{This, to our knowledge, is the case for all of the simpler RAs defined in Iris: Ex, Ag${}_0$, sum, product, etc.}. Indeed, compositions that yield $\lightning$ can be made undefined, and the validity function removed, to gain partiality, and inversely to go back to the Iris definition.
 
-An interesting property of this is that because validity is replaced by the fact composition is defined, the validity of a composition is equivalent to the fact two states are disjoint: $\irisval(a\cdot b) \iff a \# b$.
+An interesting property of this is that because validity is replaced by the fact composition is defined, the validity of a composition is equivalent to the fact two states are disjoint: $\irisval(a\cdot b) \iff a \disj b$.
 
 We now define the properties of RAs taking this change into account -- see \autoref{fig:ra-def}. From now, the term RA will be used to refer to these partial RAs.
 \begin{figure}
@@ -64,9 +64,9 @@ We now propose to redefine the notion of state models. To follow the spirit of C
 
 The core engine enables whole-program symbolic execution. For this state models must firstly define the set of states the execution will happen on; this is done via a partial resource algebra: a tuple  $(M, |\!-\!|:M\rarr M^?,(\cdot):M\times M\part M)$. They are further equipped with a set of actions $\cal A$, and an \execac{} function.
 \begin{align*}
-	\execac &: \pset(\code{SVar})\rarr \Sst^? \rarr {\cal A} \rarr \vallist \rarr \pset(\full\outcomes_e \times \Sst^? \times \vallist \times \Pc)
+	\execac &: \Sst^? \rarr {\cal A} \rarr \vallist \rarr \pset(\full\outcomes_e \times \Sst^? \times \vallist \times \Pc)
 \end{align*}
-The arguments of \execac{} are, in order: the set of existing symbolic variables (this allows the state model to generate fresh variables, for instance in allocation), the \emph{optional} state the action is executed on, the action, and the received arguments. It returns a set of branches, with an outcome, the new state, the returned values, and the path condition of that branch. It is pretty-printed as \ppexec{\alpha}{SV, \sst,\sins, o}{\sst', \souts, \pc}, with $SV$ omitted when not necessary.
+The arguments of \execac{} are, in order: the \emph{optional} state the action is executed on, the action, and the received arguments. It returns a set of branches, with an outcome, the new state, the returned values, and the path condition of that branch. It is pretty-printed as \ppexec{\alpha}{\sst,\sins}{o, \sst', \souts, \pc}.
 
 Here, the outcome is an outcome in the set of \emph{full execution outcomes} $\full\outcomes_e=\{ \Ok,\Err \}$. In the next subsection, this set will be extended to account for misses and logical failures, but these do not exist with full semantics.
 
@@ -74,13 +74,15 @@ The main difference here is that the state may be $\bot$, if the action is execu
 
 Whole-program symbolic execution is, by definition, non-compositional -- it thus operates on \emph{full state}, a notion introduced in \cite{sacha-phd}. As such, the only valid outcomes here are \Ok{} and \Err{}.
 
-Because we operate in symbolic memory, an additional piece of information is the \emph{path condition}, the set of constraints accumulated throughout execution. A path condition $\pc\in\Pc$ is a \emph{list} of symbolic values, that evaluates to a boolean. We decide to define it as a list rather than a single conjunction of boolean symbolic values, as this allows us to easily check if a path condition is an extension (or a strengthening) of another, with $\pc'\supseteq\pc$.
+Because we operate in symbolic memory, an additional piece of information is the \emph{path condition}, the set of constraints accumulated throughout execution. A path condition $\pc\in\Pc$ is a \emph{list of symbolic values}, that evaluates to a boolean. We decide to define it as a list rather than a single conjunction of boolean symbolic values, as this allows us to easily check if a path condition is an extension (or a strengthening) of another, with $\pc'\supseteq\pc$.
+
+We note that \cite{cse2} also has an `\textit{SV}' argument in action execution, that contains all existing symbolic variables, and that must be used when creating a new symbolic variable to ensure it is fresh. While necessary for proofs within the engine with Rocq, we omit it here. It is only used for allocation and it can instead be kept implicit, by assuming we can always generate a fresh symbolic variable.
 
 \subsection{Compositional Engine}
 
-The compositional engine, built on top of the core engine, allows for verification of function specifications, and handles calling functions by their specification. As such, the state model must be extended with a set of core predicates $\Delta$ and a pair of \consume{} and \produce{} functions (equivalent, respectively, to a symbolic assert and assume). Finally, to link core predicates to states, it provides a $\code{sat}_\Delta$ relation.
+The compositional engine, built on top of the core engine, allows for verification of function specifications, and handles calling functions by their specification. As such, the state model must be extended with a set of core predicates $\Delta$ and a pair of \consume{} and \produce{} functions (equivalent, respectively, to a resource assert and assume). Finally, to link core predicates to states, it provides a $\code{sat}_\Delta$ relation.
 \begin{align*}
-	\text{for }M=\{\code{OX}, \code{UX}\}\\
+	\text{for }M=\{\OX, \UX\}\\
 	\consume &: M\rarr \Sst^? \rarr \Delta \rarr \vallist \rarr \pset(\outcomes_l \times \Sst^? \times \vallist \times \Pc) \\
 	\produce &: \Sst^? \rarr \Delta \rarr \vallist \rarr \vallist \rarr \pset(\Sst^? \times \Pc)\\
 	\code{sat}_\Delta &:\St \rarr \Delta \rarr \vallist \rarr \pset(\vallist)
@@ -137,30 +139,23 @@ For all of the axioms we assume we have a symbolic state model $\mmdl$, made of 
 \theta,s,\bot_{\St^?}\models \bot_{\Sst^?}
 \end{equation}
 
-Note that here we work with the \emph{option} version $\St^?$ of the states $\St$, which extends the carrier set with a $\bot_{\St^?}$ element. If the core of a state $|\st|$ is undefined, it becomes $|\st^?|=\bot_{\St^?}$. Finally, the composition of any state with $\bot_{\St^?}$ is that state.
-
-\begin{equation}
-\tag{Symbolic Memory Composition}\label{eq:symbolic-mem-comp}
-\begin{array}{l}
-\theta,s,\st_1\models \sst_1 \land \theta,s,\st_2\models \sst_2 \land \st_1\#\st_2 \iff \theta,s,(\st_1\cdot\st_2)\models (\sst_1\cdot\sst_2)
-\end{array}
-\end{equation}
+Note that here we work with the \emph{option} version $\St^?$ of the states $\St$, which extends the carrier set with a $\bot_{\St^?}$ element. If the core of a state $|\st|$ is $\bot$, the core of its option is $|\st^?|=\bot_{\St^?}$, with $\bot_{\St^?}$ \emph{inside} the carrier set of the state model (whereas $\bot\notin \St$). Finally, the composition of any state with $\bot_{\St^?}$ is that state.
 
 \begin{equation}
 \tag{Memory Model OX Soundness}\label{eq:mem-ox-soundness}
 \begin{array}{l}
-\theta,s,\st\models\sst \land \ppexec{\alpha}{\st,\ins}{o,\st',\outs} \implies \exists \SV, \sins,\souts,\sst',\pc,\theta'\ldotp\\
-\quad \ppexec{\hat\alpha}{\SV, \sst,\sins}{o,\sst',\pc,\souts} \land \SAT(\pc) \land \theta',s,\st'\models \sst' \land\\
-\qquad \expeval{\sins}_{s,\pc}=(\ins,\pc')\land\expeval{\souts}_{s,\pc'}=(\souts,\pc'')
+\theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs} \implies \exists \sins,\souts,\sst',\pc,\theta'\ldotp\\
+\quad \ppexec{\hat\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT(\pc) \land \theta',s,\st'\models \sst' \land\\
+\qquad \expeval[s,\pc]{\sins}=(\ins,\pc')\land\expeval[s,\pc']{\souts}=(\souts,\pc'')
 \end{array}
 \end{equation}
 
 \begin{equation}
 \tag{Memory Model UX Soundness}\label{eq:mem-ux-soundness}
 \begin{array}{l}
-\ppexec{\hat\alpha}{\SV,\sst,\sins}{o,\sst',\pc,\souts} \land \SAT(\pc) \land \theta,s,\st'\models\sst' \land \\
-\expeval{\souts}_{\hat s,\pc}\rightsquigarrow(\outs,\pc')\land \expeval{\sins}_{\hat s,\pc'}\rightsquigarrow(\ins,\pc'')\implies\\
-\quad \exists \st\ldotp \theta,s,\st\models\sst \land \ppexec{\alpha}{\st,\ins}{o,\st',\outs}
+\ppexec{\hat\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT(\pc) \land \theta,s,\st'\models\sst' \land \\
+\expeval[\hat s,\pc]{\souts}\rightsquigarrow(\outs,\pc')\land \expeval[\hat s,\pc']{\sins}\rightsquigarrow(\ins,\pc'')\implies\\
+\quad \exists \st\ldotp \theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs}
 \end{array}
 \end{equation}
 
@@ -178,12 +173,12 @@ Note that here we work with the \emph{option} version $\St^?$ of the states $\St
 \begin{equation}
 \tag{Frame Addition}\label{eq:frame-add}
 \begin{array}{l}
-\ppexec{\alpha}{\sst,\sins}{o, \sst', \souts, \pc'} \land o \neq \Miss \land \sst'\#\sst_f\implies\\
-\quad\sst \# \sst_f \land \ppexec{\alpha}{\sst\cdot\sst_f, \sins}{o, \sst'\cdot\sst_f, \souts, \pc'}
+\ppexec{\alpha}{\sst,\sins}{o, \sst', \souts, \pc'} \land o \neq \Miss \land \sst'\disj\sst_f\implies\\
+\quad\sst \disj \sst_f \land \ppexec{\alpha}{\sst\cdot\sst_f, \sins}{o, \sst'\cdot\sst_f, \souts, \pc'}
 \end{array}
 \end{equation}
 
-Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from Iris is a form of frame subtraction: it guarantees $\forall c\ldotp \irisval(a \cdot c)\Rarr \irisval(b\cdot c)$, with $c$ a frame that can be added to the state ($\sst_f$ in the axiom). This becomes evident when noticing that disjointness of partial RAs equates to validity in Iris RAs, giving us $\forall c\ldotp a\# c\Rarr b\# c$. In fact, the Iris frame-preserving update implies frame subtraction modulo action outcomes. This makes sense, as Iris is used for OX reasoning, and frame subtraction is the property needed for OX soundness. \note{Maybe move this elsewhere.}
+Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from Iris is a form of frame subtraction: it guarantees $\forall c\ldotp \irisval(a \cdot c)\Rarr \irisval(b\cdot c)$, with $c$ a frame that can be added to the state ($\sst_f$ in the axiom). This becomes evident when noticing that disjointness of partial RAs equates to validity in Iris RAs, giving us $\forall c\ldotp a\disj c\Rarr b\disj c$. In fact, the Iris frame-preserving update implies frame subtraction modulo action outcomes. This makes sense, as Iris is used for OX reasoning, and frame subtraction is the property needed for OX soundness. \note{Maybe move this elsewhere.}
 
 Given the full state model $\full{\mmdl}$ with the states $\full\Sst$ and actions $\full\actions$ and the compositional state model $\mmdl$ with the states $\Sst\supseteq\full\Sst$ and actions $\actions$, $\Sst$ is the set of fragments of $\full\Sst$ if ${\forall \sst\in\Sst\ldotp \exists\full\sst\in\full\Sst\ldotp \sst\preo\full\sst}$ (completion), and ${\forall\full\sst_1,\full\sst_2\in\full\Sst\ldotp \full\sst_1\preo\full\sst_2 \implies \full\sst_1=\full\sst_2}$ (inextensibility).  These two state models are compositional, denoted $\full\mmdl \tilde \mmdl$ if all actions of full states using compositional semantics have the same result as using the full semantics.
 
@@ -204,7 +199,7 @@ Note here that we do not consider compatibility of the semantics of the language
 \begin{array}{l}
 \ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc_f} \implies\\
 \quad\exists \sst_\delta\ldotp \sst=\sst_f\cdot\sst_\delta\land (\forall\theta,s,\st,\ins,\outs\ldotp \\
-\qquad (\theta(\pc\land\pc_f)=\vtrue \land \expeval{\sins}_{\theta,s} = \ins \land \expeval{\souts}_{\theta,s}=\outs) \implies\\
+\qquad (\theta(\pc_f)=\vtrue \land \expeval{\sins} = \ins \land \expeval{\souts}=\outs) \implies\\
 \quad\qquad \theta,s,\st\models \sst_\delta \Leftrightarrow \st \models_\Delta \corepred{\delta}{\ins}{\outs})
 \end{array}
 \end{equation}
@@ -212,8 +207,8 @@ Note here that we do not consider compatibility of the semantics of the language
 \begin{equation}
 \tag{Consume OX: No Path Drops}\label{eq:consume-ox-no-drop}
 \begin{array}{l}
-(\forall o, \sst'\pc'\ldotp \ppcons{OX,\st,\delta,\sins}{o_c, \souts, \pc'}\Rarr o_c = \Ok)\land \theta, s, \st \models \sst \implies \\
-\quad \exists  \sst', \pc', \st'\ldotp \ppcons{OX, \sst, \delta,\ins,\pc}{\Ok, \sst', \souts, \pc'} \land \theta,s,\st' \models \sst'
+(\forall o, \sst'\pc'\ldotp \ppcons{\OX,\st,\delta,\sins}{o_c, \souts, \pc'}\Rarr o_c = \Ok)\land \theta, s, \st \models \sst \implies \\
+\quad \exists  \sst', \pc', \st'\ldotp \ppcons{\OX, \sst, \delta,\ins,\pc}{\Ok, \sst', \souts, \pc'} \land \theta,s,\st' \models \sst'
 \end{array}
 \end{equation}
 \note{Because the outcome $o_c$ can be \LFail{} or \Miss{}, I changed the axiom from having $o_c\neq \code{Abort}$ to $o_c=\Ok$. Should be fine?}
@@ -223,7 +218,7 @@ Note here that we do not consider compatibility of the semantics of the language
 \begin{array}{l}
 \ppprod{\sst_f,\delta,\sins,\souts}{\sst, \pc_f} \implies\\
 \exists \sst_\delta\ldotp \sst=\sst_\delta\cdot\sst_f \land (\forall\theta,s,\st_\delta\ldotp\\
-\quad \theta(\pc\land\pc_f)=\vtrue \Rarr \expeval{\sins}_{\theta,s}=\ins \Rarr \expeval{\souts}_{\theta,s}=\outs \Rarr \\
+\quad \theta(\pc\land\pc_f)=\vtrue \Rarr \expeval{\sins}=\ins \Rarr \expeval{\souts}=\outs \Rarr \\
 \quad \theta,s,\st_\delta \models \sst_\delta \Rarr \st_\delta\models_\Delta\corepred{\delta}{\ins}{\outs})
 \end{array}
 \end{equation}
@@ -231,7 +226,7 @@ Note here that we do not consider compatibility of the semantics of the language
 \begin{equation}
 \tag{Produce: Completeness}\label{eq:produce-complete}
 \begin{array}{l}
-\expeval{\sins}_{\theta,s}=\ins \land \expeval{\souts}_{\theta,s}=\outs~\land \theta,s,\st\models\sst \land \st_\delta \models_\Delta \corepred{\delta}{\ins}{\outs} \land \st \# \st_\delta \implies\\
+\expeval{\sins}=\ins \land \expeval{\souts}=\outs~\land \theta,s,\st\models\sst \land \st_\delta \models_\Delta \corepred{\delta}{\ins}{\outs} \land \st \disj \st_\delta \implies\\
 \quad \exists\sst_\delta,\pc_f\ldotp \ppprod{\sst,\delta,\sins,\souts}{\sst\cdot\sst_\delta,\pc_f} \land \theta(\pc_f) = \vtrue  \land \theta,s,\st_\delta\models\sst_\delta
 \end{array}
 \end{equation}
@@ -271,7 +266,7 @@ We now define the state transformers defined in \cite{sacha-phd}, taking advanta
 
 \subsection{Exclusive}
 
-The exclusive state model \Ex{}(\Val) is a simple state model, that represent exclusively owned cells: the cell can can only be owned once, and cannot be composed with any other cell. It is parametric on the values it stores -- for the traditional symbolic execution cell, this would be \code{Sval}. When clear from context, the type of values is omitted. It's RA is defined as: \begin{align*}
+The exclusive state model \Ex{}(\Val) is a simple state model, that represent exclusively owned cells: the cell can can only be owned once, and cannot be composed with any other cell. It is parametric on the values it stores -- for the traditional symbolic execution cell, this would be \code{SVal}. When clear from context, the type of values is omitted. It's RA is defined as: \begin{align*}
  	\Ex(X) &\defeq	\ex{x: X}\\
  	|\ex{x}| &\defeq \bot\\
  	\ex{x_1} \cdot \ex{x_2}&~\text{is always undefined}
@@ -283,9 +278,9 @@ The first notation, $\Ex(X)$ is the state model instantiation from the set $X$ t
 It defines two actions, $\actions=\{\load, \store\}$ and a predicate $\preds=\{\exP\}$  We now define the functions for the state model: \execac, \produce, \consume{} and \fix.
 \begin{mathparpagebreakable}
 \inferrule[ExLoadOk]{}{\ppexec{\load}{\ex{x},[]}{\Ok,\ex{x},[x],[]}}
-\and\inferrule[ExLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss, \ex{x},[], []}}
+\and\inferrule[ExLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss, \bot,[], []}}
 \and\inferrule[ExStoreOk]{}{\ppexec{\store}{\ex{x}, [x']}{\Ok, \ex{x'}, [], []}}
-\and\inferrule[ExStoreMiss]{}{\ppexec{\store}{\bot,[x']}{\Miss,\ex{x},[],[]}}
+\and\inferrule[ExStoreMiss]{}{\ppexec{\store}{\bot,[x']}{\Miss,\bot,[],[]}}
 \and\inferrule[ExConsOk]{}{\ppcons{\ex{x}, \exP, []}{\Ok, \bot, [x], []}}
 \and\inferrule[ExConsMiss]{}{\ppcons{\bot,\exP, []}{\Miss, \bot, [], []}}
 \and\inferrule[ExProd]{}{\ppprod{\bot,\exP, [], [x]}{\ex{x}, []}}
@@ -422,13 +417,13 @@ The \emph{partial product} state model, denoted $A \bowtie B$, is an alternative
  	\end{cases}	\\
 \end{align*}
 
-The advantage of this definition is twofold. Firstly, it allows expressing fragments of products, where one side may not have a defined core. For instance, given the product state $\ex{a} \times \ex{b}$, one can't express this as the composition of some $\ex{A} \times \bot$ and $\bot \times \ex{b}$, which becomes needed for some state transformers (notably, \PMap{} and \List). This is in turn possible with the partial product . The second advantage of the partial product and one of the main motivations behind it is that it \emph{carries on the exclusivity of its components}. Given $\text{exclusive}(a) \defeq \forall c\ldotp \neg(a\# c)$, the following rule holds:
+The advantage of this definition is twofold. Firstly, it allows expressing fragments of products, where one side may not have a defined core. For instance, given the product state $\ex{a} \times \ex{b}$, one can't express this as the composition of some $\ex{A} \times \bot$ and $\bot \times \ex{b}$, which becomes needed for some state transformers (notably, \PMap{} and \List). This is in turn possible with the partial product . The second advantage of the partial product and one of the main motivations behind it is that it \emph{carries on the exclusivity of its components}. Given $\text{exclusive}(a) \defeq \forall c\ldotp \neg(a\disj c)$, the following rule holds:
 \[
 \inferrule[PartProductEx]
 	{\text{exclusive}(a)\\\text{exclusive}(b)}
 	{\text{exclusive}(lr(a, b))}
 \]
-This is needed to allow frame-preserving transitions from one side of a sum to another. We may note also that the state model transformer itself could be generalised to handle an arbitrary number of state models, as $(A \bowtie B) \bowtie C \iff A \bowtie (B \bowtie C)$ -- for the brevity of this presentation, we will only consider the partial product of two state models.
+This is needed to allow frame-preserving transitions from one side of a sum to another. We may note also that the state model transformer itself could be generalised to handle an arbitrary number of state models, as $(A \bowtie B) \bowtie C \equiv A \bowtie (B \bowtie C)$ -- for the brevity of this presentation, we will only consider the partial product of two state models.
 
 Similarly to the sum, its actions are ${\actions = \{\alpha_l : \alpha \in \mmdl_1.\actions \} \uplus \{\alpha_r : \alpha \in \mmdl_2.\actions \}}$, and core predicates ${\Delta = \{\delta_l : \delta \in \mmdl_1.\Delta \} \uplus \{\delta_r : \delta \in \mmdl_2.\Delta \}}$.
 \begin{align*}
@@ -552,8 +547,8 @@ We now define the rules for \PMap(I,\mmdl):
 \begin{mathparpagebreakable}
 \inferrule[PMapAction]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppexec{\alpha}{s_{i'},\sins}{o,s'_{i'},\souts,\pc'} \\ \ppset{s,i',s'_{i'}}{s'}}{\ppexec{\alpha}{s,i::\sins}{o,s',i'::\souts, \pc :: \pc'}}
 \and\inferrule[PMapActionOutOfBounds]{d\neq\bot}{\ppexec{\alpha}{(h,d),i::\sins}{\Err, (h,d), [], [i\notin d]}}
-\and\inferrule[PMapAlloc]{d\neq \bot \\ i \notin \SV \\ i \notin \dom(h) \\ i \notin d \\ s_i=\code{instantiate}(\sins) \\ h' = h[i\leftarrow s_i] \\ d' = d\uplus i}{\ppexec{\alloc}{\SV, (h,d), \sins}{\Ok, (h',d'), [i], [i=i]}}
-\and\inferrule[PMapAllocMiss]{\muted{(h,d)=\mathit{unwrap}(s)} \\ d=\bot}{\ppexec{\alloc}{\SV,s,\sins}{\Miss,s,[\code{`domainset'}],[]}}
+\and\inferrule[PMapAlloc]{d\neq \bot \\ i = \code{fresh} \\ s_i=\code{instantiate}(\sins) \\ h' = h[i\leftarrow s_i] \\ d' = d\uplus i}{\ppexec{\alloc}{(h,d), \sins}{\Ok, (h',d'), [i], [i=i]}}
+\and\inferrule[PMapAllocMiss]{\muted{(h,d)=\mathit{unwrap}(s)} \\ d=\bot}{\ppexec{\alloc}{s,\sins}{\Miss,s,[\code{`domainset'}],[]}}
 \and\inferrule[PMapCons]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppcons{s_{i'},\delta,\sins}{o,s'_{i'},\souts,\pc'} \\ \ppset{s,i',s'_{i'}}{s'} \\ \souts'=\mathit{lift\_if\_miss}(o,i',\souts)}{\ppcons{s,\delta,i::\sins}{o,s',\souts', \pc::\pc'}}
 \and\inferrule[PMapConsIncompat]{d\neq\bot}{\ppcons{(h,d),\delta,i::\sins}{\LFail, (h,d), [], [i\notin d]}}
 \and\inferrule[PMapConsDomainSet]{d\neq \bot}{\ppcons{(h,d),\domainset,[]}{\Ok,(h,\bot), [d],[]}}
@@ -722,6 +717,20 @@ These rules are very similar to those of \PMap, or the rules \List{} would have,
 
 An example instantiation of \GMap{} is with the empty state model \textsc{Emp}, a state model that provides no actions or predicates, and that can only be $\bot$. \code{is\_within} may then always return \vtrue. This allows emulating the traditional separation logic linear heap, where one can always do allocation (this is not the case in \PMap{}, where one must own the domain set to allocate). We note that this instantiation does not uphold \ref{eq:compatibility}: any out of bounds access will result in a \Miss{}, rather that properly separating misses from errors.
 
+\subsection{Miscellaneous Transformers}
+
+\note{I'm not sure if this is worth mentionning at all -- if I have an `implementation' section in my report I'll put it there.}
+
+Along with the above defined transformers, a range of additional simpler transformers are provided, to make customising constructions easier.
+
+$\statemodel{ActionAdd}(\mmdl, A)$ is a transformer that equips the given state model with additional actions defined by $A$, without needing to define any predicates, overriding functions, or re-implementing repetitive functions.
+
+$\statemodel{Filter}(\mmdl, \actions, \Delta)$ is a transformer that allows filtering the actions and predicates exposed by a state model, for instance to limit the functionality of a state model if one of its provided actions shouldn't exist in the semantics of the language. This is used, for instance, to mask the \code{get\_all\_props} action that is defined in the implementation of \PMap{} as required by JavaScript, but that shouldn't exist in C.
+
+$\statemodel{Mapper}(\mmdl, F_\actions, F_\Delta)$ allows renaming predicates or actions. This is extremely useful when implementing state models using transformers that need to match a pre-existing interface.
+
+$\statemodel{Injector}(\mmdl, I)$ adds hooks into \consume, \produce{} and \execac{}, allowing the developer to apply transformations to the inputs or outputs of these functions. This is also convenient when implementing a state model that needs to satisfy a pre-existing interface. For instance, this makes re-ordering the arguments of certains actions trivial, or allows treating an out-value as an in-value that makes the branch vanish if it doesn't correspond (this is the case for the \code{domainset} predicate in JSIL).
+
 \section{Optimising maps}
 
 As mentioned above, \GMap{} is an ideal target for optimisation: it is a common transformer (used once in the C and WISL memory models, and twice in the JS memory model) that has a high performance cost, due to branching: for instance, executing an action in a map with $n$ cells can lead to $n + 2$ branches. While most of these branches eventually get dropped, as the path condition doesn't hold, there is a cost to checking the satisfiability of the path condition. The \emph{ideal} \GMap{} transformer only returns feasible branches, minimising SAT checks.
@@ -826,13 +835,11 @@ We again only define the rules for the \code{get} and \code{set} helper function
 
 We note here that this optimisation comes with a cost: if syntactic matches are rare, then the two maps need to be merged for the branching check. Furthermore, modifying the map also requires removing the binding from the other map, as the state might have been there and changed (for instance, if the wrapped state was symbolic, but was modified to be concrete, then it needs to be removed from the symbolic map). Verifying if a given state fragment is concrete or not also comes with a cost, as it requires traversing the entire state, which may be expensive -- though this could be partly solved by caching whether it's concrete or not, and invalidating or modifying the cache when the state is modified. This caching has not been implemented, as in practice the cost of verifying concreteness is less than the gain of the optimisation.
 
-In evaluation we will discuss the impact this optimisation has. \note{I need to measure the proportion of size between concrete/symbolic, to see in what executions it's more useful and in which it's not. Similarly, need to profile the time for a lookup according depending on the size of the joined map!}
+In evaluation we will discuss the impact this optimisation has. \note{I need to measure the proportion of size between concrete/symbolic, to see in what executions it's more useful and in which it's not. Similarly, need to profile the time for a lookup depending on the size of the joined map!}
 
 \subsection{Abstract location PMap}
 
-This second optimisation is new to Gillian, and uses \emph{abstract locations} (ALocs). We expand the definition of symbolic values, \code{SVal}, with values of type ``\code{ALoc}'', akin to symbolic variables. These are a form of \emph{semantic hash consing}: they can be used to distinguish different locations from their name, when not doing ``matching''. \emph{Matching} is a mode that is enabled when consuming or producing, and that is disabled when executing actions and doing substitutions. When matching is disabled, two given abstract locations that are syntactically different (have different names) are semantically different (are distinct), whereas when matching is enabled then two syntactically different abstract locations may be equal, depending on the current path condition, which may lead to branching (in which cases the two states at the clashing locations are composed). This is a powerful optimisation: inside the body of a function, all lookups are branchless, as two syntactically different ALocs are considered different (matching is disabled), however when producing the pre-condition or consuming the post-condition then locations may clash and we thus merge together states at clashing locations.
-
-This has the advantage of allowing storing locations in the map as a string (their name) rather than an expression, and checking for the presence of the string rather than requiring to attempt SAT checks for every index. The cost of this is when resolving an expression into an ALoc: if it already is of type \code{ALoc} then nothing is needed, but in the case in which it is a symbolic variable we must first check if it already equals an ALoc in the path condition, and if not instantiate a new ALoc, add the fact it is equal to the symbolic variable in the symbolic variable, and proceed.
+This second optimisation is new to Gillian, and uses \emph{abstract locations} (ALocs). We expand the definition of symbolic values, \code{SVal}, with abstract locations denotes $\aloc{a}$, with $a$ the name of the location. These are a form of \emph{semantic hash consing}: they can be used to distinguish different locations from their name, when not doing ``matching''. \emph{Matching} is a mode that is enabled when consuming or producing, and that is disabled when executing actions and doing substitutions. When matching is disabled, two given abstract locations that are syntactically different (have different names) are semantically different (are distinct). When matching is enabled, two syntactically different abstract locations may be equal, depending on the current path condition, which may lead to branching (in which cases the two states at the clashing locations are composed). This is a powerful optimisation: inside the body of a function, all lookups are branchless, as two syntactically different ALocs are considered different (matching is disabled), however when producing the pre-condition or consuming the post-condition then locations may clash and we thus merge together states at clashing locations.
 
 A limitation of this optimisation is that only abstract locations may be used as the domain type; it is thus a specialisation of $\PMap$, where $\SplitPMap$ was a more general optimisation.
 
@@ -876,7 +883,11 @@ We now present the rules for this state model; in particular, we again only need
 \and\inferrule[ALocPMapSetNone]{(h,d)=\mathit{unwrap}(s) \\ \hl{a = \code{to\_aloc}~i} \\ \hl{a\neq\bot} \\ s_i=\bot \\ h'=h[a\not\leftarrow] \\ s'=\mathit{wrap}(h',d)}{\ppset{s,i,s_i}{s'}}
 \end{mathparpagebreakable}
 
-The main advantage of $\ALocPMap$ is made evident from the rules: looking up an index does not branch when not matching; it either is found directly in the map, or can be added. This is sound, because abstract locations cannot be calculated or generated freely by the program: they can only be created when producing or consuming predicates (in which case we enable matching and the performance is similar to that of the unoptimised \PMap{}), or when allocating (at which point the we know it is a new ALoc different to all others, since it is a fresh ALoc, by definition). It is also noteworthy that we index on strings, rather than expressions; this makes other implementation-specific optimisations easy to apply, for instance using a prefix map or a hash map.
+The main advantage of $\ALocPMap$ is made evident from the rules: looking up an index does not branch when not matching; it either is found directly in the map, or can be added. This is sound, because abstract locations cannot be calculated or generated freely by the program: they can only be created when producing or consuming predicates (in which case we enable matching and the performance is similar to that of the unoptimised \PMap{}), or when allocating (at which point we know it is a new ALoc different to all others, since it is a fresh ALoc, by definition). It is also noteworthy that we index on strings, rather than expressions; this makes other implementation-specific optimisations easy to apply, for instance using a prefix map or a hash map.
+
+There is a (minor) price to pay for this: it requires the $\code{to\_aloc}$ function, that needs to simplify an expression and check the path condition to see if it equates a particular abstract location -- this is non-trivial, in particular for more complex expressions when used with large path conditions.
+
+
 
 
 
