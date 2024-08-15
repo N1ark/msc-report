@@ -1,0 +1,228 @@
+\chapter{Proofs of soundness}
+
+\section{Exclusive}
+
+\subsection{Resource Algebra}
+
+\begin{align*}
+ 	\Ex(X) &\defeq	\ex{x: X}\\
+ 	|\ex{x}| &\defeq \bot\\
+ 	\ex{x_1} \cdot \ex{x_2}&~\text{is always undefined}
+ \end{align*}
+ 
+\subsection{Compositional Concrete Rules}
+
+\begin{mathparpagebreakable}
+\inferrule[CExLoadOk]{}{\ppexecc{\load}{\ex{x},[]}{\Ok,\ex{x},[x]}}
+\and\inferrule[CExLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss, \bot,[]}}
+\and\inferrule[CExStoreOk]{}{\ppexec{\store}{\ex{x}, [x']}{\Ok, \ex{x'}, []}}
+\and\inferrule[CExStoreMiss]{}{\ppexec{\store}{\bot,[x']}{\Miss,\bot,[]}}
+\end{mathparpagebreakable}
+
+We define predicate satisfiability as:
+\begin{mathpar}
+\inferrule[ExPredSat]{\st=\ex{x}}{\st\models_\Delta\corepred{\exP}{[]}{[x]}}	
+\end{mathpar}
+
+\subsection{Compositional Symbolic Rules}
+
+\begin{mathparpagebreakable}
+\inferrule[ExLoadOk]{}{\ppexec{\load}{\ex{\sym x},[]}{\Ok,\ex{\sym x},[\sym x],[]}}
+\and\inferrule[ExLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss, \bot, [], []}}
+\and\inferrule[ExStoreOk]{}{\ppexec{\store}{\ex{\sym x}, [\sym x']}{\Ok, \ex{\sym x'}, [], []}}
+\and\inferrule[ExStoreMiss]{}{\ppexec{\store}{\bot,[\sym x']}{\Miss,\bot,[],[]}}
+\and\inferrule[ExConsOk]{}{\ppcons{\ex{\sym x}, \exP, []}{\Ok, \bot, [\sym x], []}}
+\and\inferrule[ExConsMiss]{}{\ppcons{\bot,\exP, []}{\Miss, \bot, [], []}}
+\and\inferrule[ExProd]{}{\ppprod{\bot,\exP, [], [\sym x]}{\ex{\sym x}, []}}
+\and\inferrule[ExFix]{}{\fix ~[] = [\{ \exists \sym x\ldotp \corepred{\exP}{}{\sym x} \}]}
+\end{mathparpagebreakable}
+
+We define symbolic interpretation as:
+\begin{mathpar}
+\inferrule[ExSymInterpretationBot]{}{\theta,s,\bot\models\bot}
+\and\inferrule[ExSymInterpretation]{\expeval{\sym x}=x}{\theta,s,\ex{x}\models\ex{\sym x}}
+\end{mathpar}
+
+\subsection{Soundness Proofs}
+
+\begin{proof}
+
+\pfprop{OX Soudness}
+
+\pfassume \begin{hypvlist}
+\hypvitem{conex} $\theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs}$
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{symex} $
+\begin{array}{l}
+\exists \sins,\souts,\sst',\pc,\theta'\ldotp \ppexec{\hat\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT(\pc) \land \theta',s,\st'\models \sst' \land\\
+\quad \expeval[s,\pc]{\sins}=(\ins,\pc')\land\expeval[s,\pc']{\souts}=(\souts,\pc'')
+\end{array}
+$
+\end{goalvlist}
+
+The proof is analogous for both actions, so we only consider the case where $\alpha=\load$. Given \hyp{conex} and the definition of $\models$, there are two cases: $\st=\ex{x}$ and $\sst=\ex{\sym x}$, or $\st=\bot$ and $\sst=\bot$. Again, both cases are analogous, so we only consider $\st=\ex{x}$, $\sst=\ex{\sym x}$.
+
+\begin{hypvlist}
+\hypvitem{isex} From our hypothesis, $\st=\ex{x}$ and $\sst=\ex{\sym x}$
+\hypvitem{actres} From the definition of concrete actions \textsc{CExLoadOk}, we get $\ins=[]$, $o=\Ok$, $\st'=\st$, $\outs=[x]$.
+\hypvitem{pcinsouts} We can pick $\pc$, $\sins$ and $\souts$ such that $s=[x\mapsto \sym x]$, $\pc = []$, $\sins=[]$ and $\souts=[\sym x]$.
+\hypvitem{evals} From \hyp{pcinsouts}, we get $\expeval[\pc,s]{\sins}=(\ins,\pc)$ and $\expeval[\pc,s]{\souts}=(\outs,\pc)$, as well as $\SAT(\pc)$
+\hypvitem{symact} From \textsc{ExLoadOk} and \hyp{pcinsouts}, we have $\ppexec{\load}{\sst,\sins}{\Ok, \sst', \souts, \pc}$ with $\sst'=\sst$.
+\hypvitem{models} Finally, from \hyp{actres} and \hyp{symact}, we have $\st'=\st$ and $\sst'=\sst$, thus from \hyp{conex} it follows that $\theta,s,\st'\models\sst'$.
+\end{hypvlist}
+Combining \hyp{evals}, \hyp{symact} and \hyp{models}, we get our goal \goal{symex}.
+
+%\begin{hypvlist}
+% ------------- PROOF for st=bot, just in case (basically a copy paste =^^=)
+%\hypvitem{isbot} From our hypothesis, $\st=\bot$ and $\sst=\bot$
+%\hypvitem{actresmiss} From the definition of concrete actions \textsc{CExLoadMiss}, we get $\ins=[]$, $o=\Miss$, $\st'=\st$, $\outs=[]$.
+%\hypvitem{pcinsoutsmiss} We can pick $\pc$, $\sins$ and $\souts$ such that $s=[]$, $\pc=[]$, $\sins=[]$, $\souts=[]$.
+%\hypvitem{evalsm} From \hyp{pcinsoutsmiss}, we get $\expeval[\pc,s]{\sins}=(\ins,\pc)$ and $\expeval[\pc,s]{\souts}=(\outs,\pc)$, as well as $\SAT(\pc)$
+%\hypvitem{symactmiss} From \textsc{ExLoadMiss} and \hyp{pcinsoutsmiss}, we have $\ppexec{\load}{\sst,\sins}{\Miss, \sst', \souts, \pc}$ with $\sst'=\sst$.
+%\hypvitem{models} Finally, from \hyp{actresmiss} and \hyp{symactmiss}, we have $\st'=\st$ and $\sst'=\sst$, thus from \hyp{conex} it follows that $\theta,s,\st'\models\sst'$.
+%\end{hypvlist}
+
+\pfprop{UX Soudness}
+
+\pfassume \begin{hypvlist}
+\hypvitem{symex} $
+\begin{array}{l}
+\ppexec{\hat\alpha}{\sst,\sins}{o,\sst',\souts, \pc} \land \SAT(\pc) \land \theta,s,\st'\models\sst' \land \\
+\quad \expeval[\hat s,\pc]{\souts}\rightsquigarrow(\outs,\pc')\land \expeval[\hat s,\pc']{\sins}\rightsquigarrow(\ins,\pc'')
+\end{array}
+$
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{conex} $\exists \st\ldotp \theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs}$
+\end{goalvlist}
+
+We again only consider the case where $\alpha=\load$ and $\st'=\ex{x}$, $\sst'=\ex{\sym x}$ -- the other three cases are analogous.
+\begin{hypvlist}
+\hypvitem{vals} From \textsc{ExLoadOk}, we get $\sst=\sst'=\ex{\sym x}$, $\sins=[]$, $o=\Ok$, $\souts=[\sym x]$, $\pc=[]$, with $s=[x\mapsto \sym x]$
+\hypvitem{insouts} From \hyp{vals} and \hyp{symex} we have $\ins=[]$ and $\outs=[x]$
+\hypvitem{stisex} We can pick $\st=\st'=\ex{x}$, which from \hyp{symex} and \hyp{vals} give us $\theta,s,\st\models\sst$
+\hypvitem{actex} From \textsc{CExLoadOk}, \hyp{insouts} and \hyp{stisex}, we have $\ppexecc{\load}{\st,\ins}{\Ok,\st',\outs}$.
+\end{hypvlist}
+Combinding \hyp{stisex} and \hyp{actex} gives our goal \goal{conex}.
+
+\pfprop{Frame subtraction is satisfied}
+
+\pfassume \begin{hypvlist}
+\hypvitem{act} $\ppexec{\alpha}{\sst\cdot\sst_f,\sins}{o,\sst',\souts,\pc}$
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{framesub} $\begin{array}{l}
+\exists \sst'', o', \souts'\ldotp \ppexec{\alpha}{\sst,\sins}{o', \sst'', \souts', \pc'} ~\land \\
+\quad(o' \neq \Miss \implies o' = o \land  \souts' = \souts \land \sst' = \sst'' \cdot \sst_f \land \pc' = \pc)
+\end{array}$
+\end{goalvlist}
+\begin{hypvlist}
+	\hypvitem{exists} \load{} and \store{} are always defined for respectively 0 and 1 arguments, so from \hyp{act} we know $\exists \sst'', o', \souts'\ldotp \ppexec{\alpha}{\sst,\sins}{o', \sst'', \souts', \pc'}$.
+	\hypvitem{notmiss} Assume $o'\neq\Miss$
+	\hypvitem{notbot} If $\sst=\bot$, the rules say $o'=\Miss$, contradicting \hyp{notmiss}. Thus $\sst=\ex{\sym x}$.
+	\hypvitem{botframe} From \hyp{act}, we know $\sst\cdot\sst_f$ is defined, so it must be that $\sst_f=\bot$ as $\ex{\sym x}\cdot\ex{\sym y}$ is undefined.
+\end{hypvlist}
+From \hyp{botframe} and composition rules we know $\sst\cdot\sst_f=\ex{\sym x}\cdot\bot=\ex{\sym x}=\sst$. This gives our goal \goal{framesub}.
+
+\pfprop{Frame addition is satisfied}
+
+\pfassume \begin{hypvlist}
+\hypvitem{act} $\ppexec{\alpha}{\sst,\sins}{o,\sst',\souts,\pc}$
+\hypvitem{disj} $\sst_f\disj\sst'$
+\hypvitem{notmiss} $o\neq\Miss$
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{frameadd} $\sst \disj \sst_f \land \ppexec{\alpha}{\sst\cdot\sst_f, \sins}{o, \sst'\cdot\sst_f, \souts, \pc'}$	
+\end{goalvlist}
+\begin{hypvlist}
+\hypvitem{isex} From \hyp{notmiss} and the action rules, we know $\sst'=\ex{\sym x}$.
+\hypvitem{framebot} From composition, \hyp{isex} and \hyp{disj}, we get $\sst_f=\bot$.
+\end{hypvlist}
+From \hyp{framebot} we get $\sst'\cdot\sst_f=\sst'\cdot\bot=\sst'$, and from \hyp{act} our goal \goal{frameadd} follows.
+
+\pfprop{Consume is sound and complete}
+
+\pfassume \begin{hypvlist}
+\hypvitem{consok} \ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc_f}
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{conssoundcomp} $\begin{array}{l}
+\exists \sst_\delta\ldotp \sst=\sst_f\cdot\sst_\delta\land (\forall\theta,s,\st,\ins,\outs\ldotp \\
+\quad (\theta(\pc_f)=\vtrue \land \expeval{\sins} = \ins \land \expeval{\souts}=\outs) \implies\\
+\qquad \theta,s,\st\models \sst_\delta \Leftrightarrow \st \models_\Delta \corepred{\delta}{\ins}{\outs})
+\end{array}$
+\end{goalvlist}
+\begin{hypvlist}
+\hypvitem{consok} There is only one \consume{} rules yielding \Ok, giving us $\delta=\exP$, $\sst=\ex{\sym x}$, $\sst_f=\bot$, $\sins=[]$, $\souts=[\sym x]$, $\pc=[]$
+\hypvitem{isdisj} From \hyp{consok} it follows that $\sst_\delta=\sst$ and $\sst=\sst_f\cdot\sst_\delta$
+\hypvitem{evals} Assume $\theta(\pc_f)=\vtrue \land \expeval{\sins} = \ins \land \expeval{\souts}=\outs$.
+\hypvitem{evalres} From \hyp{consok} and \hyp{evals}, we get $\ins=[]$ and $\outs=[x]$
+\hypvitem{models} From the definition of $\models$ and from \hyp{isdisj}, we get $\sst_\delta=\ex{\sym x}$ and ${\theta,s,\st\models\sst_\delta} \Leftrightarrow {\st=\ex{x}}$
+\hypvitem{predmodels} From the definition of $\models_\Delta$ and \hyp{evalres}, we have $\st\models_\Delta\corepred{\exP}{\ins}{\outs}\Leftrightarrow \st=\ex{x}$, which along with \hyp{models} gives our goal \goal{conssoundcomp}.
+\end{hypvlist}
+
+\pfprop{Consume: OX sound}
+
+\pfassume \begin{hypvlist}
+\hypvitem{allok} $(\forall o, \sst'\pc'\ldotp \ppcons{\OX,\sst,\delta,\sins}{o_c, \sst', \souts, \pc'}\Rarr o_c = \Ok)\land \theta, s, \st \models \sst$
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{exok} $\quad \exists  \sst', \pc', \st'\ldotp \ppcons{\OX, \sst, \delta,\ins,\pc}{\Ok, \sst', \souts, \pc'} \land \theta,s,\st' \models \sst'$
+\end{goalvlist}
+\begin{hypvlist}
+\hypvitem{match} From the \consume{} rules, we never vanish, so if all consumptions are \Ok{} we must have $\sst=\ex{\sym x}$, $\delta=\exP$, $\sins=[]$, $\sst'=\bot$, $\souts=[\sym x]$, $\pc'=[]$.
+\hypvitem{stexi} From the definition of $\models$ we also get $\theta,s,\bot\models\bot$. Our goal \goal{exok} follows.
+\end{hypvlist}
+
+\pfprop{Produce soundness}
+
+\pfassume \begin{hypvlist}
+\hypvitem{prod} $\ppprod{\sst_f,\delta,\sins,\souts}{\sst, \pc_f}$
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{prodsound} $\begin{array}{l}
+\exists \sst_\delta\ldotp \sst=\sst_\delta\cdot\sst_f \land (\forall\theta,s,\st_\delta\ldotp\\
+\quad \theta(\pc_f)=\vtrue \Rarr \expeval{\sins}=\ins \Rarr \expeval{\souts}=\outs \Rarr \\
+\quad \theta,s,\st_\delta \models \sst_\delta \Rarr \st_\delta\models_\Delta\corepred{\delta}{\ins}{\outs})
+\end{array}$
+\end{goalvlist}
+\begin{hypvlist}
+\hypvitem{frameex} From the \produce{} rule, we have $\sst_f=\bot$, $\delta=\exP$, $\sins=[]$, $\souts=[\sym x]$, $\sst=\ex{\sym x}$ and $\pc_f=[]$.
+\hypvitem{predst} From \hyp{frameex}, $\sst_\delta=\sst=\ex{\sym x}$.
+\hypvitem{evals} Assume $\theta(\pi_f)=\vtrue \land \expeval{\sins}=\ins \land \expeval{\souts}=\outs \land \theta,s,\st_\delta\models\sst_\delta$
+\hypvitem{evalsto} From \hyp{frameex} and \hyp{evals} we get $\ins=[]$, $\outs=[x]$, $\st_\delta=\ex{x}$
+\hypvitem{models} From \hyp{evalsto} and the definiton of $\models_\Delta$ we get $\st_\delta\models_\Delta\corepred{\delta}{\ins}{\outs}$, giving our goal \goal{prodsound}
+\end{hypvlist}
+
+\pfprop{Produce completeness}
+
+\pfassume \begin{hypvlist}
+\hypvitem{evals} $\expeval{\sins}=\ins \land \expeval{\souts}=\outs~\land \theta,s,\st\models\sst \land \st_\delta \models_\Delta \corepred{\delta}{\ins}{\outs} \land \st \disj \st_\delta$
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{prodcomp} $\exists\sst_\delta,\pc_f\ldotp \ppprod{\sst,\delta,\sins,\souts}{\sst\cdot\sst_\delta,\pc_f} \land \theta(\pc_f) = \vtrue  \land \theta,s,\st_\delta\models\sst_\delta$
+\end{goalvlist}
+\begin{hypvlist}
+\hypvitem{predisex} From \hyp{evals}, $\st_\delta\models_\Delta \corepred{\delta}{\ins}{\outs}$, thus from the definition of $\models_\Delta$ we have $\st_\delta=\ex{x}$, $\delta=\exP$, $\ins=[]$, $\outs=[x]$.
+\hypvitem{stisemp} From \hyp{evals}, $\st\disj\st_\delta$, thus from \hyp{predisex} we have $\st=\bot$.
+\hypvitem{sstisemp} From the definition of $\models$, \hyp{evals} and \hyp{stisemp}, we have $\sst=\bot$
+\hypvitem{prodex} From the \produce{} rules we have $\ppprod{\bot,\exP,[], [\sym x]}{\ex{\sym x},[]}$.
+\hypvitem{pcsat} From \hyp{prodex}, $\pc_f=[]$, thus $\theta(\pc_f)=\vtrue$ for any $\pc_f$.
+\hypvitem{models} From \hyp{sstisemp} and \hyp{prodex} we have $\sst_\delta=\ex{\sym x}$, and from \hyp{predisex} and \hyp{evals} it follows that ${\theta,s,\st_\delta\models\sst_\delta}$.
+\end{hypvlist}
+From \hyp{prodex}, \hyp{models} and \hyp{predisex} we get out goal \goal{prodcomp}.
+
+\end{proof}
+
+
+
+
+
+
+
+
+
+
+
+
