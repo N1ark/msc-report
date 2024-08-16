@@ -109,37 +109,37 @@ Combinding \hyp{stisex} and \hyp{actex} gives our goal \goal{conex}.
 \pfprop{Frame subtraction is satisfied}
 
 \pfassume \begin{hypvlist}
-\hypvitem{act} $\ppexec{\alpha}{\sst\cdot\sst_f,\sins}{o,\sst',\souts,\pc}$
+\hypvitem{act} $\st\disj\st_f \land \ppexecc{\alpha}{\st\cdot\st_f,\ins}{o,\st',\outs}$
 \end{hypvlist}
 \pfprove \begin{goalvlist}
 \goalvitem{framesub} $\begin{array}{l}
-\exists \sst'', o', \souts'\ldotp \ppexec{\alpha}{\sst,\sins}{o', \sst'', \souts', \pc'} ~\land \\
-\quad(o' \neq \Miss \implies o' = o \land  \souts' = \souts \land \sst' = \sst'' \cdot \sst_f \land \pc' = \pc)
+\exists \st'', o', \outs'\ldotp \ppexecc{\alpha}{\st,\ins}{o', \st'', \outs'} ~\land \\
+\quad(o' \neq \Miss \implies o' = o \land  \outs' = \outs \land \st' = \st'' \cdot \st_f)
 \end{array}$
 \end{goalvlist}
 \begin{hypvlist}
-	\hypvitem{exists} \load{} and \store{} are always defined for respectively 0 and 1 arguments, so from \hyp{act} we know $\exists \sst'', o', \souts'\ldotp \ppexec{\alpha}{\sst,\sins}{o', \sst'', \souts', \pc'}$.
+	\hypvitem{exists} \load{} and \store{} are always defined for respectively 0 and 1 arguments, so from \hyp{act} we know $\exists \st'', o', \outs'\ldotp \ppexecc{\alpha}{\st,\ins}{o', \st'', \outs'}$.
 	\hypvitem{notmiss} Assume $o'\neq\Miss$
-	\hypvitem{notbot} If $\sst=\bot$, the rules say $o'=\Miss$, contradicting \hyp{notmiss}. Thus $\sst=\ex{\sym x}$.
-	\hypvitem{botframe} From \hyp{act}, we know $\sst\cdot\sst_f$ is defined, so it must be that $\sst_f=\bot$ as $\ex{\sym x}\cdot\ex{\sym y}$ is undefined.
+	\hypvitem{notbot} If $\st=\bot$, the rules say $o'=\Miss$, contradicting \hyp{notmiss}. Thus $\st=\ex{x}$.
+	\hypvitem{botframe} From \hyp{act}, we know $\st\cdot\st_f$ is defined, so it must be that $\st_f=\bot$ as $\ex{x}\cdot\ex{y}$ is undefined.
 \end{hypvlist}
-From \hyp{botframe} and composition rules we know $\sst\cdot\sst_f=\ex{\sym x}\cdot\bot=\ex{\sym x}=\sst$. This gives our goal \goal{framesub}.
+From \hyp{botframe} and composition rules we know $\st\cdot\st_f=\ex{x}\cdot\bot=\ex{x}=\st$. This gives our goal \goal{framesub}.
 
 \pfprop{Frame addition is satisfied}
 
 \pfassume \begin{hypvlist}
-\hypvitem{act} $\ppexec{\alpha}{\sst,\sins}{o,\sst',\souts,\pc}$
-\hypvitem{disj} $\sst_f\disj\sst'$
+\hypvitem{act} $\ppexecc{\alpha}{\st,\ins}{o,\st',\outs}$
+\hypvitem{disj} $\st_f\disj\st'$
 \hypvitem{notmiss} $o\neq\Miss$
 \end{hypvlist}
 \pfprove \begin{goalvlist}
-\goalvitem{frameadd} $\sst \disj \sst_f \land \ppexec{\alpha}{\sst\cdot\sst_f, \sins}{o, \sst'\cdot\sst_f, \souts, \pc'}$	
+\goalvitem{frameadd} $\st \disj \st_f \land \ppexecc{\alpha}{\st\cdot\st_f, \ins}{o, \st'\cdot\st_f, \outs}$	
 \end{goalvlist}
 \begin{hypvlist}
-\hypvitem{isex} From \hyp{notmiss} and the action rules, we know $\sst'=\ex{\sym x}$.
-\hypvitem{framebot} From composition, \hyp{isex} and \hyp{disj}, we get $\sst_f=\bot$.
+\hypvitem{isex} From \hyp{notmiss} and the action rules, we know $\st'=\ex{x}$.
+\hypvitem{framebot} From composition, \hyp{isex} and \hyp{disj}, we get $\st_f=\bot$.
 \end{hypvlist}
-From \hyp{framebot} we get $\sst'\cdot\sst_f=\sst'\cdot\bot=\sst'$, and from \hyp{act} our goal \goal{frameadd} follows.
+From \hyp{framebot} we get $\st'\cdot\st_f=\st'\cdot\bot=\st'$, and from \hyp{act} our goal \goal{frameadd} follows.
 
 \pfprop{Consume is sound and complete}
 

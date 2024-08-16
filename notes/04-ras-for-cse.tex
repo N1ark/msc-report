@@ -145,7 +145,7 @@ Note that here we work with the \emph{option} version $\St^?$ of the states $\St
 \tag{Memory Model OX Soundness}\label{eq:mem-ox-soundness}
 \begin{array}{l}
 \theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs} \implies \exists \sins,\souts,\sst',\pc,\theta'\ldotp\\
-\quad \ppexec{\hat\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT(\pc) \land \theta',s,\st'\models \sst' \land\\
+\quad \ppexec{\sym\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT(\pc) \land \theta',s,\st'\models \sst' \land\\
 \qquad \expeval[s,\pc]{\sins}=(\ins,\pc')\land\expeval[s,\pc']{\souts}=(\souts,\pc'')
 \end{array}
 \end{equation}
@@ -153,8 +153,8 @@ Note that here we work with the \emph{option} version $\St^?$ of the states $\St
 \begin{equation}
 \tag{Memory Model UX Soundness}\label{eq:mem-ux-soundness}
 \begin{array}{l}
-\ppexec{\hat\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT(\pc) \land \theta,s,\st'\models\sst' \land \\
-\expeval[\hat s,\pc]{\souts}\rightsquigarrow(\outs,\pc')\land \expeval[\hat s,\pc']{\sins}\rightsquigarrow(\ins,\pc'')\implies\\
+\ppexec{\sym\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT(\pc) \land \theta,s,\st'\models\sst' \land \\
+\expeval[\sym s,\pc]{\souts}\rightsquigarrow(\outs,\pc')\land \expeval[\sym s,\pc']{\sins}\rightsquigarrow(\ins,\pc'')\implies\\
 \quad \exists \st\ldotp \theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs}
 \end{array}
 \end{equation}
@@ -164,17 +164,17 @@ Note that here we work with the \emph{option} version $\St^?$ of the states $\St
 \begin{equation}
 \tag{Frame subtraction}\label{eq:frame-sub}
 \begin{array}{l}
-\ppexec{\alpha}{\sst\cdot\sst_f,\sins}{o, \sst',\souts,\pc'} \implies \\
-\quad\exists \sst'', o', \souts'\ldotp \ppexec{\alpha}{\sst,\sins}{o', \sst'', \souts', \pc''} ~\land \\
-\qquad(o' \neq \Miss \implies o' = o \land  \souts' = \souts \land \sst' = \sst'' \cdot \sst_f \land \pc'' = \pc')
+\st\disj\st_f \land \ppexecc{\alpha}{\st\cdot\st_f,\sins}{o, \st',\outs} \implies \\
+\quad\exists \st'', o', \outs'\ldotp \ppexecc{\alpha}{\st,\ins}{o', \st'', \outs'} ~\land \\
+\qquad(o' \neq \Miss \implies o' = o \land  \outs' = \outs \land \st' = \st'' \cdot \st_f)
 \end{array}
 \end{equation}
 
 \begin{equation}
 \tag{Frame Addition}\label{eq:frame-add}
 \begin{array}{l}
-\ppexec{\alpha}{\sst,\sins}{o, \sst', \souts, \pc'} \land o \neq \Miss \land \sst'\disj\sst_f\implies\\
-\quad\sst \disj \sst_f \land \ppexec{\alpha}{\sst\cdot\sst_f, \sins}{o, \sst'\cdot\sst_f, \souts, \pc'}
+\ppexecc{\alpha}{\st,\ins}{o, \st', \outs} \land o \neq \Miss \land \st'\disj\st_f\implies\\
+\quad\st \disj \st_f \land \ppexecc{\alpha}{\st\cdot\st_f, \ins}{o, \st'\cdot\st_f, \outs}
 \end{array}
 \end{equation}
 
@@ -272,7 +272,7 @@ The exclusive state model \Ex{}(\Val) is a simple state model, that represent ex
  	\ex{x_1} \cdot \ex{x_2}&~\text{is always undefined}
  \end{align*}
 The first notation, $\Ex(X)$ is the state model instantiation from the set $X$ to the $\Ex$ resource algebra. The notation $\ex{x:X}$ stands for $\{\ex{x} : \forall x\in X \}$ -- here `$\ex{x}$' refers to the particular element of the $\Ex(X)$ RA where the value is $x\in X$.
- 
+
  Note that the above definition is identical\footnote{Modulo partiality of composition and the validity function, as explained previously.} to that in Iris \cite{iris}, showing that little to no modification is needed to adapt RAs to state models.
 
 It defines two actions, $\actions=\{\load, \store\}$ and a predicate $\preds=\{\exP\}$  We now define the functions for the state model: \execac, \produce, \consume{} and \fix.
@@ -497,7 +497,7 @@ The partial map transformer, $\PMap(I,\mmdl)$, allows modelling partial finite m
 
 The state is thus the bindings from index to substate, as well as a possibly unset \emph{domain set}. This domain set allows distinguishing, when an index is not found in the map, if the outcome is an \Err{} or \LFail{} (because the binding cannot exist), or if the state at that index is actually $\bot$ (in which case the \execac, \consume{} or \produce{} call is done with $\bot$ as an input). More than improving automation, this is a requirement, for compatibility with the full state model (\ref{eq:compatibility}) and to preserve \ref{eq:frame-sub} and \ref{eq:frame-add}.
 
-\PMap{} has a well-formedness condition, to ensure the domain of the bindings is a subset of the domain set -- for instance, the state $(\{ 2 \mapsto x \}, \{ 1 \})$ is not valid, as $\{2\} \not\subseteq \{1\}$. If the domainset is missing, then there is no restrictions on the bindings.
+\PMap{} has a well-formedness condition, to ensure the domain of the bindings is a subset of the domain set -- for instance, the state $(\{ 2 \mapsto x \}, \{ 1 \})$ is not valid, as $\{2\} \not\subseteq \{1\}$. If the domain set is missing, then there is no restrictions on the bindings.
 
 $\PMap(I,\mmdl)$ defines one action, \alloc, and one predicate, \domainset. Furthermore, it lifts all predicates of the wrapped state model, by adding the index of the cell as an in-parameter. Furthermore, to allow allocation, $\mmdl$ must provide an ${\code{instantiate}: \vallist \rarr \St}$ function, to instantiate a new state from a list of arguments. This is needed because \PMap{} has no awareness of how $\mmdl$ works, or or what it should be initialised to. \note{Maybe specify that CSE/Sacha don't mention this: PMap allocation requires an interface for allocation.}
 
@@ -563,7 +563,7 @@ This simple construction is thus enough to recreate the standard ``points to'' p
 
 Note here we must unwrap and re-wrap the state model after every action, to properly handle the case where there are no bindings and no domain set as $\bot$. For the \fix{} function we must also lift all core predicates, by recursing through the assertions and adding the index to the in-values of all assertions of type $\corepred{\delta}{\sins}{\souts}$.
 
-We note here that action execution and predicate consumption and production may branch. For instance, if the state is $(\{ 1\mapsto y \}, \{ 1,2\})$ and a \load{} action is executed with an unconstrained symbolic index $\hat x$, then three branches are created: one where $\hat x = 1$ and the action is executed on the cell $y$, one where $\hat x = 2$ and the action is executed on $\bot$, and finally one where $\hat x\notin \{1,2\}$, and an \Err{} is raised for out of bounds access. A fourth branch also gets created, with $\hat x\notin \{ 1,2\} \land \hat x\in \{1,2\}$ -- it however gets cut because of course this path condition is false. This outlines a key difficulty of \PMap{}, that will be discussed more in depth later: implementation-wise, it is a complex and expensive transformer that has the potential to create many branches -- this makes it an important target for optimisation.
+We note here that action execution and predicate consumption and production may branch. For instance, if the state is $(\{ 1\mapsto y \}, \{ 1,2\})$ and a \load{} action is executed with an unconstrained symbolic index $\sym x$, then three branches are created: one where $\sym x = 1$ and the action is executed on the cell $y$, one where $\sym x = 2$ and the action is executed on $\bot$, and finally one where $\sym x\notin \{1,2\}$, and an \Err{} is raised for out of bounds access. A fourth branch also gets created, with $\sym x\notin \{ 1,2\} \land \sym x\in \{1,2\}$ -- it however gets cut because of course this path condition is false. This outlines a key difficulty of \PMap{}, that will be discussed more in depth later: implementation-wise, it is a complex and expensive transformer that has the potential to create many branches -- this makes it an important target for optimisation.
 
 Using RAs rather than PCMs makes well-formedness easier to uphold, as a binding to $\bot$ is not valid, since $\bot \notin \mmdl.\Sigma$. To exemplify why this is helpful, consider the state model $\PMap(\nats, \Ex(\{1\}))$ and the function \code{move}, that relocates a memory cell:
 \begin{align*}
@@ -571,13 +571,13 @@ Using RAs rather than PCMs makes well-formedness easier to uphold, as a binding 
 \end{align*}
 Let the initial state be $(\{ 1\mapsto \ex1\}, \{ 1\} )$: a heap with one cell, at address $1$ -- this matches exactly the precondition of \code{move}.
 
-If we are using PCMs, $\Ex({1})$ is defined as $\ex{1}~|~0$, with $0$ the unit of the PCM. Note here that executing actions, consuming and producing doesn't return an element of $\St^?$, but of $\St$ directly, since the $0$ is already in its carrier set; one has no reason to extend it with $\bot$. The engine first consumes the \exP{} predicate, at address $1$ -- this means the pointed-to state becomes $0$ (or empty), and the bigger (or outer) state becomes $(\{ 1\mapsto 0\}, \{ 1\})$. The \domainset{} predicate is then successfully consumed too, leaving $(\{ 1\mapsto 0\},\bot)$. Now, the post-condition is produced onto the state, as calling the function modified the state of our program. First, the engine thus produces \corepred{\exP}{2}{1}, which adds a binding to \PMap{} and creates the cell: our bigger state is now $(\{ 1\mapsto 0, 2\mapsto \ex1\},\bot)$. Finally, \corepred{\domainset}{}{\{2\}} is produced onto the state, however this \emph{doesn't succeed}. Indeed, the bindings of the heap are $\{1,2\}$, which are not a subset of the produced domainset $\{2\}$. This is because the engine cannot tell apart empty ($0$) states from non-empty states. Of course one could handle this by checking for $0$, or by explicitly excluding units from the codomain of \PMap{}. This however makes rules and definitions more complex and prone to error, as it is easy to forget to check for units.
+If we are using PCMs, $\Ex({1})$ is defined as $\ex{1}~|~0$, with $0$ the unit of the PCM. Note here that executing actions, consuming and producing doesn't return an element of $\St^?$, but of $\St$ directly, since the $0$ is already in its carrier set; one has no reason to extend it with $\bot$. The engine first consumes the \exP{} predicate, at address $1$ -- this means the pointed-to state becomes $0$ (or empty), and the bigger (or outer) state becomes $(\{ 1\mapsto 0\}, \{ 1\})$. The \domainset{} predicate is then successfully consumed too, leaving $(\{ 1\mapsto 0\},\bot)$. Now, the post-condition is produced onto the state, as calling the function modified the state of our program. First, the engine thus produces \corepred{\exP}{2}{1}, which adds a binding to \PMap{} and creates the cell: our bigger state is now $(\{ 1\mapsto 0, 2\mapsto \ex1\},\bot)$. Finally, \corepred{\domainset}{}{\{2\}} is produced onto the state, however this \emph{doesn't succeed}. Indeed, the bindings of the heap are $\{1,2\}$, which are not a subset of the produced domain set $\{2\}$. This is because the engine cannot tell apart empty ($0$) states from non-empty states. Of course one could handle this by checking for $0$, or by explicitly excluding units from the codomain of \PMap{}. This however makes rules and definitions more complex and prone to error, as it is easy to forget to check for units.
 
 If this examples is now reproduced with RAs, the consumption of \corepred{\exP}{1}{1} makes the cell return $\bot$, which cannot be added into the heap -- the \PMap{} must thus removes the binding, and the postcondition can be produced properly, as the bindings of the heap is only $\{2\}$. RAs are a solution to the above problem, as they facilitate the sound construction of state models and state model transformers, by allowing unitless state models.
 
 \subsection{Dynamic PMap}
 
-The \emph{dynamic} partial map state transformer, $\DynPMap(I,\mmdl)$ is similar to the regular (or \emph{static}) $\PMap$ transformer, but allows modelling ``dynamic'' maps that can be modified without allocation. This is used, for instance, to model the JavaScript memory model, where one can set a field of an object directly if it doens't exist, and where reading a field that doesn't exist does not raise an error but simply returns a default \code{undefined} value. In other words, the domain set is used not to distinguish \Miss{} from \Err{} but \Miss{} from \Ok{}.
+The \emph{dynamic} partial map state transformer, $\DynPMap(I,\mmdl)$ is similar to the regular (or \emph{static}) $\PMap$ transformer, but allows modelling ``dynamic'' maps that can be modified without allocation. This is used, for instance, to model the JavaScript memory model, where one can set a field of an object directly if it doesn't exist, and where reading a field that doesn't exist does not raise an error but simply returns a default \code{undefined} value. In other words, the domain set is used not to distinguish \Miss{} from \Err{} but \Miss{} from \Ok{}.
 
 This transformer has the same RA as $\PMap$, as well as the same predicates. It however only lifts the actions of the underlying state model $\mmdl$, without adding an \alloc{} action (since allocation does not exist; the field is just created on access). However, since this requires instantiating the underlying state model, it must still implement an ${\code{instantiate}: \vallist \rarr \St}$ function. Here we keep $\vallist$ for compatibility with $\PMap$, but in fact the arguments are always the empty list.
 
@@ -729,13 +729,13 @@ $\statemodel{Filter}(\mmdl, \actions, \Delta)$ is a transformer that allows filt
 
 $\statemodel{Mapper}(\mmdl, F_\actions, F_\Delta)$ allows renaming predicates or actions. This is extremely useful when implementing state models using transformers that need to match a pre-existing interface.
 
-$\statemodel{Injector}(\mmdl, I)$ adds hooks into \consume, \produce{} and \execac{}, allowing the developer to apply transformations to the inputs or outputs of these functions. This is also convenient when implementing a state model that needs to satisfy a pre-existing interface. For instance, this makes re-ordering the arguments of certains actions trivial, or allows treating an out-value as an in-value that makes the branch vanish if it doesn't correspond (this is the case for the \code{domainset} predicate in JSIL).
+$\statemodel{Injector}(\mmdl, I)$ adds hooks into \consume, \produce{} and \execac{}, allowing the developer to apply transformations to the inputs or outputs of these functions. This is also convenient when implementing a state model that needs to satisfy a pre-existing interface. For instance, this makes re-ordering the arguments of certain actions trivial, or allows treating an out-value as an in-value that makes the branch vanish if it doesn't correspond (this is the case for the \code{domainset} predicate in JSIL).
 
 \section{Optimising maps}
 
 As mentioned above, \GMap{} is an ideal target for optimisation: it is a common transformer (used once in the C and WISL memory models, and twice in the JS memory model) that has a high performance cost, due to branching: for instance, executing an action in a map with $n$ cells can lead to $n + 2$ branches. While most of these branches eventually get dropped, as the path condition doesn't hold, there is a cost to checking the satisfiability of the path condition. The \emph{ideal} \GMap{} transformer only returns feasible branches, minimising SAT checks.
 
-Another aspect of optimisation is the need for simplifying \emph{substitution}. While not described here, substituting a \GMap's state requires recursing through all key-value pairs, and applying the substitution to both the key and the value, before rebuilding a binding and possibly composing values that end with the same key. For instance, given a construction $\GMap(\nats, \Ex(\{1\}) \bowtie \Ex(\{2\}))$ (we ignore the discriminator for brevity) applying the substitution $\theta[\hat x\rarr 0]$ to the mappings $[ \hat x \mapsto (1, \bot), 0 \mapsto (\bot, 2)]$ would yield $[0 \mapsto (1,2)]$. Evaluation of Gillian with different state model constructions has shown that, especially for states with large partial maps (as is the case in JavaScript), substitution can take up to \emph{50\%} of the execution time directly within the state model (here, we ignore the difference in total execution time of the engine). 
+Another aspect of optimisation is the need for simplifying \emph{substitution}. While not described here, substituting a \GMap's state requires recursing through all key-value pairs, and applying the substitution to both the key and the value, before rebuilding a binding and possibly composing values that end with the same key. For instance, given a construction $\GMap(\nats, \Ex(\{1\}) \bowtie \Ex(\{2\}))$ (we ignore the discriminator for brevity) applying the substitution $\theta[\sym x\rarr 0]$ to the mappings $[ \sym x \mapsto (1, \bot), 0 \mapsto (\bot, 2)]$ would yield $[0 \mapsto (1,2)]$. Evaluation of Gillian with different state model constructions has shown that, especially for states with large partial maps (as is the case in JavaScript), substitution can take up to \emph{50\%} of the execution time directly within the state model (here, we ignore the difference in total execution time of the engine).
 
 We will here explore three different optimisations of \PMap{} that have been ported to Gillian, by justifying their theoretical soundness. While they have been adapted for \PMap{}, they could also be adapted for \GMap{} with little additional effort -- we choose not to, to keep the presentation simpler.
 
@@ -763,7 +763,7 @@ The idea behind this first optimisation is to split the bindings of the map betw
 
 Of course, to distinguish concrete from non-concrete cells, it requires the underlying state model to provide an $\code{is\_concrete}_\St: \St\rarr \bools$ function.
 
-We first define the resource algebra of this state model, where $h_c$ denotes the concrete part of the map and $h_s$ the symbolic (or better said, non-concrete) part: 
+We first define the resource algebra of this state model, where $h_c$ denotes the concrete part of the map and $h_s$ the symbolic (or better said, non-concrete) part:
 \begin{align*}
 	\SplitPMap(I,\mmdl) &\defeq I \finmap \mmdl.\Sigma \times I \finmap\mmdl.\Sigma \times \pset(I)^?\\
 	(h_c, h_s, d)\cdot (h_c', h_s', d') &\defeq (h_c'', h_s'', d'')\\
@@ -843,7 +843,7 @@ This second optimisation is new to Gillian, and uses \emph{abstract locations} (
 
 A limitation of this optimisation is that only abstract locations may be used as the domain type; it is thus a specialisation of $\PMap$, where $\SplitPMap$ was a more general optimisation.
 
-Let's first define the RA for this optimisation, $\ALocPMap$. 
+Let's first define the RA for this optimisation, $\ALocPMap$.
 \begin{align*}
 	\ALocPMap(\mmdl) &\defeq \Str \finmap \mmdl.\Sigma \times \pset(\Str)^?\\
 		(h,d)\cdot (h',d') &\defeq (h'', d'') \\
@@ -869,7 +869,7 @@ Let's first define the RA for this optimisation, $\ALocPMap$.
 	\end{cases}
 \end{align*}
 
-We make use of the helper function ${\code{to\_aloc}:\Pc\rarr \Val\rarr \Str^?}$, which returns the name of the abstract location matching a given value, if it exists.  This function receives the path condition, as for instance given a symbolic variable $\hat x$ with the path condition ${\hat x = \aloc{\code{loc\_x}}}$, the path condition is required to know what abstract location is associated to $\hat x$. The engine presented thus far however never receives the path condition, as to ensure it can only be strengthened -- this is not the case in Gillian, where this optimisation was first implemented. We thus assume that $\code{to\_aloc}$ is capable of reading the current path condition without getting it as an input, to avoid modifying the previously defined signatures, noting it is trivial to add the path condition as a parameter of \execac, \consume{} and \produce. We thus instead use the signature ${\code{to\_aloc}: \Val\rarr\Str^?}$. We also use the auxiliary function $\code{fresh\_aloc}: \code{unit} \rarr \Str$ to generate fresh abstract location names.
+We make use of the helper function ${\code{to\_aloc}:\Pc\rarr \Val\rarr \Str^?}$, which returns the name of the abstract location matching a given value, if it exists.  This function receives the path condition, as for instance given a symbolic variable $\sym x$ with the path condition ${\sym x = \aloc{\code{loc\_x}}}$, the path condition is required to know what abstract location is associated to $\sym x$. The engine presented thus far however never receives the path condition, as to ensure it can only be strengthened -- this is not the case in Gillian, where this optimisation was first implemented. We thus assume that $\code{to\_aloc}$ is capable of reading the current path condition without getting it as an input, to avoid modifying the previously defined signatures, noting it is trivial to add the path condition as a parameter of \execac, \consume{} and \produce. We thus instead use the signature ${\code{to\_aloc}: \Val\rarr\Str^?}$. We also use the auxiliary function $\code{fresh\_aloc}: \code{unit} \rarr \Str$ to generate fresh abstract location names.
 
 We now present the rules for this state model; in particular, we again only need to concern ourselves with the \code{get} and \code{set} internal methods; actions and predicate consumption and production remain the same. We also extend \code{get} to receive a mode ${M= \{\code{MATCH},\code{NO\_MATCH}\}}$; it is \code{MATCH} in \produce{} and \consume{}, and \code{NO\_MATCH} otherwise.
 
