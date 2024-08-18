@@ -16,6 +16,7 @@
 \newcommand{\codom}[0]{\operatorname{codom}}
 \newcommand{\preo}[0]{\preccurlyeq}
 \renewcommand{\part}[0]{\rightharpoonup}
+\newcommand{\fn}[1]{\operatorname{\mathit{#1}}}
 
 % Useful in maths 
 \newcommand{\If}[0]{\text{if}}
@@ -28,6 +29,7 @@
 \newcommand{\fix}[0]{\code{fix}}
 \newcommand{\actions}[0]{{\ensuremath{\cal{A}}}}
 \newcommand{\preds}[0]{\ensuremath{\Delta}}
+\newcommand{\modelsp}[0]{\models_\preds}
 
 \newcommand{\sym}[1]{\hat{#1}}
 
@@ -68,10 +70,12 @@
 \newcommand{\type}[1]{\text{#1}}
 \newcommand{\Nat}[0]{\type{Nat}}
 \newcommand{\Val}[0]{\type{Val}}
-\newcommand{\Str}[0]{\type{Str}}
 \newcommand{\LVal}[0]{\type{LVal}}
 \newcommand{\Loc}[0]{\type{Loc}}
 \newcommand{\ALoc}[0]{\type{ALoc}}
+
+\newcommand{\Str}[0]{\type{Str}}
+\newcommand{\strv}[1]{\code{`#1'}}
 
 \newcommand{\bools}[0]{\mathbb{B}}
 \newcommand{\vtrue}[0]{\texttt{true}}
@@ -124,7 +128,8 @@
 \newcommand{\domainset}[0]{\statepred{domainset}}
 \newcommand{\alloc}[0]{\code{alloc}}
 \newcommand{\ppget}[2]{\ensuremath{\code{get}(#1)\rightsquigarrow(#2)}}
-\newcommand{\ppset}[2]{\ensuremath{\code{set}(#1)\rarr #2}}
+\newcommand{\ppset}[2]{\ensuremath{\code{set}(#1)=#2}}
+\newcommand{\ppgetc}[2]{\ensuremath{\code{get}(#1)=(#2)}}
 
 \newcommand{\List}[0]{\statemodel{List}}
 \newcommand{\bound}[0]{\statepred{bound}}

@@ -62,9 +62,10 @@ We now propose to redefine the notion of state models. To follow the spirit of C
 
 \newcommand{\vallist}[0]{\Val~\code{list}}
 
-The core engine enables whole-program symbolic execution. For this state models must firstly define the set of states the execution will happen on; this is done via a partial resource algebra: a tuple  $(M, |\!-\!|:M\rarr M^?,(\cdot):M\times M\part M)$. They are further equipped with a set of actions $\cal A$, and an \execac{} function.
+The core engine enables whole-program symbolic execution. For this state models must firstly define the set of states the execution will happen on; this is done via a partial resource algebra: a tuple  $(M, |\!-\!|:M\rarr M^?,(\cdot):M\times M\part M)$. They are further equipped with a set of actions $\cal A$, an \execac{} function and a \code{sat} relation.
 \begin{align*}
-	\execac &: \Sst^? \rarr {\cal A} \rarr \vallist \rarr \pset(\full\outcomes_e \times \Sst^? \times \vallist \times \Pc)
+	\execac &: \Sst^? \rarr {\cal A} \rarr \vallist \rarr \pset(\full\outcomes_e \times \Sst^? \times \vallist \times \Pc) \\
+	\code{sat} &: \Theta \rarr \text{Store} \rarr \Sst \rarr \pset(\St)
 \end{align*}
 The arguments of \execac{} are, in order: the \emph{optional} state the action is executed on, the action, and the received arguments. It returns a set of branches, with an outcome, the new state, the returned values, and the path condition of that branch. It is pretty-printed as \ppexec{\alpha}{\sst,\sins}{o, \sst', \souts, \pc}.
 
@@ -78,6 +79,8 @@ Because we operate in symbolic memory, an additional piece of information is the
 
 We note that \cite{cse2} also has an `\textit{SV}' argument in action execution, that contains all existing symbolic variables, and that must be used when creating a new symbolic variable to ensure it is fresh. While necessary for proofs within the engine with Rocq, we omit it here. It is only used for allocation and it can instead be kept implicit, by assuming we can always generate a fresh symbolic variable.
 
+Finally, the user must define the \code{sat} relation, relating concrete and symbolic states. It is pretty printed as $\theta,s,\st\models \sst$, meaning that given a substitution $\theta$ and a store $s$, the concrete state $\st$ can be matched by a symbolic state $\sst$. We define this relation for non-$\bot$ states; we can then lift it to the option state model $\St^?$, by simply adding that $\forall \theta, s\ldotp \theta,s,\bot \models \bot$. This relieves users from needing to prove the two fairly trivial axioms of ``Empty Symbolic Memory'' and``Empty Memory''.
+
 \subsection{Compositional Engine}
 
 The compositional engine, built on top of the core engine, allows for verification of function specifications, and handles calling functions by their specification. As such, the state model must be extended with a set of core predicates $\Delta$ and a pair of \consume{} and \produce{} functions (equivalent, respectively, to a resource assert and assume). Finally, to link core predicates to states, it provides a $\code{sat}_\Delta$ relation.
@@ -85,7 +88,7 @@ The compositional engine, built on top of the core engine, allows for verificati
 	\text{for }M=\{\OX, \UX\}\\
 	\consume &: M\rarr \Sst^? \rarr \Delta \rarr \vallist \rarr \pset(\outcomes_l \times \Sst^? \times \vallist \times \Pc) \\
 	\produce &: \Sst^? \rarr \Delta \rarr \vallist \rarr \vallist \rarr \pset(\Sst^? \times \Pc)\\
-	\code{sat}_\Delta &:\St \rarr \Delta \rarr \vallist \rarr \pset(\vallist)
+	\code{sat}_\Delta &:\St^? \rarr \Delta \rarr \vallist \rarr \pset(\vallist)
 \end{align*}
 Similarly to \execac, the input state can be $\bot$. While intuitively one may assume that the input state of \consume{} and the output state of \produce{} may never be $\bot$, this would limit what core predicates can do. In particular, this means an $\emp$ predicate couldn't be defined, since it's production on an empty state results in an empty state.
 
@@ -93,7 +96,10 @@ The arguments of \consume{} are, in order: the mode of execution to distinguish 
 
 For \produce{}, the arguments are the state, the core predicate being produced, the ins and the outs of the predicate, resulting in a set of new states and their associated path condition. As an example, producing $x \mapsto 0$ in a state $[1 \mapsto 2]$ results in a new state $[1\mapsto 2, x \mapsto 0]$ with the path condition $x \neq 1$. If the produced predicate is incompatible with the state (eg. by producing $1 \mapsto y$ in a state containing $1 \mapsto x$), the producer \emph{vanishes}. Inversely, if the assertion can be interpreted in several ways, the producer may branch. It is pretty-printed as $\ppprod{\sst,\delta,\sins,\souts}{\sst', \pc}$.
 
-The \code{sat} relation relates a \emph{concrete} state, core predicate and in-values to a set of out-values. It is pretty-printed as $\st \models_\Delta \corepred{\delta}{\ins}{\outs}$. For instance in the linear heap state model, we have $[ 1 \mapsto 2 ] \models_\Delta \corepred{\code{points\_to}}{1}{2}$.
+The $\code{sat}_\Delta$ relation relates a possibly empty \emph{concrete} state, core predicate and in-values to a set of out-values. It is pretty-printed as $\st \modelsp \corepred{\delta}{\ins}{\outs}$ for $\outs \in \code{sat}_\Delta~\st~\delta~\ins$. For instance in the linear heap state model, we have $[ 1 \mapsto 2 ] \modelsp \corepred{\code{points\_to}}{1}{2}$. We also lift this relation to the symbolic realm: 
+\begin{align*}
+	\theta,s,\st\modelsp \corepred{\delta}{\sins}{\souts} \defeq \expeval{\sins}=\ins \land \expeval{\souts}=\outs \land \st\modelsp \corepred{\delta}{\ins}{\outs}
+\end{align*}
 
 Here we define logical outcomes $\outcomes_l = \{\Ok, \LFail, \Miss \}$. These are outcomes that happen during reasoning; in particular, \LFail{} equates to a logical failure due to an incompatibility between the consumed predicate and the state. For instance, consuming $1 \mapsto 1$ when in state $1 \mapsto 2$ would yield a \LFail{}, while consuming it in state $5 \mapsto 3$ would yield a \Miss{}, as a state $1\mapsto x$ could be composed with it to yield a non-miss outcome.
 
@@ -125,7 +131,7 @@ First, it is worth noting that Gillian supports both over-approximate (OX) and u
 
 Indeed there are two orthogonal concepts at play: one is \emph{compositionality}, that introduces \consume{} and \produce{}, frame addition and subtraction, and ultimately compatibility. The other is \emph{symbolicness}, that introduces soundness and the $\vDash$ relation for symbolic state modelling. To simplify the axioms, we will only consider the symbolic compositional case, as it is a superset of the other cases.
 
-For all of the axioms we assume we have a symbolic state model $\mmdl$, made of the RA $\Sst \ni \sst$. We consider the initial state $\sst$ well-formed.%, and a satisfiable path condition $\pc$.
+For all of the axioms we assume we have a symbolic state model $\mmdl$, made of the RA $\Sst \ni \sst$. We consider the initial state $\sst$ well-formed.
 
 \subsubsection{Symbolicness Axioms \note{\footnotesize a nicer name would be good}}
 
@@ -139,7 +145,7 @@ For all of the axioms we assume we have a symbolic state model $\mmdl$, made of 
 \theta,s,\bot_{\St^?}\models \bot_{\Sst^?}
 \end{equation}
 
-Note that here we work with the \emph{option} version $\St^?$ of the states $\St$, which extends the carrier set with a $\bot_{\St^?}$ element. If the core of a state $|\st|$ is $\bot$, the core of its option is $|\st^?|=\bot_{\St^?}$, with $\bot_{\St^?}$ \emph{inside} the carrier set of the state model (whereas $\bot\notin \St$). Finally, the composition of any state with $\bot_{\St^?}$ is that state.
+The two above axioms are obtained from free for any RA $\St$, by lifting it with the option RA $\St^?$ -- users thus do not need to prove it.
 
 \begin{equation}
 \tag{Memory Model OX Soundness}\label{eq:mem-ox-soundness}
@@ -180,34 +186,42 @@ Note that here we work with the \emph{option} version $\St^?$ of the states $\St
 
 Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from Iris is a form of frame subtraction: it guarantees $\forall c\ldotp \irisval(a \cdot c)\Rarr \irisval(b\cdot c)$, with $c$ a frame that can be added to the state ($\sst_f$ in the axiom). This becomes evident when noticing that disjointness of partial RAs equates to validity in Iris RAs, giving us $\forall c\ldotp a\disj c\Rarr b\disj c$. In fact, the Iris frame-preserving update implies frame subtraction modulo action outcomes. This makes sense, as Iris is used for OX reasoning, and frame subtraction is the property needed for OX soundness. \note{Maybe move this elsewhere.}
 
-Given the full state model $\full{\mmdl}$ with the states $\full\Sst$ and actions $\full\actions$ and the compositional state model $\mmdl$ with the states $\Sst\supseteq\full\Sst$ and actions $\actions$, $\Sst$ is the set of fragments of $\full\Sst$ if ${\forall \sst\in\Sst\ldotp \exists\full\sst\in\full\Sst\ldotp \sst\preo\full\sst}$ (completion), and ${\forall\full\sst_1,\full\sst_2\in\full\Sst\ldotp \full\sst_1\preo\full\sst_2 \implies \full\sst_1=\full\sst_2}$ (inextensibility).  These two state models are compositional, denoted $\full\mmdl \tilde \mmdl$ if all actions of full states using compositional semantics have the same result as using the full semantics.
+%Given the full state model $\full{\mmdl}$ with the states $\full\Sst$ and actions $\full\actions$ and the compositional state model $\mmdl$ with the states $\Sst\supseteq\full\Sst$ and actions $\actions$, $\Sst$ is the set of fragments of $\full\Sst$ if ${\forall \sst\in\Sst\ldotp \exists\full\sst\in\full\Sst\ldotp \sst\preo\full\sst}$ (completion), and ${\forall\full\sst_1,\full\sst_2\in\full\Sst\ldotp \full\sst_1\preo\full\sst_2 \implies \full\sst_1=\full\sst_2}$ (inextensibility).  These two state models are compositional, denoted $\full\mmdl \tilde \mmdl$ if all actions of full states using compositional semantics have the same result as using the full semantics.
+%
+%\begin{equation}
+%\tag{Compatibility}\label{eq:compatibility}
+%\begin{array}{l}
+%\ppexec{\full\alpha}{\full\sst, \sins}{o,\full\sst',\souts,\pc} \iff
+%\ppexec{\alpha}{\full\sst, \sins}{o,\full\sst',\souts,\pc}
+%\end{array}
+%\end{equation}
+%
+%Note here that we do not consider compatibility of the semantics of the language, but rather only the compatibility of the actions of the state models -- it is assumed the compatibility of the full semantics follow from it.
+%
+%\note{Does the above make sense? Sacha originally defined compatibility for concrete states, but I should be able to be lifted to symbolic states anyways... I just would want to handle compositionality/symbolicness independently, otherwise I imagine I need to then lift all compositional concrete axioms to compositional symbolic...}
 
 \begin{equation}
-\tag{Compatibility}\label{eq:compatibility}
+\tag{Consume Soundness}\label{eq:consume-sound}
 \begin{array}{l}
-\ppexec{\full\alpha}{\full\sst, \sins}{o,\full\sst',\souts,\pc} \iff
-\ppexec{\alpha}{\full\sst, \sins}{o,\full\sst',\souts,\pc}
+\ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc} \implies \forall \theta,s,\st,\st_f\ldotp \\
+\quad  \theta,s,\st\models \sst \land \theta,s,\st_f\models \sst_f \land \theta(\pc)=\vtrue \implies \\
+\qquad \exists \st_\delta\ldotp \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts}
 \end{array}
 \end{equation}
 
-Note here that we do not consider compatibility of the semantics of the language, but rather only the compatibility of the actions of the state models -- it is assumed the compatibility of the full semantics follow from it.
-
-\note{Does the above make sense? Sacha originally defined compatibility for concrete states, but I should be able to be lifted to symbolic states anyways... I just would want to handle compositionality/symbolicness independently, otherwise I imagine I need to then lift all compositional concrete axioms to compositional symbolic...}
-
 \begin{equation}
-\tag{Consume Soundness and Completeness}\label{eq:consume-sound-complete}
+\tag{Consume Complete}\label{eq:consume-complete}
 \begin{array}{l}
-\ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc_f} \implies\\
-\quad\exists \sst_\delta\ldotp \sst=\sst_f\cdot\sst_\delta\land (\forall\theta,s,\st,\ins,\outs\ldotp \\
-\qquad (\theta(\pc_f)=\vtrue \land \expeval{\sins} = \ins \land \expeval{\souts}=\outs) \implies\\
-\quad\qquad \theta,s,\st\models \sst_\delta \Leftrightarrow \st \models_\Delta \corepred{\delta}{\ins}{\outs})
+\ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc} \implies \forall \theta,s,\st_f,\st_\delta\ldotp \\
+\quad \theta,s,\st_f\models \sst_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \st_f\disj\st_\delta \implies \\
+\qquad \exists \st\ldotp \st = \st_\delta \cdot \st_f \land \theta,s,\st\models \sst \land \theta(\pc)=\vtrue
 \end{array}
 \end{equation}
 
 \begin{equation}
 \tag{Consume OX: No Path Drops}\label{eq:consume-ox-no-drop}
 \begin{array}{l}
-(\forall o, \sst'\pc'\ldotp \ppcons{\OX,\st,\delta,\sins}{o_c, \souts, \pc'}\Rarr o_c = \Ok)\land \theta, s, \st \models \sst \implies \\
+(\forall o, \sst'\pc'\ldotp \ppcons{\OX,\st,\delta,\sins}{o_c, \souts, \pc}\Rarr o_c = \Ok)\land \theta, s, \st \models \sst \implies \\
 \quad \exists  \sst', \pc', \st'\ldotp \ppcons{\OX, \sst, \delta,\ins,\pc}{\Ok, \sst', \souts, \pc'} \land \theta,s,\st' \models \sst'
 \end{array}
 \end{equation}
@@ -216,18 +230,17 @@ Note here that we do not consider compatibility of the semantics of the language
 \begin{equation}
 \tag{Produce: Soundness}\label{eq:produce-sound}
 \begin{array}{l}
-\ppprod{\sst_f,\delta,\sins,\souts}{\sst, \pc_f} \implies\\
-\exists \sst_\delta\ldotp \sst=\sst_\delta\cdot\sst_f \land (\forall\theta,s,\st_\delta\ldotp\\
-\quad \theta(\pc\land\pc_f)=\vtrue \Rarr \expeval{\sins}=\ins \Rarr \expeval{\souts}=\outs \Rarr \\
-\quad \theta,s,\st_\delta \models \sst_\delta \Rarr \st_\delta\models_\Delta\corepred{\delta}{\ins}{\outs})
+\ppprod{\sst_f,\delta,\sins,\souts}{\sst, \pc} \implies\\
+\quad \forall\theta,s,\st\ldotp \theta(\pc)=\vtrue \land \theta,s,\st\models\sst \implies \exists \st_\delta, \st_f\ldotp \\
+\qquad \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta,s,\st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \theta,s,\st_f \models \sst_f
 \end{array}
 \end{equation}
 
 \begin{equation}
 \tag{Produce: Completeness}\label{eq:produce-complete}
 \begin{array}{l}
-\expeval{\sins}=\ins \land \expeval{\souts}=\outs~\land \theta,s,\st\models\sst \land \st_\delta \models_\Delta \corepred{\delta}{\ins}{\outs} \land \st \disj \st_\delta \implies\\
-\quad \exists\sst_\delta,\pc_f\ldotp \ppprod{\sst,\delta,\sins,\souts}{\sst\cdot\sst_\delta,\pc_f} \land \theta(\pc_f) = \vtrue  \land \theta,s,\st_\delta\models\sst_\delta
+\theta, s, \st_f \models \sst_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\outs} \land \st_f\disj\st_\delta \implies \\
+\quad \exists \sst\ldotp \ppprod{\sst_f,\delta,\sins,\souts}{\sst,\pc} \land \theta(\pc)=\vtrue \land \theta,s,(\st_f\cdot\st_\delta) \models \sst
 \end{array}
 \end{equation}
 
