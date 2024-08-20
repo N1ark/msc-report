@@ -566,7 +566,7 @@ We now define the rules for \PMap(I,\mmdl):
 \and\inferrule[PMapConsIncompat]{d\neq\bot}{\ppcons{(h,d),\delta,i::\sins}{\LFail, (h,d), [], [i\notin d]}}
 \and\inferrule[PMapConsDomainSet]{d\neq \bot}{\ppcons{(h,d),\domainset,[]}{\Ok,(h,\bot), [d],[]}}
 \and\inferrule[PMapConsDomainSetMiss]{\muted{(h,d)=\mathit{unwrap}(s)} \\ d=\bot}{\ppcons{s,\domainset,[]}{\Miss,s, [\code{`domainset'}], []}}
-\and\inferrule[PMapProd]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppprod{s_{i'},\delta,\sins,\souts}{s'_{i'},\pc} \\ \ppset{s,i',s'_{i'}}{s'}}{\ppprod{s,\delta,i::\sins,\souts}{s', (i = i')::\pc}}
+\and\inferrule[PMapProd]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppprod{s_{i'},\delta,\sins,\souts}{s'_{i'},\pc'} \\ \ppset{s,i',s'_{i'}}{s'}}{\ppprod{s,\delta,i::\sins,\souts}{s', \pc::\pc'}}
 \and\inferrule[PMapProdDomainSet]{(h,\bot)=\mathit{unwrap}(s)}{\ppprod{s,\domainset,[],[d]}{(h,d),[\dom(h)\subseteq d]}}
 \and\inferrule[PMapFix]{\mmdl.\fix~\sins = a \\ a'=\mathit{lift}(a,i)}{\fix~i::\sins = a'}
 \and\inferrule[PMapFixDomainSet]{}{\fix~[\code{`domainset'}] = \exists d\ldotp \corepred{\domainset}{}{d}}
@@ -610,7 +610,7 @@ We now present the rules for $\DynPMap(I,\mmdl)$, \hl{highlighting} the differen
 \and\inferrule[DynPMapConsOutOfBounds]{d\neq\bot \\ \hl{s_i=\code{instantiate}~[]} \\ \hl{\ppcons{s_i,\delta,\sins}{o,s'_i,\souts,\pc}} \\ \hl{h'=h[i\leftarrow s_i']} \\ \hl{d'=d\uplus \{i\}}}{\ppcons{(h,d),\delta,i::\sins}{o, (h',d'), \souts, [i\notin d]\hl{::\pc}}}
 \and\inferrule[DynPMapConsDomainSet]{d\neq \bot}{\ppcons{(h,d),\domainset,[]}{\Ok,(h,\bot), [d],[]}}
 \and\inferrule[DynPMapConsDomainSetMiss]{\muted{(h,d)=\mathit{unwrap}(s)} \\ d=\bot}{\ppcons{s,\domainset,[]}{\Miss,s, [\code{`domainset'}], []}}
-\and\inferrule[DynPMapProd]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppprod{s_{i'},\delta,\sins,\souts}{s'_{i'},\pc} \\ \ppset{s,i',s'_{i'}}{s'}}{\ppprod{s,\delta,i::\sins,\souts}{s', (i = i')::\pc}}
+\and\inferrule[DynPMapProd]{\ppget{s,i}{i',s_{i'},\pc} \\ \ppprod{s_{i'},\delta,\sins,\souts}{s'_{i'},\pc'} \\ \ppset{s,i',s'_{i'}}{s'}}{\ppprod{s,\delta,i::\sins,\souts}{s', \pc::\pc'}}
 \and\inferrule[DynPMapProdDomainSet]{(h,\bot)=\mathit{unwrap}(s)}{\ppprod{s,\domainset,[],[d]}{(h,d),[\dom(h)\subseteq d]}}
 \and\inferrule[PMapFix]{\mmdl.\fix~\sins = a \\ a'=\mathit{lift}(a,i)}{\fix~i::\sins = a'}
 \and\inferrule[DynPMapFixDomainSet]{}{\fix~[\code{`domainset'}] = \exists d\ldotp \corepred{\domainset}{}{d}}
