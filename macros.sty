@@ -129,7 +129,7 @@
 \newcommand{\alloc}[0]{\code{alloc}}
 \newcommand{\ppget}[2]{\ensuremath{\code{get}(#1)\rightsquigarrow(#2)}}
 \newcommand{\ppset}[2]{\ensuremath{\code{set}(#1)=#2}}
-\newcommand{\ppgetc}[2]{\ensuremath{\code{get}(#1)=(#2)}}
+\newcommand{\ppgetc}[2]{\ensuremath{\code{get}(#1)=#2}}
 
 \newcommand{\List}[0]{\statemodel{List}}
 \newcommand{\bound}[0]{\statepred{bound}}
@@ -140,10 +140,10 @@
 \newcommand{\freedP}[0]{\code{freed}}
 
 \newcommand{\GMap}[0]{\statemodel{GMap}}
-\newcommand{\SplitPMap}[0]{\statemodel{PMap}_{\statemodel{Split}}}
-\newcommand{\ALocPMap}[0]{\statemodel{PMap}_{\statemodel{ALoc}}}
-\newcommand{\SplitDynPMap}[0]{\statemodel{DynPMap}_{\statemodel{Split}}}
-\newcommand{\ALocDynPMap}[0]{\statemodel{DynPMap}_{\statemodel{ALoc}}}
+\newcommand{\SplitPMap}[0]{\ensuremath{\statemodel{PMap}_{\statemodel{Split}}}}
+\newcommand{\ALocPMap}[0]{\ensuremath{\statemodel{PMap}_{\statemodel{ALoc}}}}
+\newcommand{\SplitDynPMap}[0]{\ensuremath{\statemodel{DynPMap}_{\statemodel{Split}}}}
+\newcommand{\ALocDynPMap}[0]{\ensuremath{\statemodel{DynPMap}_{\statemodel{ALoc}}}}
 \newcommand{\aloc}[1]{\text{aloc}(#1)}
 
 \newcommand{\BlockTree}[0]{\statemodel{BlockTree}}
@@ -161,3 +161,4 @@
 \newcommand{\note}[1]{{\emph{\color{purple}{#1}}}}
 \newcommand{\muted}[1]{{\color{gray}{#1}}}
 \newcommand{\hl}[1]{{\color{blue}{#1}}} % highlight
+\newenvironment{breakalign*}[1][]{\begingroup\allowdisplaybreaks\notag\align}{\endalign\endgroup}

@@ -6,8 +6,8 @@
 	0 & \sout{\textbf{Define optimised state models}: ALocPMap, SplitPMap} \\ \hline
 	0 & \textbf{Proof of equivalence}: ALocPMap, SplitPMap \\ \hline
 	1 & \textbf{Define stacks}: WISL, JS, C \\ \hline
-	1 & \textbf{Write comparative evaluation}: WISL, \sout{JS, C}, (Viper?) \\ \hline
-	1 & \textbf{Write proofs}: \sout{Ex}, Ag, Frac, PMap, List, GMap, Freeable, Sum, Product, DynPMap \\ \hline
+	1 & \textbf{Write comparative evaluation}: WISL, \sout{JS, C} \\ \hline
+	1 & \textbf{Write proofs}: \sout{Ex}, Ag, Frac, \sout{PMap}, List, GMap, Freeable, Sum, Product, DynPMap \\ \hline
 	2 & \textbf{Results table}: make a large table for appendix, with for each tested file: mode, number of procedures, number of GIL commands, Gillian time to verify, instantiation time to verify \\ \hline
 	2 & \textbf{Soudness of JS construction} \\ \hline
 	2 & \textbf{Write absolute evaluation}: PMap perf according to size, split PMap split rate \\ \hline
@@ -16,9 +16,11 @@
 	4 & \textbf{Redefine fixes as purely assertions}: signature, biabduction rules, proof of soundness \\ \hline
 \end{tabularx}
 
+\vspace{0.5cm}
+
 Small things to do/fix: \begin{compactitem}
  \item \sout{Mention that CSE2 has $\SV$, but keep it implicit here.}
- \item Remove notion of compatibility / update: maybe Sacha has a fix?
+ \item \sout{Remove notion of compatibility / update: maybe Sacha has a fix? / update: not really}
  \item Explain the difference between \LFail{} and \Err{}, maybe with that Venn diagram
  \item Give an example where \Miss{} is relevant for \consume.
  \item Explain what core predicates are -- relevant: \cite{abstractseplogic}
@@ -33,4 +35,5 @@ Small things to do/fix: \begin{compactitem}
  \item For every state model transformer make it clear the different wrt PCMs
  \item Give an example of how ALocPMap works
  \item Explain somewhere that symbolic states don't need to have composition defined, and explain why (symbolic block tree composition may yield >1 results)
+ \item Include quote from that Iris paper to explain why we need a domainset in PMap.
  \end{compactitem}

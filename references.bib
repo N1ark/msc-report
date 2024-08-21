@@ -1,12 +1,59 @@
 %% This BibTeX bibliography file was created using BibDesk.
 %% https://bibdesk.sourceforge.io/
 
-%% Created for Opale Sjöstedt at 2024-08-15 19:17:31 +0100 
+%% Created for Opale Sjöstedt at 2024-08-21 17:00:14 +0100 
 
 
 %% Saved with string encoding Unicode (UTF-8) 
 
 
+
+@misc{sufficientil,
+	archiveprefix = {arXiv},
+	author = {Flavio Ascari and Roberto Bruni and Roberta Gori and Francesco Logozzo},
+	date-added = {2024-08-21 16:59:36 +0100},
+	date-modified = {2024-08-21 16:59:42 +0100},
+	eprint = {2310.18156},
+	primaryclass = {cs.LO},
+	title = {Sufficient Incorrectness Logic: SIL and Separation SIL},
+	url = {https://arxiv.org/abs/2310.18156},
+	year = {2024},
+	bdsk-url-1 = {https://arxiv.org/abs/2310.18156}}
+
+@article{biabinox,
+	abstract = {Gradual verification, which supports explicitly partial specifications  
+and verifies them with a combination of static and dynamic checks, makes  
+verification more incremental and provides earlier feedback to developers.  
+While an abstract, weakest precondition-based approach to gradual verification  
+was previously proven sound, the approach did not provide sufficient guidance  
+for implementation and optimization of the required run-time checks. More  
+recently, gradual verification was implemented using symbolic execution  
+techniques, but the soundness of the approach (as with related static  
+checkers based on implicit dynamic frames) was an open question. This paper  
+puts practical gradual verification on a sound footing with a formalization  
+of symbolic execution, optimized run-time check generation, and run time  
+execution. We prove our approach is sound; our proof also covers a core  
+subset of the Viper tool, for which we are aware of no previous soundness result.  
+Our formalization enabled us to find a soundness bug in an implemented gradual  
+verification tool and describe the fix necessary to make it sound.},
+	address = {New York, NY, USA},
+	articleno = {85},
+	author = {Zimmerman, Conrad and DiVincenzo, Jenna and Aldrich, Jonathan},
+	date-added = {2024-08-21 14:35:33 +0100},
+	date-modified = {2024-08-21 14:35:39 +0100},
+	doi = {10.1145/3632927},
+	issue_date = {January 2024},
+	journal = {Proc. ACM Program. Lang.},
+	keywords = {gradual verification, implicit dynamic frames, soundness proof, static verification, symbolic execution},
+	month = {jan},
+	number = {POPL},
+	numpages = {30},
+	publisher = {Association for Computing Machinery},
+	title = {Sound Gradual Verification with Symbolic Execution},
+	url = {https://doi.org/10.1145/3632927},
+	volume = {8},
+	year = {2024},
+	bdsk-url-1 = {https://doi.org/10.1145/3632927}}
 
 @inproceedings{towardsjs,
 	abstract = {JavaScript has become the most widely used language for client-side web programming. The dynamic nature of JavaScript makes understanding its code notoriously difficult, leading to buggy programs and a lack of adequate static-analysis tools. We believe that logical reasoning has much to offer JavaScript: a simple description of program behaviour, a clear understanding of module boundaries, and the ability to verify security contracts.

@@ -127,9 +127,7 @@ To finish this, we may note the solution to the above bug is to proceed executin
 
 We may now go over the axioms that must be respected by the above defined functions for the soundness of the engine. Note we will thus focus on the axioms related to the state models in particular, and not the general semantics of the engine.
 
-First, it is worth noting that Gillian supports both over-approximate (OX) and under-approximate (UX) reasoning -- for which \emph{frame subtraction} or \emph{frame addition} must hold, respectively. In addition to the axioms in \cite{cse1} and the upcoming paper on an Abstract CSE, we also take inspiration from \cite{sacha-phd} and include the notion of \emph{compatibility}, linking full states to compositional states, as well as concrete states to symbolic states.
-
-Indeed there are two orthogonal concepts at play: one is \emph{compositionality}, that introduces \consume{} and \produce{}, frame addition and subtraction, and ultimately compatibility. The other is \emph{symbolicness}, that introduces soundness and the $\vDash$ relation for symbolic state modelling. To simplify the axioms, we will only consider the symbolic compositional case, as it is a superset of the other cases.
+It is worth noting that Gillian supports both over-approximate (OX) and under-approximate (UX) reasoning -- for which \emph{frame subtraction} or \emph{frame addition} must hold, respectively.
 
 For all of the axioms we assume we have a symbolic state model $\mmdl$, made of the RA $\Sst \ni \sst$. We consider the initial state $\sst$ well-formed.
 
