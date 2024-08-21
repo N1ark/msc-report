@@ -79,7 +79,7 @@ Because we operate in symbolic memory, an additional piece of information is the
 
 We note that \cite{cse2} also has an `\textit{SV}' argument in action execution, that contains all existing symbolic variables, and that must be used when creating a new symbolic variable to ensure it is fresh. While necessary for proofs within the engine with Rocq, we omit it here. It is only used for allocation and it can instead be kept implicit, by assuming we can always generate a fresh symbolic variable.
 
-Finally, the user must define the \code{sat} relation, relating concrete and symbolic states. It is pretty printed as $\theta,s,\st\models \sst$, meaning that given a substitution $\theta$ and a store $s$, the concrete state $\st$ can be matched by a symbolic state $\sst$. We define this relation for non-$\bot$ states; we can then lift it to the option state model $\St^?$, by simply adding that $\forall \theta, s\ldotp \theta,s,\bot \models \bot$. This relieves users from needing to prove the two fairly trivial axioms of ``Empty Symbolic Memory'' and``Empty Memory''.
+Finally, the user must define the \code{sat} relation, relating concrete and symbolic states. It is pretty printed as $\theta,s,\st\models \sst$, meaning that given a substitution $\theta$ and a store $s$, the concrete state $\st$ can be matched by a symbolic state $\sst$. We define this relation for non-$\bot$ states; we can then lift it to the option state model $\St^?$, by simply adding that $\forall \theta, s\ldotp \theta,s,\bot \models \bot$. This relieves users from needing to take $\bot$ into account when defining $\models$ and from proving the fairly trivial axiom \ref{eq:empty-mem}.
 
 \subsection{Compositional Engine}
 
@@ -134,16 +134,11 @@ For all of the axioms we assume we have a symbolic state model $\mmdl$, made of 
 \subsubsection{Symbolicness Axioms \note{\footnotesize a nicer name would be good}}
 
 \begin{equation}
-\tag{Empty Symbolic Memory}\label{eq:empty-sym-mem}
-\theta,s,\st\models \bot_{\Sst^?} \implies \st = \bot_{\St^?}
-\end{equation}
-
-\begin{equation}
 \tag{Empty Memory}\label{eq:empty-mem}
-\theta,s,\bot_{\St^?}\models \bot_{\Sst^?}
+\theta,s,\st\models \bot_{\Sst^?} \iff \st = \bot_{\St^?}
 \end{equation}
 
-The two above axioms are obtained from free for any RA $\St$, by lifting it with the option RA $\St^?$ -- users thus do not need to prove it.
+The above axiom is obtained for free, by lifting the $\models$ relation to the option RA. While in the axiom we distinguish between the two $\bot$ elements such that $\bot_{\Sst^?}\in\Sst^?$ and $\bot_{\St^?}\in\St^?$, we otherwise will omit the distinction 
 
 \begin{equation}
 \tag{Memory Model OX Soundness}\label{eq:mem-ox-soundness}
@@ -201,9 +196,9 @@ Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from I
 \begin{equation}
 \tag{Consume Soundness}\label{eq:consume-sound}
 \begin{array}{l}
-\ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc} \implies \forall \theta,s,\st,\st_f\ldotp \\
-\quad  \theta,s,\st\models \sst \land \theta,s,\st_f\models \sst_f \land \theta(\pc)=\vtrue \implies \\
-\qquad \exists \st_\delta\ldotp \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts}
+\ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc} \implies \forall \theta,s,\st\ldotp \\
+\quad  \theta,s,\st\models \sst \land \theta(\pc)=\vtrue \implies \exists \st_\delta, \st_f\ldotp\\
+\qquad \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \theta,s,\st_f\models \sst_f
 \end{array}
 \end{equation}
 
@@ -219,11 +214,10 @@ Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from I
 \begin{equation}
 \tag{Consume OX: No Path Drops}\label{eq:consume-ox-no-drop}
 \begin{array}{l}
-(\forall o, \sst'\pc'\ldotp \ppcons{\OX,\st,\delta,\sins}{o_c, \souts, \pc}\Rarr o_c = \Ok)\land \theta, s, \st \models \sst \implies \\
-\quad \exists  \sst', \pc', \st'\ldotp \ppcons{\OX, \sst, \delta,\ins,\pc}{\Ok, \sst', \souts, \pc'} \land \theta,s,\st' \models \sst'
+(\forall o, \sst_f,\souts,\pc \ldotp \ppcons{\OX,\sst,\delta,\sins}{o, \sst_f, \souts, \pc}\Rarr o_c = \Ok) \implies \\
+\quad \exists  \sst_f',\souts',\pc' \ldotp \ppcons{\OX, \sst, \delta,\ins,\pc}{\Ok, \sst_f', \souts', \pc'}
 \end{array}
 \end{equation}
-\note{Because the outcome $o_c$ can be \LFail{} or \Miss{}, I changed the axiom from having $o_c\neq \code{Abort}$ to $o_c=\Ok$. Should be fine?}
 
 \begin{equation}
 \tag{Produce: Soundness}\label{eq:produce-sound}

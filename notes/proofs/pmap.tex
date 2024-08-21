@@ -38,8 +38,7 @@ We define predicate satisfiability as:
 
 We define symbolic interpretation as:
 \begin{mathpar}
-\inferrule[PMapSymInterpretationBot]{}{\theta,s,\bot\models\bot}
-\and\inferrule[PMapSymInterpretation]{\forall \sym i\in\dom(\sym h)\ldotp \expeval{\sym i}=i \land i\in\dom(h) \land \theta,s,h(i) \models \sym h(\sym i) \\ \expeval{\dom(\sym h)}=\dom(h) \\ \expeval{\sym d}=d}{\theta,s,(h,d)\models (\sym h, \sym d)}
+\inferrule[PMapSymInterpretation]{\forall \sym i\in\dom(\sym h)\ldotp \expeval{\sym i}=i \land i\in\dom(h) \land \theta,s,h(i) \models \sym h(\sym i) \\ \expeval{\dom(\sym h)}=\dom(h) \\ \expeval{\sym d}=d}{\theta,s,(h,d)\models (\sym h, \sym d)}
 \end{mathpar}
 
 \subsection{Compositional Concrete Rules}
@@ -400,8 +399,8 @@ Again, both cases (when the domains set $d$ is owned and when it is $\bot$) are 
 \end{hypvlist}
 \pfprove \begin{goalvlist}
 \goalvitem{conssound} $\begin{array}{l}
-\forall \theta,s,\st,\st_f\ldotp \theta,s,\st\models \sst \land \theta,s,\st_f\models \sst_f \land \theta(\pc)=\vtrue \implies \\
-\quad \exists \st_\delta\ldotp \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts}
+\forall \theta,s,\st\ldotp \theta,s,\st\models \sst \land \theta(\pc)=\vtrue \implies \exists \st_\delta, \st_f \ldotp\\
+\quad  \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \theta,s,\st_f\models \sst_f 
 \end{array}$
 \end{goalvlist}
 
@@ -409,12 +408,11 @@ Again, both cases (when the domains set $d$ is owned and when it is $\bot$) are 
 
 \begin{hypvlist}
 \hypvitem{subcon} From \hyp{consok} and \textsc{PMapCons}, given $\sins=\sym i::\sins'$ and $\pc=\pc'::\pc''$ we have $\ppget{\sst,\sym i}{\sym i', \sst_i, \pc'}$, ${\ppcons{\sst_i,\delta,\sins'}{o,\sst_i',\souts,\pc''}}$ and $\ppset{\sst,\sym i',\sst_i'}{\sst_f}$.
-\hypvitem{assume} Assume $\theta,s,\st\models \sst \land \theta,s,\st_f\models \sst_f \land \theta(\pc)=\vtrue$.
+\hypvitem{assume} Assume $\theta,s,\st\models \sst \land \theta(\pc)=\vtrue$.
 \hypvitem{evalsok} From \hyp{subcon} and \hyp{assume}, we have $\expeval{\ins}=i::\ins'$
 \hypvitem{submodels} From \hyp{assume} and \ref{eq:get-sound}, we know $\exists \st_i\ldotp \ppgetc{\st,i}{\st_i} \land \theta,s,\st_i\models\sst_i$.
-\hypvitem{subfmodels} From \hyp{assume}, \hyp{subcon} and the definition of \code{set} it follows that $\exists \st_i'\ldotp \theta,s,\st_i'\models\sst_i'$.
 \hypvitem{pcok} From \hyp{assume} and \hyp{subcon}, we have $\theta(\pc'')=\vtrue$.
-\hypvitem{subsound} From \hyp{submodels}, \hyp{subfmodels}, \hyp{pcok} and \hyp{ssatsconssound} we can apply \ref{eq:consume-sound}, giving us $\exists \st_{\delta,i}\ldotp \st_{\delta,i}\disj \st_i' \land \st_i=\st_{\delta,i}\cdot\st_i' \land \theta,s,\st_{\delta,i}\modelsp \corepred{\delta}{\ins'}{\outs}$.
+\hypvitem{subsound} From \hyp{submodels}, \hyp{pcok} and \hyp{ssatsconssound} we can apply \ref{eq:consume-sound}, giving us $\exists \st_{\delta,i}, \st_{f,i}\ldotp \st_{\delta,i}\disj \st_i' \land \st_i=\st_{\delta,i}\cdot\st_i' \land \theta,s,\st_{\delta,i}\modelsp \corepred{\delta}{\ins'}{\outs} \land \theta,s,\st_{f,i}\models\sst_{f,i}$.
 \hypvitem{subdisj} We can then pick $\st_\delta=([i\mapsto \st_{\delta,i}], \bot)$, and from \hyp{subsound} and the definition of composition we know $\st_\delta\disj\st$ and \hyp{subcon} and the definition of \code{set}, $\st_f=\st\cdot\st_\delta$.
 \hypvitem{modelsp} From the definition of $\modelsp$ and \hyp{subsound} we then have $\theta,s,\st_\delta\models\corepred{\delta}{\ins}{\outs}$, which with \hyp{subdisj} gives our goal \goal{conssound}.
 \end{hypvlist}
@@ -470,11 +468,11 @@ Again, both cases (when the domains set $d$ is owned and when it is $\bot$) are 
 \pfprop{Consume: OX sound}
 
 \pfassume \begin{hypvlist}
-\hypvitem{allok} $(\forall o, \sst'\pc'\ldotp \ppcons{\OX,\sst,\delta,\sins}{o_c, \sst', \souts, \pc'}\Rarr o_c = \Ok)\land \theta, s, \st \models \sst$
+\hypvitem{allok} $\forall o, \sst_f,\souts,\pc \ldotp \ppcons{\OX,\sst,\delta,\sins}{o, \sst_f, \souts, \pc}\Rarr o_c = \Ok$
 \hypvitem{ssatsconsox} \consume{} on $\mmdl$ are OX sound.
 \end{hypvlist}
 \pfprove \begin{goalvlist}
-\goalvitem{exok} $\quad \exists  \sst', \pc', \st'\ldotp \ppcons{\OX, \sst, \delta,\ins,\pc}{\Ok, \sst', \souts, \pc'} \land \theta,s,\st' \models \sst'$
+\goalvitem{exok} $\exists  \sst_f',\souts',\pc' \ldotp \ppcons{\OX, \sst, \delta,\ins,\pc}{\Ok, \sst_f', \souts', \pc'}$
 \end{goalvlist}
 
 \pfcase{$\delta \in \preds_\mmdl$}
@@ -483,10 +481,7 @@ From \textsc{PMapProd} we know \consume{} for $\delta\in\preds_\mmdl$ only retur
 
 \pfcase{$\delta = \domainset$}
 
-\begin{hypvlist}
-\hypvitem{match} From the \consume{} rules, we never vanish, so if all consumptions are \Ok{} we must have $\sst=(\sym h,\sym d)$ with $\sym d\neq\bot$, $\sins=[]$, $\sst'=(\sym h,\bot)$, $\souts=[\sym d]$, $\pc'=[]$.
-\hypvitem{stexi} Given $\theta,s,\st\models\sst$ from \hyp{allok}, with $\st=(h,d)$, then we have $\st'=(h,\bot)$ such that, from the definition of $\models$, $\theta,s,\st'\models\sst'$. This completes our goal \goal{exok}.
-\end{hypvlist}
+From the \consume{} rules, we never vanish, so if all consumptions are \Ok{} we must have $\sst=(\sym h,\sym d)$ with $\sym d\neq\bot$, $\sins=[]$, $\sst'_f=(\sym h,\bot)$, $\souts'=[\sym d]$, $\pc'=[]$, which gives our goal \goal{exok}.
 
 \pfprop{Produce soundness}
 

@@ -17,8 +17,7 @@ We define predicate satisfiability as:
 
 We define symbolic interpretation as:
 \begin{mathpar}
-\inferrule[ExSymInterpretationBot]{}{\theta,s,\bot\models\bot}
-\and\inferrule[ExSymInterpretation]{\expeval{\sym x}=x}{\theta,s,\ex{x}\models\ex{\sym x}}
+\inferrule[ExSymInterpretation]{\expeval{\sym x}=x}{\theta,s,\ex{x}\models\ex{\sym x}}
 \end{mathpar}
 
 \subsection{Compositional Concrete Rules}
@@ -138,8 +137,8 @@ From \hyp{framebot} we get $\st'\cdot\st_f=\st'\cdot\bot=\st'$, and from \hyp{ac
 \end{hypvlist}
 \pfprove \begin{goalvlist}
 \goalvitem{conssound} $\begin{array}{l}
-\forall \theta,s,\st,\st_f\ldotp \theta,s,\st\models \sst \land \theta,s,\st_f\models \sst_f \land \theta(\pc)=\vtrue \implies \\
-\quad \exists \st_\delta\ldotp \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts}
+\forall \theta,s,\st\ldotp \theta,s,\st\models \sst \land \theta(\pc)=\vtrue \implies \exists \st_\delta, \st_f \ldotp\\
+\quad  \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \theta,s,\st_f\models \sst_f 
 \end{array}$
 \end{goalvlist}
 \begin{hypvlist}
@@ -176,15 +175,13 @@ Combining \hyp{stex}, \hyp{stdex} and \hyp{predmdl} gives our goal \goal{conssou
 \pfprop{Consume: OX sound}
 
 \pfassume \begin{hypvlist}
-\hypvitem{allok} $(\forall o, \sst'\pc'\ldotp \ppcons{\OX,\sst,\delta,\sins}{o_c, \sst', \souts, \pc'}\Rarr o_c = \Ok)\land \theta, s, \st \models \sst$
+\hypvitem{allok} $\forall o, \sst_f,\souts,\pc \ldotp \ppcons{\OX,\sst,\delta,\sins}{o, \sst_f, \souts, \pc}\Rarr o_c = \Ok$
 \end{hypvlist}
 \pfprove \begin{goalvlist}
-\goalvitem{exok} $\quad \exists  \sst', \pc', \st'\ldotp \ppcons{\OX, \sst, \delta,\ins,\pc}{\Ok, \sst', \souts, \pc'} \land \theta,s,\st' \models \sst'$
+\goalvitem{exok} $\exists  \sst_f',\souts',\pc' \ldotp \ppcons{\OX, \sst, \delta,\ins,\pc}{\Ok, \sst_f', \souts', \pc'}$
 \end{goalvlist}
-\begin{hypvlist}
-\hypvitem{match} From the \consume{} rules, we never vanish, so if all consumptions are \Ok{} we must have $\sst=\ex{\sym x}$, $\delta=\exP$, $\sins=[]$, $\sst'=\bot$, $\souts=[\sym x]$, $\pc'=[]$.
-\hypvitem{stexi} From the definition of $\models$ we also get $\theta,s,\bot\models\bot$. Our goal \goal{exok} follows.
-\end{hypvlist}
+
+From the \consume{} rules, we never vanish, so if all consumptions are \Ok{} we must have $\sst=\ex{\sym x}$, $\delta=\exP$, $\sins=[]$, $\sst_f'=\bot$, $\souts'=[\sym x]$, $\pc'=[]$. Our goal \goal{exok} follows.
 
 \pfprop{Produce soundness}
 
