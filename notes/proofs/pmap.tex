@@ -85,47 +85,49 @@ We now re-define \code{get} and \code{set}, lifting them to the symbolic realm (
 	\code{get}&: \PMap(I, \mmdl) \rarr I \rarr \pset(I \times \mmdl.\Sst \times \Pc) \\
 	\code{set}&: \PMap(I, \mmdl) \rarr I \rarr \mmdl.\Sst \rarr \PMap(I, \mmdl)
 \end{align*}
-We pretty-print \code{get} and \code{set} as \ppget{\sst,i}{i',\sst_i,\pc} and \ppset{\sst,i,\sst_i}{\sst'}.
+We pretty-print \code{get} and \code{set} as \ppget{\sst,\sym i}{\sym i',\sst_i,\pc} and \ppset{\sst,\sym i,\sst_i}{\sst'}.
 \begin{align*}
 	\text{Given }
-	\fn{wrap}(h, d) &\defeq \begin{cases}
-		\bot &\If~\dom(h)=\emptyset \land d=\bot\\
-		(h,d)&\Otherwise
+	\fn{wrap}(\sym h, \sym d) &\defeq \begin{cases}
+		\bot &\If~\dom(\sym h)=\emptyset \land \sym d=\bot\\
+		(\sym h,\sym d)&\Otherwise
 	\end{cases}\\
 	\fn{unwrap}(\sst) & \defeq \begin{cases}
 		([], \bot) &\If~\sst=\bot\\
-		(h, d) &\If~\sst=(h,d)
+		(\sym h, \sym d) &\If~\sst=(\sym h,\sym d)
 	\end{cases}
 \end{align*}
 \begin{mathparpagebreakable}
-\inferrule[PMapGetMatch]{(h,d)=\fn{unwrap}(\sst) \\ i'\in\dom(h) \\ \sst_i=h(i')}{\ppget{\sst, i}{i', \sst_i, [i=i']}}
-\and\inferrule[PMapGetAdd]{(h,d)=\fn{unwrap}(\sst) \\ i\notin\dom(h) \\ d\neq\bot}{\ppget{\sst, i}{i,\bot, [i\notin\dom(h) \land i\in d]}}
-\and\inferrule[PMapGetBotDomain]{(h,d)=\fn{unwrap}(\sst) \\ i\notin \dom(h) \\ d=\bot}{\ppget{\sst,i}{i,\bot,[i\notin\dom(h)]}}
-\and\inferrule[PMapSetSome]{(h,d)=\fn{unwrap}(\sst) \\ \sst_i\neq\bot \\ h'=h[i\leftarrow \sst_i] \\ \sst'=\fn{wrap}(h', d)}{\ppset{\sst,i,\sst_i}{\sst'}}
-\and\inferrule[PMapSetNone]{(h,d)=\fn{unwrap}(\sst) \\ \sst_i=\bot \\ h'=h[i\not\leftarrow] \\ \sst'=\fn{wrap}(h', d)}{\ppset{\sst,i,\sst_i}{\sst'}}
+\inferrule[PMapGetMatch]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i'\in\dom(\sym h) \\ \sst_i=\sym h(\sym i')}{\ppget{\sst, \sym i}{\sym i', \sst_i, [\sym i=\sym i']}}
+\and\inferrule[PMapGetAdd]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\notin\dom(\sym h) \\ \sym d\neq\bot}{\ppget{\sst, \sym i}{\sym i,\bot, [\sym i\notin\dom(\sym h) \land \sym i\in \sym d]}}
+\and\inferrule[PMapGetBotDomain]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\notin \dom(\sym h) \\ \sym d=\bot}{\ppget{\sst,\sym i}{\sym i,\bot,[\sym i\notin\dom(\sym h)]}}
+\and\inferrule[PMapSetSome]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sst_i\neq\bot \\ \sym h'=\sym h[\sym i\leftarrow \sst_i] \\ \sst'=\fn{wrap}(\sym h', \sym d)}{\ppset{\sst,\sym i,\sst_i}{\sst'}}
+\and\inferrule[PMapSetNone]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sst_i=\bot \\ \sym h'=\sym h[\sym i\not\leftarrow] \\ \sst'=\fn{wrap}(\sym h', \sym d)}{\ppset{\sst,\sym i,\sst_i}{\sst'}}
 \end{mathparpagebreakable}
 
 \begin{align*}
 	\text{Given }
-	\fn{lift\_if\_miss}(o, i, \sins) &\defeq \begin{cases}
-		i :: \sins &\If~o=\Miss\\
+	\fn{lift\_if\_miss}(o, \sym i, \sins) &\defeq \begin{cases}
+		\sym i :: \sins &\If~o=\Miss\\
 		\sins &\Otherwise
 	\end{cases}
 \end{align*}
 \begin{mathparpagebreakable}
-\inferrule[PMapAction]{\ppget{\sst,i}{i',\sst_i,\pc} \\ \ppexec{\alpha}{\sst_i,\sins}{o,\sst'_i,\souts,\pc'} \\ \ppset{\sst,i',\sst'_i}{\sst'}}{\ppexec{\alpha}{\sst,i::\sins}{o,\sst',i'::\souts, \pc :: \pc'}}
-\and\inferrule[PMapActionOutOfBounds]{d\neq\bot}{\ppexec{\alpha}{(h,d),i::\sins}{\Err, (h,d), [], [i\notin d]}}
-\and\inferrule[PMapAlloc]{d\neq \bot \\ i = \code{fresh} \\ \sst_i=\code{instantiate}(\sins) \\ h' = h[i\leftarrow \sst_i] \\ d' = d\uplus \{i\}}{\ppexec{\alloc}{(h,d), \sins}{\Ok, (h',d'), [i], [i=i]}}
-\and\inferrule[PMapAllocMiss]{(h,d)=\fn{unwrap}(\sst) \\ d=\bot}{\ppexec{\alloc}{\sst,\sins}{\Miss,\sst,[\strv{domainset}],[]}}
-\and\inferrule[PMapCons]{\ppget{\sst,i}{i',\sst_i,\pc} \\ \ppcons{\sst_i,\delta,\sins}{o,\sst'_i,\souts,\pc'} \\ \ppset{\sst,i',\sst'_i}{\sst'} \\ \souts'=\fn{lift\_if\_miss}(o,i',\souts)}{\ppcons{\sst,\delta,i::\sins}{o,\sst',\souts', \pc::\pc'}}
-\and\inferrule[PMapConsIncompat]{d\neq\bot}{\ppcons{(h,d),\delta,i::\sins}{\LFail, (h,d), [], [i\notin d]}}
-\and\inferrule[PMapConsDomainSet]{d\neq \bot}{\ppcons{(h,d),\domainset,[]}{\Ok,(h,\bot), [d],[]}}
-\and\inferrule[PMapConsDomainSetMiss]{(h,d)=\fn{unwrap}(\sst) \\ d=\bot}{\ppcons{\sst,\domainset,[]}{\Miss,\sst, [\strv{domainset}], []}}
-\and\inferrule[PMapProd]{\ppget{\sst,i}{i',\sst_i,\pc} \\ \ppprod{\sst_i,\delta,\sins,\souts}{\sst'_i,\pc'} \\ \ppset{\sst,i',\sst'_i}{\sst'}}{\ppprod{\sst,\delta,i::\sins,\souts}{\sst', \pc::\pc'}}
-\and\inferrule[PMapProdDomainSet]{(h,\bot)=\fn{unwrap}(\sst)}{\ppprod{\sst,\domainset,[],[d]}{(h,d),[\dom(h)\subseteq d]}}
-\and\inferrule[PMapFix]{\mmdl.\fix~\sins = a \\ a'=\fn{lift}(a,i)}{\fix~i::\sins = a'}
-\and\inferrule[PMapFixDomainSet]{}{\fix~[\strv{domainset}] = \exists d\ldotp \corepred{\domainset}{}{d}}
+\inferrule[PMapAction]{\ppget{\sst,\sym i}{\sym i',\sst_i,\pc} \\ \ppexec{\alpha}{\sst_i,\sins}{o,\sst'_i,\souts,\pc'} \\ \ppset{\sst,\sym i',\sst'_i}{\sst'}}{\ppexec{\alpha}{\sst,\sym i::\sins}{o,\sst',\sym i'::\souts, \pc :: \pc'}}
+\and\inferrule[PMapActionOutOfBounds]{\sym d\neq\bot}{\ppexec{\alpha}{(\sym h,\sym d),\sym i::\sins}{\Err, (\sym h,\sym d), [], [\sym i\notin \sym d]}}
+\and\inferrule[PMapAlloc]{\sym d\neq \bot \\ \sym i = \code{fresh} \\ \sst_i=\code{instantiate}(\sins) \\ \sym h' = \sym h[\sym i\leftarrow \sst_i] \\ \sym d' = \sym d\uplus \{\sym i\}}{\ppexec{\alloc}{(\sym h,\sym d), \sins}{\Ok, (\sym h',\sym d'), [\sym i], [\sym i=\sym i]}}
+\and\inferrule[PMapAllocMiss]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym d=\bot}{\ppexec{\alloc}{\sst,\sins}{\Miss,\sst,[\strv{domainset}],[]}}
+\and\inferrule[PMapCons]{\ppget{\sst,\sym i}{\sym i',\sst_i,\pc} \\ \ppcons{\sst_i,\delta,\sins}{o,\sst'_i,\souts,\pc'} \\ \ppset{\sst,\sym i',\sst'_i}{\sst'} \\ \souts'=\fn{lift\_if\_miss}(o,\sym i',\souts)}{\ppcons{\sst,\delta,\sym i::\sins}{o,\sst',\souts', \pc::\pc'}}
+\and\inferrule[PMapConsIncompat]{\sym d\neq\bot}{\ppcons{(\sym h,\sym d),\delta,\sym i::\sins}{\LFail, (\sym h,\sym d), [], [\sym i\notin \sym d]}}
+\and\inferrule[PMapConsDomainSet]{\sym d\neq \bot}{\ppcons{(\sym h,\sym d),\domainset,[]}{\Ok,(\sym h,\bot), [\sym d],[]}}
+\and\inferrule[PMapConsDomainSetMiss]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym d=\bot}{\ppcons{\sst,\domainset,[]}{\Miss,\sst, [\strv{domainset}], []}}
+\and\inferrule[PMapProd]{\ppget{\sst,\sym i}{\sym i',\sst_i,\pc} \\ \ppprod{\sst_i,\delta,\sins,\souts}{\sst'_i,\pc'} \\ \ppset{\sst,\sym i',\sst'_i}{\sst'}}{\ppprod{\sst,\delta,\sym i::\sins,\souts}{\sst', \pc::\pc'}}
+\and\inferrule[PMapProdDomainSet]{(\sym h,\bot)=\fn{unwrap}(\sst)}{\ppprod{\sst,\domainset,[],[\sym d]}{(\sym h,\sym d),[\dom(\sym h)\subseteq \sym d]}}
+\and\inferrule[PMapFix]{\mmdl.\fix~\sins = a \\ a'=\fn{lift}(a,\sym i)}{\fix~\sym i::\sins = a'}
+\and\inferrule[PMapFixDomainSet]{}{\fix~[\strv{domainset}] = \exists \sym d\ldotp \corepred{\domainset}{}{\sym d}}
 \end{mathparpagebreakable}
+
+Note in the above we define $\fn{lift}(a,\sym i)$ as a function that traverses an assertion $a$ and lifts all core predicate assertions by adding the value $\sym i$ at the start of its in-values, such that $\fn{lift}(\corepred{\delta}{\sins}{\souts}, \sym i)=\corepred{\delta}{\sym i::\sins}{\souts}$.
 
 \subsection{Soundness Proofs}
 

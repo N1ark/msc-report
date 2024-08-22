@@ -5,10 +5,10 @@ For the partial map with syntactic checks, we re-use the RA of \PMap, as well as
 \subsection{\code{get} rules}
 
 \begin{mathparpagebreakable}
-\inferrule[SyntacticPMapGetMatch]{(h,d)=\mathit{unwrap}(\sst) \\ i\in\dom(h) \\ \sst_i=h(i)}{\ppget{\sst, i}{i, \sst_{i}, []}}
-\and\inferrule[SyntacticPMapGetBranch]{(h,d)=\mathit{unwrap}(\sst) \\ i\notin\dom(h) \\ i'\in\dom(h) \\ \sst_{i'}=h(i')}{\ppget{\sst, i}{i', \sst_{i'}, [i=i']}}
-\and\inferrule[SyntacticPMapGetAdd]{(h,d)=\mathit{unwrap}(\sst) \\ i\notin\dom(h) \\ d\neq\bot}{\ppget{\sst, i}{i,\bot, [i\notin\dom(h) \land i\in d]}}
-\and\inferrule[SyntacticPMapGetBotDomain]{(h,d)=\mathit{unwrap}(\sst) \\ i\notin \dom(h) \\ d=\bot}{\ppget{\sst,i}{i,\bot,[i\notin\dom(h)]}}
+\inferrule[SyntacticPMapGetMatch]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\in\dom(\sym h) \\ \sst_i=\sym h(\sym i)}{\ppget{\sst, \sym i}{\sym i, \sst_{i}, []}}
+\and\inferrule[SyntacticPMapGetBranch]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\notin\dom(\sym h) \\ \sym i'\in\dom(\sym h) \\ \sst_{i'}=\sym h(\sym i')}{\ppget{\sst, \sym i}{\sym i', \sst_{i'}, [\sym i=\sym i']}}
+\and\inferrule[SyntacticPMapGetAdd]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\notin\dom(\sym h) \\ \sym d\neq\bot}{\ppget{\sst, \sym i}{\sym i,\bot, [\sym i\notin\dom(\sym h) \land \sym i\in \sym d]}}
+\and\inferrule[SyntacticPMapGetBotDomain]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\notin \dom(\sym h) \\ \sym d=\bot}{\ppget{\sst,\sym i}{\sym i,\bot,[\sym i\notin\dom(\sym h)]}}
 \end{mathparpagebreakable}
 
 \subsection{Soundness Proofs}

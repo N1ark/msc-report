@@ -770,44 +770,44 @@ Of course, to distinguish concrete from non-concrete cells, it requires the unde
 
 We first define the resource algebra of this state model, where $h_c$ denotes the concrete part of the map and $h_s$ the symbolic (or better said, non-concrete) part:
 \begin{align*}
-	\SplitPMap(I,\mmdl) &\defeq I \finmap \mmdl.\Sigma \times I \finmap\mmdl.\Sigma \times \pset(I)^?\\
-	(h_c, h_s, d)\cdot (h_c', h_s', d') &\defeq (h_c'', h_s'', d'')\\
-	\text{where } h_{all}&\defeq h_c\cup h_s,\quad h_{all}'\defeq h_c'\cup h_s'\\
-	\text{where } h_c''&\defeq \lambda i.\begin{cases}
-		h_{all}(i)\cdot h_{all}'(i)&\begin{aligned}
-			\If~&i\in \dom(h_{all})\cap\dom(h_{all}') ~\land \\
-			&\code{is\_concrete}_\St~(h_{all}(i)\cdot h_{all}'(i)) ~\land \\
-			&\code{is\_concrete}~i
-		\end{aligned}\\
-		h_c(i) &\If~i\in \dom(h_c) \backslash \dom(h_{all}')\\
-		h_c'(i) &\If~i\in \dom(h_c') \backslash \dom(h_{all})\\
-		\text{undefined}&\Otherwise
-	\end{cases}\\
-	\text{and }h_s'' &\defeq \lambda i.\begin{cases}
-		h_{all}(i)\cdot h_{all}'(i)&\begin{aligned}
-			\If~&i\in \dom(h_{all})\cap\dom(h_{all}') ~\land \\
-			&\neg(\code{is\_concrete}_\St~(h_{all}(i)\cdot h_{all}'(i)) ~\land \\
-			&~~~\code{is\_concrete}~i)
-		\end{aligned}\\
-		h_s(i) &\If~i\in \dom(h_s) \backslash \dom(h_{all}')\\
-		h_s'(i) &\If~i\in \dom(h_s') \backslash \dom(h_{all})\\
-		\text{undefined}&\Otherwise
-	\end{cases}\\
-	\text{and }d''&\defeq\begin{cases}
-		d&\If~d'=\bot\\
-		d'&\If~d=\bot\\
-		\text{undefined}&\Otherwise
-	\end{cases}\\
-	\text{and }& d'' = \bot \lor \dom(h_c'')\cup\dom(h_s'')\subseteq d''\\
-	|(h_c, h_s, d)| &\defeq \begin{cases}
-		\bot &\If~\dom(h_c')=\emptyset \land \dom(h_s')=\emptyset\\
-		(h_c', h_s', \bot) &\Otherwise
-	\end{cases}\\
-	\text{where }h_c'&\defeq \lambda i.\begin{cases}
-		|h_c(i)| &\If~ i\in\dom(h_c) \land |h_c(i)| \neq \bot\\
-		\text{undefined} &\Otherwise
-	\end{cases} \\
-	\text{and }h_s'&\defeq \text{likewise}
+	\SplitPMap(I,\mmdl) &\defeq I \finmap \mmdl.\Sigma \times I \finmap\mmdl.\Sigma \times \pset(I)^?
+%	(h_c, h_s, d)\cdot (h_c', h_s', d') &\defeq (h_c'', h_s'', d'')\\
+%	\text{where } h_{all}&\defeq h_c\cup h_s,\quad h_{all}'\defeq h_c'\cup h_s'\\
+%	\text{where } h_c''&\defeq \lambda i.\begin{cases}
+%		h_{all}(i)\cdot h_{all}'(i)&\begin{aligned}
+%			\If~&i\in \dom(h_{all})\cap\dom(h_{all}') ~\land \\
+%			&\code{is\_concrete}_\St~(h_{all}(i)\cdot h_{all}'(i)) ~\land \\
+%			&\code{is\_concrete}~i
+%		\end{aligned}\\
+%		h_c(i) &\If~i\in \dom(h_c) \backslash \dom(h_{all}')\\
+%		h_c'(i) &\If~i\in \dom(h_c') \backslash \dom(h_{all})\\
+%		\text{undefined}&\Otherwise
+%	\end{cases}\\
+%	\text{and }h_s'' &\defeq \lambda i.\begin{cases}
+%		h_{all}(i)\cdot h_{all}'(i)&\begin{aligned}
+%			\If~&i\in \dom(h_{all})\cap\dom(h_{all}') ~\land \\
+%			&\neg(\code{is\_concrete}_\St~(h_{all}(i)\cdot h_{all}'(i)) ~\land \\
+%			&~~~\code{is\_concrete}~i)
+%		\end{aligned}\\
+%		h_s(i) &\If~i\in \dom(h_s) \backslash \dom(h_{all}')\\
+%		h_s'(i) &\If~i\in \dom(h_s') \backslash \dom(h_{all})\\
+%		\text{undefined}&\Otherwise
+%	\end{cases}\\
+%	\text{and }d''&\defeq\begin{cases}
+%		d&\If~d'=\bot\\
+%		d'&\If~d=\bot\\
+%		\text{undefined}&\Otherwise
+%	\end{cases}\\
+%	\text{and }& d'' = \bot \lor \dom(h_c'')\cup\dom(h_s'')\subseteq d''\\
+%	|(h_c, h_s, d)| &\defeq \begin{cases}
+%		\bot &\If~\dom(h_c')=\emptyset \land \dom(h_s')=\emptyset\\
+%		(h_c', h_s', \bot) &\Otherwise
+%	\end{cases}\\
+%	\text{where }h_c'&\defeq \lambda i.\begin{cases}
+%		|h_c(i)| &\If~ i\in\dom(h_c) \land |h_c(i)| \neq \bot\\
+%		\text{undefined} &\Otherwise
+%	\end{cases} \\
+%	\text{and }h_s'&\defeq \text{likewise}
 \end{align*}
 
 We note that composition requires checking for the presence of the index in both maps; if the first state has a binding in its concrete heap while the second has a binding in its symbolic heap, both need to be composed and then verify again if the result of the composition is concrete or symbolic.
