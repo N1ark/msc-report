@@ -33,7 +33,7 @@ We proceed by proving the property holds for all rules of the symbolic \code{get
 \hypvitem{apply1} From \hyp{rule1}, \hyp{getsym} and \textsc{SyntacticPMapGetMatch} we have $\pc=[]$ and $\sym i'=\sym i$.
 \hypvitem{models1} Let $\st$ such that $\theta,s,\st\models\sst$.
 \hypvitem{notbot1} From \hyp{rule1}, we know $\sst\neq\bot$, thus $\st$ is of the form $\st=(h,d)$.
-\hypvitem{evalheap1} From \hyp{models}, \hyp{rule1} and the definition of $\models$, we have $i\in h$ such that $\st_i=h(i)$ and ${\theta,s,\st_i\models\sst_i}$.
+\hypvitem{evalheap1} From \hyp{models1}, \hyp{rule1} and the definition of $\models$, we have $i\in h$ such that $\st_i=h(i)$ and ${\theta,s,\st_i\models\sst_i}$.
 \hypvitem{applycget} From \hyp{evalheap1} we can apply \textsc{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
 \end{hypvlist}
 
