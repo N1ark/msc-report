@@ -1,0 +1,211 @@
+\section{Abstract Location Partial Map}
+
+For the abstract location partial map, we define a new set of states, \ALocPMap, which we only use for the symbolic representation; the concrete compositional RA is still that defined in \PMap. 
+
+For the $\PMap$ with syntactic matching and $\SplitPMap$ we considered compatiblity with any ``regular'' $\PMap$ that has the same domain $I$. Here however, because $\ALocPMap$ enforces the domain be abstract locations (as strings), we must consider compatiblity with regards to $\PMap(\Loc, \mmdl)$ only.
+
+Concrete locations (or just locations) are values of the form $\loc{a}$, where $a$ is the name of the location -- it always holds that given two locations $\loc{a}$ and $\loc{b}$, $\loc{a}=\loc{b} \iff a=b$. They are uninterpreted values, and do not allow any operations; as such, they can be used as sorts of pointers, where they represent address in a map, to the difference that they do not allow pointer arithmetics.
+
+Abstract locations are \emph{symbolic} values of the form $\aloc{a}$, where $a$ is the name of the abstract location. Unlike with concrete locations, their name does not uniquely identify them: we may have a substitution $\theta$ such that for $\aloc{a}$ and $\aloc{b}$ with $a\neq b$, we have $\expeval{\aloc{a}} = \expeval{\aloc{b}}$.
+
+We also introduce the function $\code{to\_aloc}$, that returns the name of an abstract location associated with a symbolic value if it exists, and $\bot$ otherwise: \begin{align*}
+	\code{to\_aloc}~i = \begin{cases}
+		a' & \If~\exists a'\ldotp a=\aloc{a'} \land \expeval{i}=a \\
+		\bot & \Otherwise
+	\end{cases}
+\end{align*}
+
+\subsection{Resource Algebra}
+
+\begin{breakalign*}
+	\ALocPMap(\mmdl) &\defeq \Str \finmap \mmdl.\Sigma \times \pset(\Str)^?
+\end{breakalign*}
+
+\begin{mathpar}
+\inferrule[ALocPMapSymInterpretation]{\forall a\in\dom(\sym h)\ldotp \expeval{\aloc{a}}=i \land i\in\dom(h) \land \theta,s,h(i) \models \sym h(a) \\ \expeval{\{ \aloc{a} : a\in \dom(\sym h)\}}=\dom(h) \\ \expeval{\{ \aloc{a} : a\in \sym d\}}=d}{\theta,s,(h,d)\models (\sym h_c, \sym h_s, \sym d)}
+\end{mathpar}
+
+\subsection{\code{get} and \code{set} rules}
+
+We now present the rules for this state model; in particular, we again only need to concern ourselves with the \code{get} and \code{set} internal methods. We also extend \code{get} to receive a mode ${M= \{\code{MATCH},\code{NO\_MATCH}\}}$; it is \code{MATCH} in \consume{} and \produce, and \code{NO\_MATCH} during action execution. The rules for \execac, \consume{} and \produce{} are omitted as they are analogous to those in \PMap, to the exception that the domain set is a set of strings, and that \code{get} received a matching mode.
+
+\begin{align*}
+	\text{Given }
+	\fn{wrap}(\sym h, \sym d) &\defeq \begin{cases}
+		\bot &\If~\dom(\sym h)=\emptyset \land \sym d=\bot\\
+		(\sym h,\sym d)&\Otherwise
+	\end{cases}\\
+	\fn{unwrap}(\sst) & \defeq \begin{cases}
+		([], \bot) &\If~\sst=\bot\\
+		(\sym h, \sym d) &\If~\sst=(\sym h,\sym d)
+	\end{cases}
+\end{align*}
+\begin{mathparpagebreakable}
+\inferrule[ALocPMapGetMatch]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a \neq \bot \\ a\in\dom(\sym h) \\ \sst_i=\sym h(a)}{\ppget{\sst, \sym i, m}{\aloc{a}, \sst_i, []}}
+\and\inferrule[ALocPMapGetMatchBot]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a \neq \bot \\ a\notin\dom(\sym h) \\ \sym d\neq\bot}{\ppget{\sst, \sym i, m}{\aloc{a}, \bot, [\aloc{a}\in \sym d]}}
+\and\inferrule[ALocPMapGetNewLoc]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a = \bot \\  \sym d=\bot \\ a'=\code{fresh\_aloc ()}}{\ppget{\sst, \sym i, m}{\aloc{a'}, \bot, [\sym i=\aloc{a'}]}}
+\and\inferrule[ALocPMapMatching]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a \neq\bot \\ a\notin \dom(\sym h) \\ a'\in\dom(\sym h) \\ \sst_i=\sym h(a')}{\ppget{\sst, \sym i,\code{MATCH}}{\aloc{a'},\sst_i,[\aloc{a}=\aloc{a'}]}}
+\and\inferrule[ALocPMapMatchingBot]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a=\bot \\ a'\in\dom(\sym h) \\ \sst_i=\sym h(a')}{\ppget{\sst, \sym i,\code{MATCH}}{\aloc{a'},\sst_i,[\sym i=\aloc{a'}]}}
+\and\inferrule[ALocPMapSetSome]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a\neq\bot \\ \sst_i\neq\bot \\ \sym h'=\sym h[a\leftarrow \sst_i] \\ \sst'=\fn{wrap}(\sym h', \sym d)}{\ppset{\sst,\sym i,\sst_i}{\sst'}}
+\and\inferrule[ALocPMapSetNone]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a\neq\bot \\ \sst_i=\bot \\ \sym h'=\sym h[a\not\leftarrow] \\ \sst'=\fn{wrap}(\sym h',\sym d)}{\ppset{\sst,\sym i,\sst_i}{\sst'}}
+\end{mathparpagebreakable}
+
+\subsection{Soundness Proofs}
+
+Because we extend the signature of get with a matching mode, we cannot re-use the proofs used previously. We instead re-do the proofs from scratch, omitting the ones that are analogous. In particular, we do not re-do the proofs relating to consuming or producing the \domainset{} predicate or executing \alloc{}, as they are analogous, nor the proofs for frame subtraction and addition, as these only are needed for the concrete actions, which we re-use from \PMap.
+
+\begin{proof}
+
+\pfprop{OX Soudness}
+
+\pfassume \begin{hypvlist}
+\hypvitem{conex} $\theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs}$
+\hypvitem{sissound} The actions on $\mmdl$ are OX sound.
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{symex} $
+\begin{array}{l}
+\exists \sins,\souts,\sst',\pc,\theta'\ldotp \ppexec{\hat\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT[\theta',s](\pc) \land \theta',s,\st'\models \sst' \land\\
+\quad \expeval[s,\pc]{\sins}=(\ins,\pc')\land\expeval[s,\pc']{\souts}=(\souts,\pc'')
+\end{array}$
+\end{goalvlist}
+
+\begin{hypvlist}
+\hypvitem{isok} If the action gets executed succesfully (it is not an out of bounds error), from \textsc{CPMapAction} we have $\ppgetc{\st,i}{\st_i}$,  $\ppexecc{\alpha}{\st_i,\ins'}{o,\st'_i,\outs'}$ and $\ppset{\st,i,\st'_i}{\st'}$, with $\ins=i::\ins'$ and $\outs=i::\outs'$
+\hypvitem{stnotbot} From \hyp{isok} we know $\st\neq\bot$, thus from the definition of $\models$, we know $\sst$ is of the form $\sst=(\sym h, \sym d)$.%
+\hypvitem{subex} From \hyp{stnotbot} it follows that $\exists a\ldotp a\in\dom(\sym h) \land \expeval{\aloc a}=i \land \sst_i=\sym h(a) \land \theta,s,\st_i\models\sst_i$.%
+\hypvitem{endactsym} We can thus use \textsc{ALocPMapGetMatch}, giving us $\ppget{\sst,\aloc a,m}{\aloc a, \sst_i, []}$.%
+\hypvitem{execcon} From \hyp{sissound}, \hyp{isok} and \hyp{subex}, we can use \ref{eq:mem-ox-soundness}, giving us $\exists \sins',\souts',\sst_i',\pc'',\theta'\ldotp \ppexec{\hat\alpha}{\sst_i,\sins'}{o,\sst_i',\souts',\pc''} \land \SAT[\theta',s](\pc'') \land \theta',s,\st_i'\models \sst_i' \land \expeval[s,\pc']{\sins}=(\ins,\pc_i')\land\expeval[s,\pc_i']{\souts}=(\souts,\pc_i'')$
+\hypvitem{sinssouts} We can then define $\sins=\aloc a::\sins'$ and $\souts=\sym i::\souts$.
+\hypvitem{stprimmdl} From \hyp{conex} and \hyp{execcon}, we have $\theta,s,\st\models\sst$ and $\theta',s,\st_i'\models\sst_i'$. From the definition of \code{set}, it follows that only modifying the state at $\aloc a$ preserves symbolic interpretation, thus $\theta',s,\st'\models\sst'$.
+\hypvitem{close} By applying \textsc{PMapAction} and from \hyp{endactsym}, \hyp{isok}, \hyp{execcon}, \hyp{sinssouts} and \hyp{stprimmdl} our goal \goal{symex} follows.
+\end{hypvlist}
+
+\pfprop{UX Soundness}
+
+\pfassume \begin{hypvlist}
+\hypvitem{symex} $
+\begin{array}{l}
+\ppexec{\hat\alpha}{\sst,\sins}{o,\sst',\souts, \pc} \land \SAT(\pc) \land \theta,s,\st'\models\sst' \land \\
+\quad \expeval[\hat s,\pc]{\souts}\rightsquigarrow(\outs,\pc')\land \expeval[\hat s,\pc']{\sins}\rightsquigarrow(\ins,\pc'')
+\end{array}
+$
+\hypvitem{sissound} The actions on $\mmdl$ are UX sound.
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{conex} $\exists \st\ldotp \theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs}$
+\end{goalvlist}
+
+We only consider the successful action, as the proof for an out of bounds error is analogous to that of \PMap.
+
+\begin{hypvlist}
+\hypvitem{isok} If the action gets executed succesfully (it is not an out of bounds error), from \textsc{PMapAction} we have $\ppget{\sst,\sym i,\code{NO\_MATCH}}{\sym i',\sst_i,\pc'}$, $\ppexec{\alpha}{\sst_i,\sins'}{o,\sst'_i,\souts',\pc''}$ and ${\ppset{\sst,\sym i',\sst'_i}{\sst'}}$, with $\sins=\sym i::\sins'$, $\souts=\sym i'::\souts'$ and $\pc=\pc'::\pc''$
+\hypvitem{execcon} From \hyp{sissound}, \hyp{isok} and \hyp{symex}, we get $\exists \st_i\ldotp \theta,s,\st_i\models\sst_i \land \ppexecc{\alpha}{\st_i,\ins'}{p,\st',\outs'}$
+\hypvitem{modelsbefore} From the definition of $\models$, it follows that if $\theta,s,\st'\models\sst'$ where $\ppset{\sst,\sym i',\sst'_i}{\sst'}$, then if $\theta,s,\st_i\models\sst_i$ there exists an $\st$ such that $\ppset{\st,i,\st_i'}{\st'}$ and $\theta,s,\st\models\sst$, since \code{set} only modifies the state at $i$.
+\hypvitem{getsound} Similarly, it also means that we have $\ppgetc{\st,i}{\st_i}$.
+\hypvitem{applcon} From \hyp{getsound}, \hyp{execcon} and \hyp{modelsbefore} we can apply \textsc{CPMapAction}, giving us ${\ppexecc{\alpha}{\st,\ins}{o,\st',\outs}}$, which together with \hyp{modelsbefore} gives our goal \goal{conex}.
+\end{hypvlist}
+
+\pfprop{Consume soundness}
+
+\pfassume \begin{hypvlist}
+\hypvitem{consok} \ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc}
+\hypvitem{ssatsconssound} \consume{} on $\mmdl$ is sound.
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{conssound} $\begin{array}{l}
+\forall \theta,s,\st\ldotp \theta,s,\st\models \sst \land \SAT(\pc) \implies \exists \st_\delta, \st_f \ldotp\\
+\quad  \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \theta,s,\st_f\models \sst_f 
+\end{array}$
+\end{goalvlist}
+
+\begin{hypvlist}
+\hypvitem{subcon} From \hyp{consok} and \textsc{PMapCons}, given $\sins=\sym i::\sins'$ and $\pc=\pc'::\pc''$ we have $\ppget{\sst,\sym i,\code{MATCHING}}{\sym i', \sst_i, \pc'}$, ${\ppcons{\sst_i,\delta,\sins'}{o,\sst_i',\souts,\pc''}}$ and $\ppset{\sst,\sym i',\sst_i'}{\sst_f}$.
+\hypvitem{assume} Assume $\theta,s,\st\models \sst \land \SAT(\pc)$.
+\hypvitem{evalsok} From \hyp{subcon} and \hyp{assume}, we have $\sins=\sym i::\sins' \land \expeval{\sym i}=i$
+\hypvitem{submodels} From the rules of \code{get} with $m=\code{MATCHING}$, we know that if $\theta,s,\st\models\sst$ (which we have from \hyp{assume}) all possible paths can match to an existing model: $\sym i$ is either directly in the map, or is part of the domain and returns $\bot$, or matches another existing address, giving us $\exists \st_i\ldotp \theta,s,\st_i\models\sst_i$.
+\hypvitem{pcok} From \hyp{assume} and \hyp{subcon}, we have $\SAT(\pc'')$.
+\hypvitem{subsound} From \hyp{submodels}, \hyp{pcok} and \hyp{ssatsconssound} we can apply \ref{eq:consume-sound}, giving us $\exists \st_{\delta,i}, \st_{f,i}\ldotp \st_{\delta,i}\disj \st_i' \land \st_i=\st_{\delta,i}\cdot\st_i' \land \theta,s,\st_{\delta,i}\modelsp \corepred{\delta}{\ins'}{\outs} \land \theta,s,\st_{f,i}\models\sst_{f,i}$.
+\hypvitem{subdisj} We can then pick $\st_\delta=([i\mapsto \st_{\delta,i}], \bot)$, and from \hyp{subsound} and the definition of composition we know $\st_\delta\disj\st$ and \hyp{subcon} and the definition of \code{set}, $\st_f=\st\cdot\st_\delta$.
+\hypvitem{modelsp} From the definition of $\modelsp$ and \hyp{subsound} we then have $\theta,s,\st_\delta\models\corepred{\delta}{\ins}{\outs}$, which with \hyp{subdisj} gives our goal \goal{conssound}.
+\end{hypvlist}
+
+\pfprop{Consume completeness}
+
+\pfassume \begin{hypvlist}
+\hypvitem{consok} $\ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc}$
+\hypvitem{ssatsconscomp} \consume{} on \mmdl{} is complete.
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{conscomp} $\begin{array}{l}
+\forall \theta,s,\st_f,\st_\delta\ldotp \theta,s,\st_f\models \sst_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \st_f\disj\st_\delta \implies \\
+\quad \exists \st\ldotp \st = \st_\delta \cdot \st_f \land \theta,s,\st\models \sst \land \SAT(\pc)
+\end{array}$
+\end{goalvlist}
+
+\begin{hypvlist}
+\hypvitem{subcon} From \hyp{consok} and \textsc{PMapCons}, given $\sins=\sym i::\sins'$ and $\pc=\pc'::\pc''$ we have $\ppget{\sst,\sym i,\code{MATCHING}}{\sym i', \sst_i, \pc'}$, ${\ppcons{\sst_i,\delta,\sins'}{o,\sst_i',\souts,\pc''}}$ and $\ppset{\sst,\sym i',\sst_i'}{\sst_f}$.
+\hypvitem{assume} Assume $\theta,s,\st_f\models \sst_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \st_f\disj\st_\delta$.
+\hypvitem{stpisbot} There are two cases here, $\st_\delta=\bot$ and $\st_\delta\neq\bot$. If $\st_\delta=\bot$, we trivially get $\st=\bot\cdot\st_f$ and the rest of our goal \goal{conscomp}.
+\hypvitem{modelsp} Assume now $\st_\delta\neq\bot$. From the definition of $\modelsp$ and \hyp{assume}, we have $\exists i,\st_{\delta,i}\ldotp \expeval{\sym i}=i \land {\st_\delta=([i\mapsto\st_{\delta,i}],\bot)} \land \st_{\delta,i}\modelsp \corepred{\delta}{\sins'}{\souts}$.
+\hypvitem{submodels} From \hyp{assume}, \hyp{subcon} and the definitions of $\models$  and composition we have $\exists \st_i'\ldotp {\theta,s,\st_i'\models\sst_i'} \land \st_i' \disj \st_{\delta,i}$.
+\hypvitem{subcomp} From \hyp{submodels}, \hyp{modelsp} and \hyp{ssatsconscomp}, we can apply \ref{eq:consume-complete}, giving us $\exists \st_i\ldotp {\st_i=\st_{\delta,i}\cdot\st_i'} \land \theta,s,\st_i\models \sst_i \land \SAT(\pc'')$.
+\hypvitem{modelscell} From the definition of $\models$, because \consume{} doesn't affect any other cell, given ${\theta,s,\st_i\models\sst_i}$ and $\theta,s,\st_f\models\sst_f$ and $\ppset{\sst,\sym i',\sst_i'}{\sst_f}$, we obtain $\theta,s,\st\models\sst$.
+\hypvitem{sthasi} From \hyp{modelsp}, we have $\st_\delta$ of the form $\st_\delta=(h_\delta,\bot)$ where $i\in \dom(h_\delta)$. From composition rules, it follows that if $\st=\st_\delta\cdot\st_f$ we have $\st=(h,d)$ where $i\in \dom(h)$ too.
+\hypvitem{exgetc} From \hyp{sthasi} and \hyp{modelscell}, it follows that we can apply \textsc{CPMapGetMatch} such that ${\ppgetc{\st,i}{\st_i}}$.
+\hypvitem{pcprimissat} From the rules of \code{get} with $m=\code{MATCHING}$, it follows that when $\theta,s,\st\models\sst$ and $\ppget{\sst,\sym i}{\sym i',\sst_i,\pc'}$, we have $\SAT(\pc')$, as they are direct implications of the rules for $\models$.
+\hypvitem{pcok} It follows from \hyp{pcprimissat} and \hyp{subcomp}, given $\pc=\pc'::\pc''$, $\SAT(\pc)$. This along with \hyp{modelscell} gives our goal \goal{conscomp}.
+\end{hypvlist}
+
+\pfprop{Consume: OX sound}
+
+This proof is analogous to that in \PMap.
+
+\pfprop{Produce soundness}
+
+\pfassume \begin{hypvlist}
+\hypvitem{prod} $\ppprod{\sst_f,\delta,\sins,\souts}{\sst, \pc}$
+\hypvitem{ssatsprodsound} \produce{} on $\mmdl$ is sound.
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{prodsound} $\begin{array}{l}
+\forall\theta,s,\st\ldotp \SAT(\pc) \land \theta,s,\st\models\sst \implies \exists \st_\delta, \st_f\ldotp \\
+\quad \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta,s,\st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \theta,s,\st_f \models \sst_f
+\end{array}$
+\end{goalvlist}
+
+\begin{hypvlist}
+\hypvitem{useprod} Given \hyp{prod}, from \textsc{PMapProd} we have $\ppget{\sst_f,\sym i,\code{MATCHING}}{\sym i',\sst_{f,i},\pc'} \land \\\ppprod{\sst_{f,i},\delta,\sins',\souts}{\sst_i,\pc''} \land \ppset{\sst_f,\sym i',\sst_i}{\sst}$, given $\sins=\sym i::\sins'$ and ${\pc=\pc'::\pc''}$.%
+\hypvitem{assume} Assume $\SAT(\pc) \land \theta,s,\st\models\sst$.
+\hypvitem{pcsok} From \hyp{assume} and $\pc=\pc'::\pc''$, it follows that $\SAT(\pc')$ and $\SAT(\pc'')$.
+\hypvitem{submodels} From the definition of \code{set}, \hyp{useprod} and \hyp{assume}, we have $\exists \st_i\ldotp \theta,s,\st_i\models \sst_i$.
+\hypvitem{subprod} From \hyp{useprod}, \hyp{submodels}, \hyp{pcsok} and \hyp{ssatsprodsound}, we can apply \ref{eq:produce-sound}, giving us $\exists \st_{\delta,i}, \st_{f,i}\ldotp \st_{\delta,i}\disj\st_{f,i} \land \st_i=\st_{\delta,i}\cdot\st_{f,i} \land \theta,s,\st_{\delta,i}\modelsp \corepred{\delta}{\sins'}{\souts} \land \theta,s,\st_{f,i}\models\sst_{f,i}$.
+\hypvitem{stpred} Given $\expeval{\sym i'}=i$, we can then have $\st_\delta=([i\mapsto \st_{\delta,i}], \bot)$, or $\st_\delta=\bot$ if $\st_{\delta,i}=\bot$. By the definition of $\modelsp$ and \hyp{subprod}, $\theta,s,\st_\delta\modelsp\corepred{\delta}{\sins}{\souts}$ in both cases.
+\hypvitem{fmodels} Given \code{set} only modifies the state at a specific location leaving the rest untouched, from \hyp{assume} and \hyp{subprod} we have $\theta,s,\st\models\sst$ and $\theta,s,\st_{f,i}\models\sst_{f,i}$, thus it follows that $\exists \st_f\ldotp \theta,s,\st_f\models\st_f$.
+\hypvitem{iscomp} From \hyp{subprod} and by the rules of composition, we know that if the two states $\st_{\delta,i}$ and $\st_{f,i}$ at index $i$ are disjoint then the entire state $\st_f$ and the singleton $\st_\delta$ are disjoint. Thus $\st_\delta\disj\st_f\land\st=\st_\delta\cdot\st_f$, giving our goal \goal{prodsound}.
+\end{hypvlist}
+
+\pfprop{Produce completeness}
+
+\pfassume \begin{hypvlist}
+\hypvitem{models} $\theta, s, \st_f \models \sst_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \st_f\disj\st_\delta$
+\hypvitem{ssatsprodscomp} \produce{} on $\mmdl$ is complete.
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{prodcomp} $\exists \sst\ldotp \ppprod{\sst_f,\delta,\sins,\souts}{\sst,\pc} \land \SAT(\pc) \land \theta,s,(\st_f\cdot\st_\delta) \models \sst$
+\end{goalvlist}
+
+\begin{hypvlist}
+\hypvitem{stddef} From \hyp{models} and the definition of $\modelsp$, we have $\exists \sym i,i,\st_{\delta,i} \ldotp \sins=\sym i::\sins' \land \expeval{\sym i}=i \land \theta,s,\st_{\delta,i}\modelsp \corepred{\delta}{\sins'}{\souts} \land \st_\delta=([i\mapsto \st_{\delta,i}],\bot)$.
+\hypvitem{getexists} Given the fact $\st_f\disj\st_\delta$ and $\st_\delta\modelsp\corepred{\delta}{\sym i::\sins'}{\souts}$, it means the index $i$ is compatible with $\st_f$, so the state located at $i$ is obtainable via \code{get}. We thus have $\exists \st_{f,i} \ldotp {\ppgetc{\st_f,i}{\st_{f,i}}}$.
+\hypvitem{usegetcomp} By analysing the rules for \code{get} with $m=\code{MATCHING}$, given $\theta,s,\st_f\models\sst_f$ and \hyp{getexists}, know there is a succesful execution of \code{get} over the symbolic state. Thus $\exists \sst_{f,i},\sym i,\sym i', \pc'\ldotp \ppget{\sst_f,\sym i}{\sym i',\sst_{f,i},\pc} \land \theta,s,\st_{f,i}\models\sst_{f,i} \land \expeval{\sym i}=\expeval{\sym i'}=i \land \SAT(\pc')$.
+\hypvitem{subaredisj} From \hyp{models}, because $\st_{f,i}$ and $\st_{\delta,i}$ are at the same index and $\st_f\disj\st_\delta$, from the rules for composition we have $\st_{f,i}\disj\st_{\delta,i}$.
+\hypvitem{subprod} From \hyp{stddef}, \hyp{usegetcomp} and \hyp{subaredisj} we can apply \ref{eq:produce-complete} for $\mmdl$, giving us $\exists \sst_i\ldotp {\ppprod{\sst_{f,i},\delta,\sins',\souts}{\sst_i,\pc''}}\land\SAT(\pc'') \land \theta,s,(\st_{f,i}\cdot\st_{\delta,i})\models\sst_i$.
+\hypvitem{defsst} We may define $\sst$ such that $\ppset{\sst_f,\sym i',\sst_i}{\sst}$.
+\hypvitem{sstmodels} We have $\theta, s, \st_f \models \sst_f$ and ${\theta,s,(\st_{f,i}\cdot\st_{\delta,i})\models\sst_i}$ from \hyp{models} and \hyp{subprod}. Furthermore, we know $\st_\delta=([i\mapsto \st_{\delta,i}],\bot)$ from \hyp{stddef}. From \hyp{defsst} and the rules for \code{set} we know no state is lost and only the state at $i$ is extended by $\st_{\delta,i}$, it thus follows that $\theta,s,(\st_f\cdot\st_\delta)\models\sst$.%
+\hypvitem{prodex} From and \hyp{usegetcomp}, \hyp{subprod} and this we can apply \textsc{PMapProd}, giving us \ppprod{\sst_f,\delta,\sins,\souts}{\sst,\pc'::\pc''}.
+\hypvitem{pcok} From \hyp{usegetcomp} and \hyp{subprod}, we have $\SAT(\pc'::\pc'')$. This, along with \hyp{sstmodels} and \hyp{prodex}, gives our goal \goal{prodcomp}.
+\end{hypvlist}
+
+\end{proof}
+
