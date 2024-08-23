@@ -18,7 +18,7 @@ For the partial map with syntactic checks, we re-use the RA of \PMap, as well as
 \pfprop{Get Soundness}
 
 \pfassume \begin{hypvlist}
-\hypvitem{getsym} $\ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \expeval{\sym i}=\expeval{\sym i'}=i \land \theta(\pc)=\vtrue $
+\hypvitem{getsym} $\ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \expeval{\sym i}=\expeval{\sym i'}=i \land \SAT(\pc) $
 \end{hypvlist}
 \pfprove \begin{goalvlist}
 \goalvitem{getcon} $\forall \st\ldotp \theta,s,\st \models \sst \implies \exists \st_i \ldotp \ppgetc{\st, i}{\st_i} \land \theta,s,\st_i \models \sst_i$
@@ -60,7 +60,7 @@ The rule \textsc{SyntacticPMapGetBotDomain} is exactly the same as \textsc{PMapG
 \hypvitem{getcon} $\theta,s,\st \models \sst \land \ppgetc{\st, i}{\st_i}$
 \end{hypvlist}
 \pfprove \begin{goalvlist}
-\goalvitem{getsym} $\exists \sst_i, \sym i, \sym i', \pc \ldotp \ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \theta,s,\st_i\models\sst_i \land \expeval{\sym i}=\expeval{\sym i'}=i \land \theta(\pc)=\vtrue$
+\goalvitem{getsym} $\exists \sst_i, \sym i, \sym i', \pc \ldotp \ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \theta,s,\st_i\models\sst_i \land \expeval{\sym i}=\expeval{\sym i'}=i \land \SAT(\pc)$
 \end{goalvlist}
 
 We proceed by proving the property holds for all rules of the concrete \code{get}, resulting in three cases.
@@ -71,7 +71,7 @@ We proceed by proving the property holds for all rules of the concrete \code{get
 \hypvitem{rule1} Assume $(h,d)=\fn{unwrap}(\st) \land i\in\dom(h) \land \st_{i}=h(i)$.
 \hypvitem{exsym1} It follows from \hyp{getcon} and the definition of $\models$ that $\sst=(\sym h, \sym d)$ such that $\exists \sym i\ldotp \sym i \in \dom(\sym h)$, $\expeval{\sym i}=i$ and $\theta,s,\st_i\models \sym h(\sym i)$.
 \hypvitem{applys1} We can then apply \textsc{SyntacticPMapGetMatch}, giving us $\ppget{\sst,\sym i}{\sym i, \sym h(\sym i), []}$.
-\hypvitem{complete1} From \hyp{applys1} it follows that $\theta([])=\vtrue$, which along with \hyp{exsym1} gives our goal \goal{getsym}.
+\hypvitem{complete1} From \hyp{applys1} it follows that $\SAT([])$, which along with \hyp{exsym1} gives our goal \goal{getsym}.
 \end{hypvlist}
 
 \pfcase{\textsc{CPMapGetAdd}}

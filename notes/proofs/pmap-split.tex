@@ -4,7 +4,7 @@ For the split partial map, we define a new RA, \SplitPMap, which we only use for
 
 \subsection{Resource Algebra}
 
-While we keep the default \PMap RA for the concrete compositional states, we need to define a new set of states for the symbolic compositional states, as defined below.
+While we keep the default \PMap{} RA for the concrete compositional states, we need to define a new set of states for the symbolic compositional states, as defined below.
 
 \begin{breakalign*}
 	\SplitPMap(I,\mmdl) &\defeq I \finmap \mmdl.\Sigma \times I \finmap\mmdl.\Sigma \times \pset(I)^?
@@ -12,7 +12,7 @@ While we keep the default \PMap RA for the concrete compositional states, we nee
 
 Predicate satisfiability is defined with regards to the concrete compositional states, so we re-use it from \PMap. We however need to re-define symbolic interpretation, as follows. We denote $\sym h_c$ and $\sym h_s$ the concrete and symbolic parts of the heap respectively.
 \begin{mathpar}
-\inferrule[PMapSymInterpretation]{\forall \sym i\in\dom(\sym h_c)\ldotp \sym i\notin \sym h_s \land \expeval{\sym i}=i \land i\in\dom(h) \land \theta,s,h(i) \models \sym h_c(\sym i) \\ \forall \sym i\in\dom(\sym h_s)\ldotp \sym i\notin \sym h_c \land \expeval{\sym i}=i \land i\in\dom(h) \land \theta,s,h(i) \models \sym h_s(\sym i) \\  \expeval{\dom(\sym h_c) \uplus \dom(\sym h_s)}=\dom(h) \\ \expeval{\sym d}=d}{\theta,s,(h,d)\models (\sym h_c, \sym h_s, \sym d)}
+\inferrule[SplitPMapSymInterpretation]{\forall \sym i\in\dom(\sym h_c)\ldotp \sym i\notin \sym h_s \land \expeval{\sym i}=i \land i\in\dom(h) \land \theta,s,h(i) \models \sym h_c(\sym i) \\ \forall \sym i\in\dom(\sym h_s)\ldotp \sym i\notin \sym h_c \land \expeval{\sym i}=i \land i\in\dom(h) \land \theta,s,h(i) \models \sym h_s(\sym i) \\  \expeval{\dom(\sym h_c) \uplus \dom(\sym h_s)}=\dom(h) \\ \expeval{\sym d}=d}{\theta,s,(h,d)\models (\sym h_c, \sym h_s, \sym d)}
 \end{mathpar}
 
 \subsection{\code{get} and \code{set} rules}
@@ -46,7 +46,7 @@ Predicate satisfiability is defined with regards to the concrete compositional s
 \pfprop{Get Soundness}
 
 \pfassume \begin{hypvlist}
-\hypvitem{getsym} $\ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \expeval{\sym i}=\expeval{\sym i'}=i \land \theta(\pc)=\vtrue $
+\hypvitem{getsym} $\ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \expeval{\sym i}=\expeval{\sym i'}=i \land \SAT(\pc) $
 \end{hypvlist}
 \pfprove \begin{goalvlist}
 \goalvitem{getcon} $\forall \st\ldotp \theta,s,\st \models \sst \implies \exists \st_i \ldotp \ppgetc{\st, i}{\st_i} \land \theta,s,\st_i \models \sst_i$
@@ -85,7 +85,7 @@ We proceed by proving the property holds for all rules of the symbolic \code{get
 \hypvitem{apply4} From \hyp{rule4}, \hyp{getsym} and \textsc{SplitPMapGetAdd} we have $\pc=[\sym i\notin\dom(\sym h_{all}) \land \sym i\in \sym d]$, $\sym i'=\sym i$ and $\sst_i=\bot$.
 \hypvitem{models4} Let $\st$ such that $\theta,s,\st\models\sst$.
 \hypvitem{notbot4} From \hyp{rule4} we know $\sst\neq\bot$, thus $\st$ is of the form $\st=(h,d)$.
-\hypvitem{notinh4} From \hyp{getsym} and \hyp{apply4}, we know $\theta(\pc)=\vtrue$, such that from \hyp{models4} we have ${i\notin \dom(h)} \land {i\in d}$.
+\hypvitem{notinh4} From \hyp{getsym} and \hyp{apply4}, we know $\SAT(\pc)$, such that from \hyp{models4} we have ${i\notin \dom(h)} \land {i\in d}$.
 \hypvitem{applycget4} From \hyp{notinh4} we can straightforwardly apply \textsc{CPMapGetAdd}, giving us $\ppgetc{\st,i}{\bot}$ -- together with \hyp{apply4} and \ref{eq:empty-mem} this completes our goal \goal{getcon}.
 \end{hypvlist}
 
@@ -96,7 +96,7 @@ We proceed by proving the property holds for all rules of the symbolic \code{get
 \hypvitem{apply5} From \hyp{rule5}, \hyp{getsym} and \textsc{SplitPMapGetBotDomain} we have $\pc=[\sym i\notin\dom(\sym h_{all})]$ and $\sym i=\sym i$.
 \hypvitem{models5} Let $\st$ such that $\theta,s,\st\models\sst$.
 \hypvitem{botdom} From \hyp{rule5} we have $\sym d=\bot$, so given $(h,d)=\fn{unwrap}(\st)$ and \hyp{models5}, we have $d=\bot$.%
-\hypvitem{pctrue5} From \hyp{getsym} $\theta(\pc)=\vtrue$, thus from \hyp{apply5} and \hyp{models5}, $i\notin \dom(h)$.
+\hypvitem{pctrue5} From \hyp{getsym} $\SAT(\pc)$, thus from \hyp{apply5} and \hyp{models5}, $i\notin \dom(h)$.
 \hypvitem{applycget5} From \hyp{pctrue5} and \hyp{botdom} we can apply \textsc{CPMapGetBotDomain}, thus ${\ppgetc{\st,i}{\bot}}$ -- together with \hyp{apply5} and \ref{eq:empty-mem} this completes our goal \goal{getcon}.
 \end{hypvlist}
 
@@ -106,7 +106,7 @@ We proceed by proving the property holds for all rules of the symbolic \code{get
 \hypvitem{getcon} $\theta,s,\st \models \sst \land \ppgetc{\st, i}{\st_i}$
 \end{hypvlist}
 \pfprove \begin{goalvlist}
-\goalvitem{getsym} $\exists \sst_i, \sym i, \sym i', \pc \ldotp \ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \theta,s,\st_i\models\sst_i \land \expeval{\sym i}=\expeval{\sym i'}=i \land \theta(\pc)=\vtrue$
+\goalvitem{getsym} $\exists \sst_i, \sym i, \sym i', \pc \ldotp \ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \theta,s,\st_i\models\sst_i \land \expeval{\sym i}=\expeval{\sym i'}=i \land \SAT(\pc)$
 \end{goalvlist}
 
 We proceed by proving the property holds for all rules of the concrete \code{get}, resulting in three cases.
@@ -116,7 +116,7 @@ We proceed by proving the property holds for all rules of the concrete \code{get
 \begin{hypvlist}
 \hypvitem{rule1} Assume $(h,d)=\fn{unwrap}(\st) \land i\in\dom(h) \land \st_{i}=h(i)$.
 \hypvitem{isinsomeheap} It follows from \hyp{getcon} and the definition of $\models$ that $\sst=(\sym h_c, \sym h_s, \sym d)$ such that there exists an $\sym i$ with $\expeval{\sym i}=i$, and a binding from $\sym i$ is in either the concrete or the symbolic part of the heap. We also define $\sym i$ as the value of $i$ directly lifted to symbolic values, such that $\code{is\_concrete}~i$.
-\hypvitem{isincpart} From \hyp{isinsomeheap}, assume the binding is in the concrete part of the heap, $\sym h_c$. From this and \hyp{isinsomeheap}, we can apply \textsc{SplitPMapGetMatchCon}, giving us $\ppget{\sst,\sym i}{\sym i, \sym h_c(\sym i), []}$. This, along with the fact $\theta([])=\vtrue$, gives our goal \goal{getsym}.
+\hypvitem{isincpart} From \hyp{isinsomeheap}, assume the binding is in the concrete part of the heap, $\sym h_c$. From this and \hyp{isinsomeheap}, we can apply \textsc{SplitPMapGetMatchCon}, giving us $\ppget{\sst,\sym i}{\sym i, \sym h_c(\sym i), []}$. This, along with the fact $\SAT([])$, gives our goal \goal{getsym}.
 \hypvitem{isincpart} Assume now from \hyp{isinsomeheap} that the binding is in the symbolic part of the heap, $\sym h_s$. From this and \hyp{isinsomeheap}, we can apply \textsc{SplitPMapGetMatchSym}, giving us $\ppget{\sst,\sym i}{\sym i, \sym h_s(\sym i), []}$. This again gives our goal \goal{getsym}.
 \end{hypvlist}
 
@@ -126,7 +126,7 @@ We proceed by proving the property holds for all rules of the concrete \code{get
 \hypvitem{rule2} Assume $(h,d)=\fn{unwrap}(\st) \land i\notin\dom(h) \land d\neq\bot \land i\in d$.
 \hypvitem{exsym2} It follows from \hyp{getcon} and the definition of $\models$ that $\sst=(\sym h_c, \sym h_s, \sym d)$ such that $\expeval{\sym i}=i$, $\sym i\in \sym d$ and $\sym i\notin \dom(\sym h_c \cup \sym h_s)$.
 \hypvitem{applys2} We can then apply \textsc{SplitPMapGetAdd}, giving us $\ppget{\sst,\sym i}{\sym i,\bot,[\sym i\notin \dom(\sym h_c \cup \sym h_s) \land \sym i\notin \sym d]}$.%
-\hypvitem{complete2} From \hyp{exsym2} it follows that $\theta([\sym i\notin \dom(\sym h) \land \sym i\notin \sym d])=\vtrue$, which completes our goal \goal{getsym}.
+\hypvitem{complete2} From \hyp{exsym2} it follows that $\SAT([\sym i\notin \dom(\sym h) \land \sym i\notin \sym d])$, which completes our goal \goal{getsym}.
 \end{hypvlist}
 
 \pfcase{\textsc{CPMapGetBotDomain}}
@@ -136,7 +136,7 @@ We proceed by proving the property holds for all rules of the concrete \code{get
 \hypvitem{apply3} From \hyp{rule3}, \hyp{getcon} and \textsc{CPMapGetBotDomain}, we have $\st_i=\bot$.
 \hypvitem{exsym3} It follows from \hyp{getcon} and the definition of $\models$ that $\sst=(\sym h_c, \sym h_s, \bot)$ such that $\expeval{\sym i}=i$ and $\sym i\notin \dom(\sym h_c\cup \sym h_s)$.
 \hypvitem{applys3} We can then apply \textsc{SplitPMapGetBotDomain}, giving us ${\ppget{\sst,\sym i}{\sym i,\bot,[\sym i\notin \dom(\sym h_c\cup \sym h_s)]}}$.%
-\hypvitem{complete3} From \hyp{exsym3} it follows that $\theta([\sym i\notin \dom(\sym h_c\cup\sym h_s)])=\vtrue$, which completes our goal \goal{getsym}.
+\hypvitem{complete3} From \hyp{exsym3} it follows that $\SAT([\sym i\notin \dom(\sym h_c\cup\sym h_s)])$, which completes our goal \goal{getsym}.
 \end{hypvlist}
 
 \end{proof}

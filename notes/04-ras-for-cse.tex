@@ -75,7 +75,10 @@ The main difference here is that the state may be $\bot$, if the action is execu
 
 Whole-program symbolic execution is, by definition, non-compositional -- it thus operates on \emph{full state}, a notion introduced in \cite{sacha-phd}. As such, the only valid outcomes here are \Ok{} and \Err{}.
 
-Because we operate in symbolic memory, an additional piece of information is the \emph{path condition}, the set of constraints accumulated throughout execution. A path condition $\pc\in\Pc$ is a \emph{list of symbolic values}, that evaluates to a boolean. We decide to define it as a list rather than a single conjunction of boolean symbolic values, as this allows us to easily check if a path condition is an extension (or a strengthening) of another, with $\pc'\supseteq\pc$.
+Because we operate in symbolic memory, an additional piece of information is the \emph{path condition}, the set of constraints accumulated throughout execution. A path condition $\pc\in\Pc$ is a \emph{list of symbolic values}, that evaluates to a boolean. We decide to define it as a list rather than a single conjunction of boolean symbolic values, as this allows us to easily check if a path condition is an extension (or a strengthening) of another, with $\pc'\supseteq\pc$. We further define the predicate \code{SAT}, that is true if, given the substitution $\theta$, store $s$ and a path condition $\pc$, the conjunction of the elements of $\pc$ resolves to $\vtrue$ once evaluated:
+\begin{align*}
+	\SAT(\pc) \defeq \left\llbracket \bigwedge_{i}^{|\pc|}\pc(i) \right\rrbracket_{\theta,s} = \vtrue
+\end{align*}
 
 We note that \cite{cse2} also has an `\textit{SV}' argument in action execution, that contains all existing symbolic variables, and that must be used when creating a new symbolic variable to ensure it is fresh. While necessary for proofs within the engine with Rocq, we omit it here. It is only used for allocation and it can instead be kept implicit, by assuming we can always generate a fresh symbolic variable.
 
@@ -144,7 +147,7 @@ The above axiom is obtained for free, by lifting the $\models$ relation to the o
 \tag{Memory Model OX Soundness}\label{eq:mem-ox-soundness}
 \begin{array}{l}
 \theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs} \implies \exists \sins,\souts,\sst',\pc,\theta'\ldotp\\
-\quad \ppexec{\sym\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT(\pc) \land \theta',s,\st'\models \sst' \land\\
+\quad \ppexec{\sym\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT[\theta',s](\pc) \land \theta',s,\st'\models \sst' \land\\
 \qquad \expeval[s,\pc]{\sins}=(\ins,\pc')\land\expeval[s,\pc']{\souts}=(\souts,\pc'')
 \end{array}
 \end{equation}
@@ -152,7 +155,7 @@ The above axiom is obtained for free, by lifting the $\models$ relation to the o
 \begin{equation}
 \tag{Memory Model UX Soundness}\label{eq:mem-ux-soundness}
 \begin{array}{l}
-\ppexec{\sym\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT(\pc) \land \theta,s,\st'\models\sst' \land \\
+\ppexec{\sym\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT[\theta',s](\pc) \land \theta,s,\st'\models\sst' \land \\
 \expeval[\sym s,\pc]{\souts}\rightsquigarrow(\outs,\pc')\land \expeval[\sym s,\pc']{\sins}\rightsquigarrow(\ins,\pc'')\implies\\
 \quad \exists \st\ldotp \theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs}
 \end{array}
@@ -197,7 +200,7 @@ Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from I
 \tag{Consume Soundness}\label{eq:consume-sound}
 \begin{array}{l}
 \ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc} \implies \forall \theta,s,\st\ldotp \\
-\quad  \theta,s,\st\models \sst \land \theta(\pc)=\vtrue \implies \exists \st_\delta, \st_f\ldotp\\
+\quad  \theta,s,\st\models \sst \land \SAT(\pc) \implies \exists \st_\delta, \st_f\ldotp\\
 \qquad \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \theta,s,\st_f\models \sst_f
 \end{array}
 \end{equation}
@@ -207,7 +210,7 @@ Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from I
 \begin{array}{l}
 \ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc} \implies \forall \theta,s,\st_f,\st_\delta\ldotp \\
 \quad \theta,s,\st_f\models \sst_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \st_f\disj\st_\delta \implies \\
-\qquad \exists \st\ldotp \st = \st_\delta \cdot \st_f \land \theta,s,\st\models \sst \land \theta(\pc)=\vtrue
+\qquad \exists \st\ldotp \st = \st_\delta \cdot \st_f \land \theta,s,\st\models \sst \land \SAT(\pc)
 \end{array}
 \end{equation}
 
@@ -223,7 +226,7 @@ Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from I
 \tag{Produce: Soundness}\label{eq:produce-sound}
 \begin{array}{l}
 \ppprod{\sst_f,\delta,\sins,\souts}{\sst, \pc} \implies\\
-\quad \forall\theta,s,\st\ldotp \theta(\pc)=\vtrue \land \theta,s,\st\models\sst \implies \exists \st_\delta, \st_f\ldotp \\
+\quad \forall\theta,s,\st\ldotp \SAT(\pc) \land \theta,s,\st\models\sst \implies \exists \st_\delta, \st_f\ldotp \\
 \qquad \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta,s,\st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \theta,s,\st_f \models \sst_f
 \end{array}
 \end{equation}
@@ -232,7 +235,7 @@ Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from I
 \tag{Produce: Completeness}\label{eq:produce-complete}
 \begin{array}{l}
 \theta, s, \st_f \models \sst_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\outs} \land \st_f\disj\st_\delta \implies \\
-\quad \exists \sst\ldotp \ppprod{\sst_f,\delta,\sins,\souts}{\sst,\pc} \land \theta(\pc)=\vtrue \land \theta,s,(\st_f\cdot\st_\delta) \models \sst
+\quad \exists \sst\ldotp \ppprod{\sst_f,\delta,\sins,\souts}{\sst,\pc} \land \SAT(\pc) \land \theta,s,(\st_f\cdot\st_\delta) \models \sst
 \end{array}
 \end{equation}
 
@@ -850,28 +853,7 @@ A limitation of this optimisation is that only abstract locations may be used as
 
 Let's first define the RA for this optimisation, $\ALocPMap$.
 \begin{align*}
-	\ALocPMap(\mmdl) &\defeq \Str \finmap \mmdl.\Sigma \times \pset(\Str)^?\\
-		(h,d)\cdot (h',d') &\defeq (h'', d'') \\
-	\text{where } h''&\defeq \lambda i.\begin{cases}
-		h(i)\cdot h'(i)&\If~i\in \dom(h)\cap\dom(h')\\
-		h(i) &\If~i\in \dom(h) \backslash \dom(h')\\
-		h'(i) &\If~i\in \dom(h') \backslash \dom(h)\\
-		\text{undefined}&\Otherwise
-	\end{cases}\\
-	\text{and }d''&\defeq\begin{cases}
-		d&\If~d'=\bot\\
-		d'&\If~d=\bot\\
-		\text{undefined}&\Otherwise
-	\end{cases}\\
-	\text{and }& d'' = \bot \lor \dom(h'')\subseteq d''\\
-	|(h, d)| &\defeq \begin{cases}
-		\bot &\If~\dom(h')=\emptyset\\
-		(h', \bot) &\Otherwise
-	\end{cases}\\
-	\text{where }h'&\defeq \lambda i.\begin{cases}
-		|h(i)| &\If~ i\in\dom(h) \land |h(i)| \neq \bot\\
-		\text{undefined} &\Otherwise
-	\end{cases}
+	\ALocPMap(\mmdl) &\defeq \Str \finmap \mmdl.\Sigma \times \pset(\Str)^?
 \end{align*}
 
 We make use of the helper function ${\code{to\_aloc}:\Pc\rarr \Val\rarr \Str^?}$, which returns the name of the abstract location matching a given value, if it exists.  This function receives the path condition, as for instance given a symbolic variable $\sym x$ with the path condition ${\sym x = \aloc{\code{loc\_x}}}$, the path condition is required to know what abstract location is associated to $\sym x$. The engine presented thus far however never receives the path condition, as to ensure it can only be strengthened -- this is not the case in Gillian, where this optimisation was first implemented. We thus assume that $\code{to\_aloc}$ is capable of reading the current path condition without getting it as an input, to avoid modifying the previously defined signatures, noting it is trivial to add the path condition as a parameter of \execac, \consume{} and \produce. We thus instead use the signature ${\code{to\_aloc}: \Val\rarr\Str^?}$. We also use the auxiliary function $\code{fresh\_aloc}: \code{unit} \rarr \Str$ to generate fresh abstract location names.

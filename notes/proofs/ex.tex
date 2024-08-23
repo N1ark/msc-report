@@ -54,7 +54,7 @@ We define symbolic interpretation as:
 \pfprove \begin{goalvlist}
 \goalvitem{symex} $
 \begin{array}{l}
-\exists \sins,\souts,\sst',\pc,\theta'\ldotp \ppexec{\hat\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT(\pc) \land \theta',s,\st'\models \sst' \land\\
+\exists \sins,\souts,\sst',\pc,\theta'\ldotp \ppexec{\hat\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT[\theta',s](\pc) \land \theta',s,\st'\models \sst' \land\\
 \quad \expeval[s,\pc]{\sins}=(\ins,\pc')\land\expeval[s,\pc']{\souts}=(\souts,\pc'')
 \end{array}
 $
@@ -137,7 +137,7 @@ From \hyp{framebot} we get $\st'\cdot\st_f=\st'\cdot\bot=\st'$, and from \hyp{ac
 \end{hypvlist}
 \pfprove \begin{goalvlist}
 \goalvitem{conssound} $\begin{array}{l}
-\forall \theta,s,\st\ldotp \theta,s,\st\models \sst \land \theta(\pc)=\vtrue \implies \exists \st_\delta, \st_f \ldotp\\
+\forall \theta,s,\st\ldotp \theta,s,\st\models \sst \land \SAT(\pc) \implies \exists \st_\delta, \st_f \ldotp\\
 \quad  \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \theta,s,\st_f\models \sst_f 
 \end{array}$
 \end{goalvlist}
@@ -158,7 +158,7 @@ Combining \hyp{stex}, \hyp{stdex} and \hyp{predmdl} gives our goal \goal{conssou
 \pfprove \begin{goalvlist}
 \goalvitem{conscomp} $\begin{array}{l}
 \forall \theta,s,\st_f,\st_\delta\ldotp \theta,s,\st_f\models \sst_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \st_f\disj\st_\delta \implies \\
-\quad \exists \st\ldotp \st = \st_\delta \cdot \st_f \land \theta,s,\st\models \sst \land \theta(\pc)=\vtrue
+\quad \exists \st\ldotp \st = \st_\delta \cdot \st_f \land \theta,s,\st\models \sst \land \SAT(\pc)
 \end{array}$
 \end{goalvlist}
 \begin{hypvlist}
@@ -169,7 +169,7 @@ Combining \hyp{stex}, \hyp{stdex} and \hyp{predmdl} gives our goal \goal{conssou
 \hypvitem{ex} We can pick $\st=\st_\delta=\ex{x}$.
 \hypvitem{rest} From the definition of composition, \hyp{stisbot} and \hyp{stdisex}, we have $\st=\st_\delta\cdot\st_f$.
 \hypvitem{models} Given \hyp{consok} and \hyp{ex}, we have $\theta,s,\st\models\sst$.
-\hypvitem{sat} From \hyp{consok}, $\pc=[]$ thus $\theta(\pc)=\vtrue$. Together with \hyp{rest} and \hyp{models}, this gives our goal \goal{conscomp}.
+\hypvitem{sat} From \hyp{consok}, $\pc=[]$ thus $\SAT(\pc)$. Together with \hyp{rest} and \hyp{models}, this gives our goal \goal{conscomp}.
 \end{hypvlist}
 
 \pfprop{Consume: OX sound}
@@ -190,7 +190,7 @@ From the \consume{} rules, we never vanish, so if all consumptions are \Ok{} we 
 \end{hypvlist}
 \pfprove \begin{goalvlist}
 \goalvitem{prodsound} $\begin{array}{l}
-\forall\theta,s,\st\ldotp \theta(\pc)=\vtrue \land \theta,s,\st\models\sst \implies \exists \st_\delta, \st_f\ldotp \\
+\forall\theta,s,\st\ldotp \SAT(\pc) \land \theta,s,\st\models\sst \implies \exists \st_\delta, \st_f\ldotp \\
 \quad \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta,s,\st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \theta,s,\st_f \models \sst_f
 \end{array}$
 \end{goalvlist}
@@ -208,7 +208,7 @@ From the \consume{} rules, we never vanish, so if all consumptions are \Ok{} we 
 \hypvitem{models} $\theta, s, \st_f \models \sst_f \land \theta, s, \st_\delta \modelsp \corepred{\delta}{\sins}{\outs} \land \st_f\disj\st_\delta$
 \end{hypvlist}
 \pfprove \begin{goalvlist}
-\goalvitem{prodcomp} $\exists \sst\ldotp \ppprod{\sst_f,\delta,\sins,\souts}{\sst,\pc} \land \theta(\pc)=\vtrue \land \theta,s,(\st_f\cdot\st_\delta) \models \sst$
+\goalvitem{prodcomp} $\exists \sst\ldotp \ppprod{\sst_f,\delta,\sins,\souts}{\sst,\pc} \land \SAT(\pc) \land \theta,s,(\st_f\cdot\st_\delta) \models \sst$
 \end{goalvlist}
 \begin{hypvlist}
 \hypvitem{predisex} From \hyp{models}, $\st_\delta\modelsp \corepred{\delta}{\sins}{\souts}$, thus from the definition of $\modelsp$ we have $\st_\delta=\ex{x}$, $\delta=\exP$, $\sins=[]$, $\souts=[\sym x]$ with $\expeval{\sym x}=x$.
@@ -216,7 +216,7 @@ From the \consume{} rules, we never vanish, so if all consumptions are \Ok{} we 
 \hypvitem{sstfisemp} From the rules of $\models$ and \hyp{stfisemp}, we have $\sst_f=\bot$.
 \hypvitem{sstex} We can pick $\sst=\ex{\sym x}$.
 \hypvitem{prod} From \hyp{sstfisemp}, \hyp{predisex}, \hyp{sstex} and the rules of \produce, we have ${\ppprod{\st_f,\delta,\sins,\souts}{\sst,\pc}}$, with $\pc=[]$.
-\hypvitem{pcsat} From \hyp{prod}, $\theta(\pc)=\vtrue$.
+\hypvitem{pcsat} From \hyp{prod}, $\SAT(\pc)$.
 \hypvitem{compst} From \hyp{stfisemp} and \hyp{predisex}, $\st_f=\bot$ and $\st_\delta=\ex{x}$, thus from the rules of composition, $\st_f\cdot\st_\delta=\ex{x}$. 
 \hypvitem{models} From \hyp{predisex}, $\expeval{\sym x}=x$, thus from \hyp{sstex} and \hyp{compst} we have $\theta,s,(\st_f\cdot\st_\delta)\models\sst$, which combined with \hyp{prod} and \hyp{pcsat} gives our goal \goal{prodcomp}.
 \end{hypvlist}
