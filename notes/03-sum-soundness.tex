@@ -322,7 +322,7 @@ A side-effect of this is that a non-$\bot$ state is never considered observably-
 An advantage of this approach is that lifting a full state model to a complete state model doesn't require anything (aside from handling $\bot$ in \code{produce} and \code{consume}), as the empty compositional state is already added!
 
 We now redefine some of the constructs used in the engine according to this new definition.
-
+{
 \newcommand{\vallist}[0]{\textit{Val}~\code{list}}
 
 
@@ -331,7 +331,7 @@ We now redefine some of the constructs used in the engine according to this new 
 	\code{consume}:\St \rarr \Delta \rarr \vallist \rarr (\mathcal O^+_l \times \vallist \times \St^?) \\
 	\code{produce}:\St^? \rarr \Delta \rarr \vallist \rarr \vallist \rarr \St~\code{set}\\
 	\code{eval\_action}: {\cal A} \rarr \St^? \rarr \vallist \rarr (\mathcal O^+_l \times \vallist \times \St^?)
-\end{gather*}
+\end{gather*}}
 
 A consideration with this is that \code{consume} only works on non-$\bot$ elements, as no predicate is satisfied by the empty state (not sure about this). For produce however, a predicate can be produced from the absence of state.
 
