@@ -43,70 +43,13 @@ Predicate satisfiability is defined with regards to the concrete compositional s
 
 \begin{proof}
 
-\pfprop{Get Soundness}
+\pfprop{Get OX Soundness}
 
 \pfassume \begin{hypvlist}
-\hypvitem{getsym} $\ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \expeval{\sym i}=\expeval{\sym i'}=i \land \SAT(\pc) $
+\hypvitem{getcon} $\theta,s,\st \models \sst \land \ppgetc{\st, i}{\st_i} \land \expeval{\sym i}=i$
 \end{hypvlist}
 \pfprove \begin{goalvlist}
-\goalvitem{getcon} $\forall \st\ldotp \theta,s,\st \models \sst \implies \exists \st_i \ldotp \ppgetc{\st, i}{\st_i} \land \theta,s,\st_i \models \sst_i$
-\end{goalvlist}
-
-We proceed by proving the property holds for all rules of the symbolic \code{get}, resulting in five cases.
-
-\pfcase{\textsc{SplitPMapGetMatchCon}}
-
-\begin{hypvlist}
-\hypvitem{rule1} Assume $(\sym h_c,\sym h_s,\sym d)=\mathit{unwrap}(\sst) \land \code{is\_concrete}~\sym i \land \sym i\in\dom(\sym h_c) \land \sst_{i}=\sym h_c(\sym i)$.
-\hypvitem{apply1} From \hyp{rule1}, \hyp{getsym} and \textsc{SplitPMapGetMatchCon} we have $\pc=[]$ and $\sym i'=\sym i$.
-\hypvitem{models1} Let $\st$ such that $\theta,s,\st\models\sst$.
-\hypvitem{notbot1} From \hyp{rule1}, we know $\sst\neq\bot$, thus $\st$ is of the form $\st=(h,d)$.
-\hypvitem{evalheap1} From \hyp{models1}, \hyp{rule1} and the definition of $\models$, we have $i\in \dom(h)$ such that $\st_i=h(i)$ and ${\theta,s,\st_i\models\sst_i}$.
-\hypvitem{applycget1} From \hyp{evalheap1} we can apply \textsc{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
-\end{hypvlist}
-
-\pfcase{\textsc{SplitPMapGetMatchSym}} This is proved analogously to the above.
-
-\pfcase{\textsc{SplitPMapGetBranch}}
-
-\begin{hypvlist}
-\hypvitem{rule3} Assume $(\sym h_c,\sym h_s,\sym d)=\mathit{unwrap}(\sst) \land \sym h_{all}=\sym h_c\cup \sym h_s \land \sym i\notin \dom(\sym h_{all}) \land \sym i'\in\dom(\sym h_{all}) \land {\sst_i=\sym h_{all}(\sym i')}$.
-\hypvitem{apply3} From \hyp{rule3}, \hyp{getsym} and \textsc{SplitPMapGetBranch} we have $\pc=[\sym i = \sym i']$.
-\hypvitem{models3} Let $\st$ such that $\theta,s,\st\models\sst$.
-\hypvitem{notbot3} From \hyp{rule3} we know $\sst\neq\bot$, thus $\st$ is of the form $\st=(h,d)$.
-\hypvitem{evalheap3} From \hyp{rule3}, \hyp{models3} and the definition of $\models$, we have $i\in \dom(h)$  such that $\st_i=h(i)$ and ${\theta,s,\st_i\models\sst_i}$.
-\hypvitem{applycget3} From \hyp{evalheap3} we can apply \textsc{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
-\end{hypvlist}
-
-\pfcase{\textsc{SplitPMapGetAdd}}
-
-\begin{hypvlist}
-\hypvitem{rule4} Assume $(\sym h_c,\sym h_s,\sym d)=\mathit{unwrap}(\sst) \land \sym h_{all}=\sym h_c\cup \sym h_s \land \sym i\notin\dom(\sym h_{all}) \land \sym d\neq\bot$.
-\hypvitem{apply4} From \hyp{rule4}, \hyp{getsym} and \textsc{SplitPMapGetAdd} we have $\pc=[\sym i\notin\dom(\sym h_{all}) \land \sym i\in \sym d]$, $\sym i'=\sym i$ and $\sst_i=\bot$.
-\hypvitem{models4} Let $\st$ such that $\theta,s,\st\models\sst$.
-\hypvitem{notbot4} From \hyp{rule4} we know $\sst\neq\bot$, thus $\st$ is of the form $\st=(h,d)$.
-\hypvitem{notinh4} From \hyp{getsym} and \hyp{apply4}, we know $\SAT(\pc)$, such that from \hyp{models4} we have ${i\notin \dom(h)} \land {i\in d}$.
-\hypvitem{applycget4} From \hyp{notinh4} we can straightforwardly apply \textsc{CPMapGetAdd}, giving us $\ppgetc{\st,i}{\bot}$ -- together with \hyp{apply4} and \ref{eq:empty-mem} this completes our goal \goal{getcon}.
-\end{hypvlist}
-
-\pfcase{\textsc{SplitPMapGetBotDomain}}
-
-\begin{hypvlist}
-\hypvitem{rule5} Assume $(\sym h_c,\sym h_s,\sym d)=\mathit{unwrap}(\sst) \land \sym h_{all}=\sym h_c\cup \sym h_s \land \sym i\notin \dom(\sym h_{all}) \land \sym d=\bot$.
-\hypvitem{apply5} From \hyp{rule5}, \hyp{getsym} and \textsc{SplitPMapGetBotDomain} we have $\pc=[\sym i\notin\dom(\sym h_{all})]$ and $\sym i=\sym i$.
-\hypvitem{models5} Let $\st$ such that $\theta,s,\st\models\sst$.
-\hypvitem{botdom} From \hyp{rule5} we have $\sym d=\bot$, so given $(h,d)=\fn{unwrap}(\st)$ and \hyp{models5}, we have $d=\bot$.%
-\hypvitem{pctrue5} From \hyp{getsym} $\SAT(\pc)$, thus from \hyp{apply5} and \hyp{models5}, $i\notin \dom(h)$.
-\hypvitem{applycget5} From \hyp{pctrue5} and \hyp{botdom} we can apply \textsc{CPMapGetBotDomain}, thus ${\ppgetc{\st,i}{\bot}}$ -- together with \hyp{apply5} and \ref{eq:empty-mem} this completes our goal \goal{getcon}.
-\end{hypvlist}
-
-\pfprop{Get Completeness}
-
-\pfassume \begin{hypvlist}
-\hypvitem{getcon} $\theta,s,\st \models \sst \land \ppgetc{\st, i}{\st_i}$
-\end{hypvlist}
-\pfprove \begin{goalvlist}
-\goalvitem{getsym} $\exists \sst_i, \sym i, \sym i', \pc \ldotp \ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \theta,s,\st_i\models\sst_i \land \expeval{\sym i}=\expeval{\sym i'}=i \land \SAT(\pc)$
+\goalvitem{getsym} $\exists \sst_i, \sym i', \pc \ldotp \ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \theta,s,\st_i\models\sst_i \land \expeval{\sym i'}=i \land \SAT(\pc)$
 \end{goalvlist}
 
 We proceed by proving the property holds for all rules of the concrete \code{get}, resulting in three cases.
@@ -115,9 +58,10 @@ We proceed by proving the property holds for all rules of the concrete \code{get
 
 \begin{hypvlist}
 \hypvitem{rule1} Assume $(h,d)=\fn{unwrap}(\st) \land i\in\dom(h) \land \st_{i}=h(i)$.
-\hypvitem{isinsomeheap} It follows from \hyp{getcon} and the definition of $\models$ that $\sst=(\sym h_c, \sym h_s, \sym d)$ such that there exists an $\sym i$ with $\expeval{\sym i}=i$, and a binding from $\sym i$ is in either the concrete or the symbolic part of the heap. We also define $\sym i$ as the value of $i$ directly lifted to symbolic values, such that $\code{is\_concrete}~i$.
-\hypvitem{isincpart} From \hyp{isinsomeheap}, assume the binding is in the concrete part of the heap, $\sym h_c$. From this and \hyp{isinsomeheap}, we can apply \textsc{SplitPMapGetMatchCon}, giving us $\ppget{\sst,\sym i}{\sym i, \sym h_c(\sym i), []}$. This, along with the fact $\SAT([])$, gives our goal \goal{getsym}.
-\hypvitem{isincpart} Assume now from \hyp{isinsomeheap} that the binding is in the symbolic part of the heap, $\sym h_s$. From this and \hyp{isinsomeheap}, we can apply \textsc{SplitPMapGetMatchSym}, giving us $\ppget{\sst,\sym i}{\sym i, \sym h_s(\sym i), []}$. This again gives our goal \goal{getsym}.
+\hypvitem{isinsomeheap} It follows from \hyp{getcon} and the definition of $\models$ that $\sst=(\sym h_c, \sym h_s, \sym d)$. From here we have three cases: $\sym i$ is present directly in $\sym h_c$, or in $\sym h_s$, or neither.
+\hypvitem{isincpart} From \hyp{isinsomeheap}, assume the binding is in the concrete part of the heap: $\sym i \in \sym h_c$. From the definition of \code{set}, we know that if an entry is in the concrete part it must be concrete; thus $\code{is\_concrete}~\sym i$. From this, we can apply \textsc{SplitPMapGetMatchCon}, giving us $\ppget{\sst,\sym i}{\sym i, \sym h_c(\sym i), []}$. From the definition of $\models$, it also follows that $\theta,s,\st_i\models \sym h_c(\sym i)$. This, along with the fact $\SAT([])$, gives our goal \goal{getsym}.
+\hypvitem{isinspart} Assume now from \hyp{isinsomeheap} that the binding is in the symbolic part of the heap, $\sym h_s$. From this, we can apply \textsc{SplitPMapGetMatchSym}, giving us $\ppget{\sst,\sym i}{\sym i, \sym h_s(\sym i), []}$. From the definition of $\models$, it also follows that $\theta,s,\st_i\models \sym h_s(\sym i)$. This again gives our goal \goal{getsym}.
+\hypvitem{isinneither} Finally, it may be that $\sym i \notin \sym h_c \land \sym i \notin \sym h_s$. From the definition of $\models$, there must however still exist a $\sym i'$ such that $\expeval{\sym i'}=i$ and given $\sym h_{all}=\sym h_c\cup\sym h_s$, $\theta,s,\st_i\models \sym h_{all}(\sym i')$. From this we may apply \textsc{SplitPMapGetBranch}, giving us \ppget{\sst,\sym i}{\sym i',\sst_i,[\sym i=\sym i']}. Because we have $\expeval{\sym i}=i$, it follows that $\SAT([\sym i=\sym i'])$, completing our goal \goal{getsym}.
 \end{hypvlist}
 
 \pfcase{\textsc{CPMapGetAdd}}
@@ -137,6 +81,60 @@ We proceed by proving the property holds for all rules of the concrete \code{get
 \hypvitem{exsym3} It follows from \hyp{getcon} and the definition of $\models$ that $\sst=(\sym h_c, \sym h_s, \bot)$ such that $\expeval{\sym i}=i$ and $\sym i\notin \dom(\sym h_c\cup \sym h_s)$.
 \hypvitem{applys3} We can then apply \textsc{SplitPMapGetBotDomain}, giving us ${\ppget{\sst,\sym i}{\sym i,\bot,[\sym i\notin \dom(\sym h_c\cup \sym h_s)]}}$.%
 \hypvitem{complete3} From \hyp{exsym3} it follows that $\SAT([\sym i\notin \dom(\sym h_c\cup\sym h_s)])$, which completes our goal \goal{getsym}.
+\end{hypvlist}
+
+\pfprop{Get UX Soundness}
+
+\pfassume \begin{hypvlist}
+\hypvitem{getsym} $\ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \expeval{\sym i}=\expeval{\sym i'}=i \land \SAT(\pc) $
+\hypvitem{models} $\st\ldotp \theta,s,\st \models \sst$
+\end{hypvlist}
+\pfprove \begin{goalvlist}
+\goalvitem{getcon} $\exists \st_i \ldotp \ppgetc{\st, i}{\st_i} \land \theta,s,\st_i \models \sst_i$
+\end{goalvlist}
+
+We proceed by proving the property holds for all rules of the symbolic \code{get}, resulting in five cases.
+
+\pfcase{\textsc{SplitPMapGetMatchCon}}
+
+\begin{hypvlist}
+\hypvitem{rule1} Assume $(\sym h_c,\sym h_s,\sym d)=\mathit{unwrap}(\sst) \land \code{is\_concrete}~\sym i \land \sym i\in\dom(\sym h_c) \land \sst_{i}=\sym h_c(\sym i)$.
+\hypvitem{apply1} From \hyp{rule1}, \hyp{getsym} and \textsc{SplitPMapGetMatchCon} we have $\pc=[]$ and $\sym i'=\sym i$.
+\hypvitem{notbot1} From \hyp{rule1}, we know $\sst\neq\bot$, thus $\st$ is of the form $\st=(h,d)$.
+\hypvitem{evalheap1} From \hyp{models}, \hyp{rule1} and the definition of $\models$, we have $i\in \dom(h)$ such that $\st_i=h(i)$ and ${\theta,s,\st_i\models\sst_i}$.
+\hypvitem{applycget1} From \hyp{evalheap1} we can apply \textsc{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
+\end{hypvlist}
+
+\pfcase{\textsc{SplitPMapGetMatchSym}} This is proved analogously to the above.
+
+\pfcase{\textsc{SplitPMapGetBranch}}
+
+\begin{hypvlist}
+\hypvitem{rule3} Assume $(\sym h_c,\sym h_s,\sym d)=\mathit{unwrap}(\sst) \land \sym h_{all}=\sym h_c\cup \sym h_s \land \sym i\notin \dom(\sym h_{all}) \land \sym i'\in\dom(\sym h_{all}) \land {\sst_i=\sym h_{all}(\sym i')}$.
+\hypvitem{apply3} From \hyp{rule3}, \hyp{getsym} and \textsc{SplitPMapGetBranch} we have $\pc=[\sym i = \sym i']$.
+\hypvitem{notbot3} From \hyp{rule3} we know $\sst\neq\bot$, thus $\st$ is of the form $\st=(h,d)$.
+\hypvitem{evalheap3} From \hyp{rule3}, \hyp{models} and the definition of $\models$, we have $i\in \dom(h)$  such that $\st_i=h(i)$ and ${\theta,s,\st_i\models\sst_i}$.
+\hypvitem{applycget3} From \hyp{evalheap3} we can apply \textsc{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
+\end{hypvlist}
+
+\pfcase{\textsc{SplitPMapGetAdd}}
+
+\begin{hypvlist}
+\hypvitem{rule4} Assume $(\sym h_c,\sym h_s,\sym d)=\mathit{unwrap}(\sst) \land \sym h_{all}=\sym h_c\cup \sym h_s \land \sym i\notin\dom(\sym h_{all}) \land \sym d\neq\bot$.
+\hypvitem{apply4} From \hyp{rule4}, \hyp{getsym} and \textsc{SplitPMapGetAdd} we have $\pc=[\sym i\notin\dom(\sym h_{all}) \land \sym i\in \sym d]$, $\sym i'=\sym i$ and $\sst_i=\bot$.
+\hypvitem{notbot4} From \hyp{rule4} we know $\sst\neq\bot$, thus $\st$ is of the form $\st=(h,d)$.
+\hypvitem{notinh4} From \hyp{getsym} and \hyp{apply4}, we know $\SAT(\pc)$, such that from \hyp{models} we have ${i\notin \dom(h)} \land {i\in d}$.
+\hypvitem{applycget4} From \hyp{notinh4} we can straightforwardly apply \textsc{CPMapGetAdd}, giving us $\ppgetc{\st,i}{\bot}$ -- together with \hyp{apply4} and \ref{eq:empty-mem} this completes our goal \goal{getcon}.
+\end{hypvlist}
+
+\pfcase{\textsc{SplitPMapGetBotDomain}}
+
+\begin{hypvlist}
+\hypvitem{rule5} Assume $(\sym h_c,\sym h_s,\sym d)=\mathit{unwrap}(\sst) \land \sym h_{all}=\sym h_c\cup \sym h_s \land \sym i\notin \dom(\sym h_{all}) \land \sym d=\bot$.
+\hypvitem{apply5} From \hyp{rule5}, \hyp{getsym} and \textsc{SplitPMapGetBotDomain} we have $\pc=[\sym i\notin\dom(\sym h_{all})]$ and $\sym i=\sym i$.
+\hypvitem{botdom} From \hyp{rule5} we have $\sym d=\bot$, so given $(h,d)=\fn{unwrap}(\st)$ and \hyp{models}, we have $d=\bot$.%
+\hypvitem{pctrue5} From \hyp{getsym} $\SAT(\pc)$, thus from \hyp{apply5} and \hyp{models}, $i\notin \dom(h)$.
+\hypvitem{applycget5} From \hyp{pctrue5} and \hyp{botdom} we can apply \textsc{CPMapGetBotDomain}, thus ${\ppgetc{\st,i}{\bot}}$ -- together with \hyp{apply5} and \ref{eq:empty-mem} this completes our goal \goal{getcon}.
 \end{hypvlist}
 
 \end{proof}

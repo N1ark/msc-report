@@ -146,9 +146,9 @@ The above axiom is obtained for free, by lifting the $\models$ relation to the o
 \begin{equation}
 \tag{Memory Model OX Soundness}\label{eq:mem-ox-soundness}
 \begin{array}{l}
-\theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs} \implies \exists \sins,\souts,\sst',\pc,\theta'\ldotp\\
-\quad \ppexec{\sym\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT[\theta',s](\pc) \land \theta',s,\st'\models \sst' \land\\
-\qquad \expeval[s,\pc]{\sins}=(\ins,\pc')\land\expeval[s,\pc']{\souts}=(\souts,\pc'')
+\theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs} \land \expeval{\sins}=\ins ~\land \\
+(\forall o', \sst', \souts', \pc'\ldotp \ppexec{\alpha}{\sst,\sins}{o',\sst',\souts',\pc'} \Rarr o' \in \{ \Ok, \Err \}) \implies \exists \sst',\souts,\pc,\theta'\ldotp\\
+\quad \ppexec{\sym\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \theta',s,\st'\models \sst' \land  \SAT[\theta',s](\pc) \land \expeval[\theta',s]{\souts}=\outs
 \end{array}
 \end{equation}
 
