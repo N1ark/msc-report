@@ -60,8 +60,6 @@ We now propose to redefine the notion of state models. To follow the spirit of C
 
 \subsection{Core Engine}
 
-\newcommand{\vallist}[0]{\Val~\code{list}}
-
 The core engine enables whole-program symbolic execution. For this state models must firstly define the set of states the execution will happen on; this is done via a partial resource algebra: a tuple  $(M, |\!-\!|:M\rarr M^?,(\cdot):M\times M\part M)$. They are further equipped with a set of actions $\cal A$, an \execac{} function and a \code{sat} relation.
 \begin{align*}
 	\execac &: \Sst^? \rarr {\cal A} \rarr \vallist \rarr \pset(\full\outcomes_e \times \Sst^? \times \vallist \times \Pc) \\
@@ -180,24 +178,10 @@ The above axiom is obtained for free, by lifting the $\models$ relation to the o
 \end{array}
 \end{equation}
 
-Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from Iris is a form of frame subtraction: it guarantees $\forall c\ldotp \irisval(a \cdot c)\Rarr \irisval(b\cdot c)$, with $c$ a frame that can be added to the state ($\sst_f$ in the axiom). This becomes evident when noticing that disjointness of partial RAs equates to validity in Iris RAs, giving us $\forall c\ldotp a\disj c\Rarr b\disj c$. In fact, the Iris frame-preserving update implies frame subtraction modulo action outcomes. This makes sense, as Iris is used for OX reasoning, and frame subtraction is the property needed for OX soundness. \note{Maybe move this elsewhere.}
-
-%Given the full state model $\full{\mmdl}$ with the states $\full\Sst$ and actions $\full\actions$ and the compositional state model $\mmdl$ with the states $\Sst\supseteq\full\Sst$ and actions $\actions$, $\Sst$ is the set of fragments of $\full\Sst$ if ${\forall \sst\in\Sst\ldotp \exists\full\sst\in\full\Sst\ldotp \sst\preo\full\sst}$ (completion), and ${\forall\full\sst_1,\full\sst_2\in\full\Sst\ldotp \full\sst_1\preo\full\sst_2 \implies \full\sst_1=\full\sst_2}$ (inextensibility).  These two state models are compositional, denoted $\full\mmdl \tilde \mmdl$ if all actions of full states using compositional semantics have the same result as using the full semantics.
-%
-%\begin{equation}
-%\tag{Compatibility}\label{eq:compatibility}
-%\begin{array}{l}
-%\ppexec{\full\alpha}{\full\sst, \sins}{o,\full\sst',\souts,\pc} \iff
-%\ppexec{\alpha}{\full\sst, \sins}{o,\full\sst',\souts,\pc}
-%\end{array}
-%\end{equation}
-%
-%Note here that we do not consider compatibility of the semantics of the language, but rather only the compatibility of the actions of the state models -- it is assumed the compatibility of the full semantics follow from it.
-%
-%\note{Does the above make sense? Sacha originally defined compatibility for concrete states, but I should be able to be lifted to symbolic states anyways... I just would want to handle compositionality/symbolicness independently, otherwise I imagine I need to then lift all compositional concrete axioms to compositional symbolic...}
+Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from Iris is a form of frame subtraction: it guarantees $\forall c\ldotp \irisval(a \cdot c)\Rarr \irisval(b\cdot c)$, with $c$ a frame that can be added to the state ($\st_f$ in the axiom). This becomes evident when noticing that disjointness of partial RAs equates to validity in Iris RAs, giving us $\forall c\ldotp a\disj c\Rarr b\disj c$. In fact, the Iris frame-preserving update implies frame subtraction modulo action outcomes. This makes sense, as Iris is used for OX reasoning, and frame subtraction is the property needed for OX soundness. \note{Maybe move this elsewhere.}
 
 \begin{equation}
-\tag{Consume Soundness}\label{eq:consume-sound}
+\tag{Consume UX Soundness}\label{eq:consume-sound}
 \begin{array}{l}
 \ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc} \implies \forall \theta,s,\st\ldotp \\
 \quad  \theta,s,\st\models \sst \land \SAT(\pc) \implies \exists \st_\delta, \st_f\ldotp\\
@@ -238,35 +222,6 @@ Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from I
 \quad \exists \sst\ldotp \ppprod{\sst_f,\delta,\sins,\souts}{\sst,\pc} \land \SAT(\pc) \land \theta,s,(\st_f\cdot\st_\delta) \models \sst
 \end{array}
 \end{equation}
-
-%\section{Full States}
-%
-%In Sacha-Élie Ayoun's thesis \cite{sacha-phd}, the notion of \emph{full states} is introduced, as an additional step between different abstractions of states. This is distinct from previous works, that only considered compositional (concrete) and (compositional) symbolic states; the full (concrete) state is by definition not compositional and represents how the program actually runs.
-%
-%This addition comes with constraints, most notably that compositional states can be completed into full states \ref{eq:state-complet}, and full states are inextensible \ref{eq:state-inext}.
-%
-%\begin{figure}[H]
-%	Given the RA $(\St, |\!-\!|, (\cdot))$ and $\full\St\subseteq\St$, $\full\St$ is the set of full elements of $\St$ and $\St$ is the set of fragments of $\full\St$ if:
-%	\begin{align}
-%		\tag{State-Comp}
-%		\label{eq:state-complet}
-%		\forall \st\in\St\ldotp\exists\full\st\in\full\St&\ldotp a\preo \full\st\\
-%		\tag{State-Inext}
-%		\label{eq:state-inext}
-%		\forall \full\st_1,\full\st_2\in\full\St&\ldotp \full\st_1\preo \full\st_2 \Rarr \full\st_1=\full\st_2
-%	\end{align}
-%	\caption{Definition of full and partial state}
-%\end{figure}
-%
-%Furthermore, the existence of compositional state implies the \Miss{} outcome, meaning the state can be completed with another state fragment to give a non \Miss{} outcome. Compositional semantics are compatible with full semantics if evaluation on full states with compositional semantics is equivalent to evaluation with full semantics.
-%
-%For particular constructions such as PMaps and Lists however, this is done by adding a domain set or bound, respectively, to the compositional state -- on action execution on a cell that is not in the partial state, one can thus check whether the cell is simply not in this fragment of the state (resulting in a \Miss) or if the cell does not exist (resulting in an \Err). Without such additional information, the compositional semantics would need to resort to always evaluating to \Err{}, or to \Miss{} -- the former breaks frame subtraction and addition making the state unsound, the latter means \Miss{} outcomes leak into full semantics.
-%
-%A PMap over a state model $\St$ with a sort $I$ is defined as $I \finmap \St \times \pset(I)$, with $\pset(I)$ the domain set as discussed above that is exclusively owned. Similarly, a List state model over $\St$ is defined as $\nats\finmap\St\times\nats$, with the second element of the product the exclusively owned bound (or size) of the list. While both states use the notion of a mapping $I \finmap \St$, this wouldn't form a valid state model, because as explained above the semantics would not be able to distinguish \Err{} from \Miss{} outcomes. This is a source of discomfort, as it goes against the idea of being able to soundly construct complex state models from simpler blocks -- one would need to redefine mappings for every such structure. Similarly, the product both state transformers use also exists as a state model, and both domain set and bound are exclusively owned and could be modelled with Exclusive, but aren't. Furthermore, Iris already defines finite partial maps, so we know these form valid RAs, but they do not form sound state models \emph{when full states are considered}.
-
-%While one could accept this and redefine the state models to make up for this difference, much work would need to be redone, and one would need to pass on the rich theory that already exists in Iris. We may note this difficulty comes from the unification of state models and the RAs (or PCMs, in previous works) that back them.
-%
-%We may introduce a split between RAs, that can be used for reasoning about the state just like in Iris, and fully fledged state models, that must also provides actions, core predicates and must be compatible with the full state. By doing so, one can enjoy the constructions pre-existing in Iris, while enhancing them with actions and predicates when needed to form state models. A valid RA must satisfy the properties described in \autoref{fig:ra-def} (such that all RAs defined in Iris work), while a valid state model must both have a valid RA and come with \consume, \produce{} and \execac{} functions that are sound with regards to the backing RA. This idea is also inline with the goal of Iris and that was mentioned in \cite{next700seplogics}, where one full separation logic can be used without needing to reinvent the wheel at each inconvenience.
 
 \section{RAs and State Models}
 

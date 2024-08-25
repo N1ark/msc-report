@@ -1,0 +1,468 @@
+\chapter{State Model Definitions}
+
+We list here the different state models developed. In particular, we list their components in the following order: the definition of the Resource Algebra, along with its core $|-|$ and composition $(\cdot)$ rules, the list of actions $\actions$ and core predicates $\preds$ it has, the rules for symbolic interpretation $\models$, the rules for predicate satisfiability $\modelsp$, the rules for \execac{} on concrete states, the rules for \execac{} on symbolic state, the rules for \consume, the rules for \produce, and finally the rules for \fix.
+
+\section{Exclusive} \label{rules:ex}
+
+\subsection{Resource Algebra}
+
+\begin{align*}
+ 	\Ex(X) &\defeq	\ex{x: X}\\
+ 	|\ex{x}| &\defeq \bot\\
+ 	\ex{x_1} \cdot \ex{x_2}&~\text{is always undefined}
+\end{align*}
+
+It defines two actions, $\actions=\{\load, \store\}$ and a predicate $\preds=\{\exP\}$.
+
+\subsection{Satisfiability}
+
+\begin{mathpar}
+\inferrule[ExPredSat]{\st=\ex{x}}{\st\modelsp\corepred{\exP}{[]}{[x]}}	
+\and\inferrule[ExSymInterpretation]{\expeval{\sym x}=x}{\theta,s,\ex{x}\models\ex{\sym x}}
+\end{mathpar}
+
+\subsection{Compositional Concrete Rules}
+
+\begin{mathparpagebreakable}
+\inferrule[CExLoadOk]{}{\ppexecc{\load}{\ex{x},[]}{\Ok,\ex{x},[x]}}
+\and\inferrule[CExLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss, \bot,[]}}
+\and\inferrule[CExStoreOk]{}{\ppexec{\store}{\ex{x}, [x']}{\Ok, \ex{x'}, []}}
+\and\inferrule[CExStoreMiss]{}{\ppexec{\store}{\bot,[x']}{\Miss,\bot,[]}}
+\end{mathparpagebreakable}
+
+\subsection{Compositional Symbolic Rules}
+
+\begin{mathparpagebreakable}
+\inferrule[ExLoadOk]{}{\ppexec{\load}{\ex{\sym x},[]}{\Ok,\ex{\sym x},[\sym x],[]}}
+\and\inferrule[ExLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss, \bot, [], []}}
+\and\inferrule[ExStoreOk]{}{\ppexec{\store}{\ex{\sym x}, [\sym x']}{\Ok, \ex{\sym x'}, [], []}}
+\and\inferrule[ExStoreMiss]{}{\ppexec{\store}{\bot,[\sym x']}{\Miss,\bot,[],[]}}
+\and\inferrule[ExConsOk]{}{\ppcons{\ex{\sym x}, \exP, []}{\Ok, \bot, [\sym x], []}}
+\and\inferrule[ExConsMiss]{}{\ppcons{\bot,\exP, []}{\Miss, \bot, [], []}}
+\and\inferrule[ExProd]{}{\ppprod{\bot,\exP, [], [\sym x]}{\ex{\sym x}, []}}
+\and\inferrule[ExFix]{}{\fix ~[] = [\{ \exists \sym x\ldotp \corepred{\exP}{}{\sym x} \}]}
+\end{mathparpagebreakable}
+
+\section{Agreement} \label{rules:ag}
+
+\subsection{Resource Algebra}
+\begin{align*}
+	\Ag(X) &\defeq \ag{x: X}\\
+	|\ag{x}| &\defeq \ag{x}\\
+	\ag{x} \cdot \ag{x'} &\defeq \begin{cases}
+ 	\ag{x} &\If~x = x' \\
+ 	\text{undefined} &\Otherwise
+ \end{cases}
+\end{align*}
+
+It defines $\actions=\{\load\}$, and one predicate, $\Delta=\{\agP\}$.
+
+\subsection{Satisfiability}
+
+\begin{mathpar}
+\inferrule[AgPredSat]{\st=\ag{x}}{\st\modelsp\corepred{\agP}{[]}{[x]}}	
+\and\inferrule[AgSymInterpretation]{\expeval{\sym x}=x}{\theta,s,\ag{x}\models\ag{\sym x}}
+\end{mathpar}
+
+\subsection{Compositional Concrete Rules}
+
+\begin{mathparpagebreakable}
+\inferrule[CAgLoadOk]{}{\ppexecc{\load}{\ag{x},[]}{\Ok,\ag{x},[x]}}
+\and\inferrule[CAgLoadMiss]{}{\ppexecc{\load}{\bot,[]}{\Miss,\bot,[]}}
+\end{mathparpagebreakable}
+
+\subsection{Compositional Symbolic Rules}
+
+\begin{mathparpagebreakable}
+\inferrule[AgLoadOk]{}{\ppexec{\load}{\ag{\sym x},[]}{\Ok,\ag{\sym x},[\sym x],[]}}
+\and\inferrule[AgLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss,\bot,[],[]}}
+\and\inferrule[AgConsOk]{}{\ppcons{\ag{\sym x},\agP,[]}{\Ok,\ag{\sym x},[\sym x],[]}}
+\and\inferrule[AgConsMiss]{}{\ppcons{\bot,\agP,[]}{\Miss,\bot,[][]}}
+\and\inferrule[AgProdBot]{}{\ppprod{\bot,\agP,[],[\sym x]}{\ag{\sym x}, []}}
+\and\inferrule[AgProdEq]{}{\ppprod{\ag{\sym x},\agP,[],[\sym x']}{\ag{\sym x}, [\sym x = \sym x']}}
+\and\inferrule[AgFix]{}{\fix~[] = [\{\exists \sym x\ldotp \corepred{\agP}{}{\sym x}\}]}
+\end{mathparpagebreakable}
+
+\section{Fractional} \label{rules:frac}
+
+\subsection{Resource Algebra}
+
+\begin{align*}
+	\Frac(X)&\defeq \fracc{x: X, q: (0;1]}\\
+	|\fracc{x, q}| &\defeq \bot\\
+	\fracc{x,q}\cdot\fracc{x',q'}&\defeq \begin{cases}
+		\fracc{x,q+q'} & \If~ x=x' \land q+q' \leq 1\\
+		\text{undefined} &\Otherwise
+	\end{cases}
+\end{align*}
+
+We define the actions $\actions=\{\load,\store\}$ and the core predicate $\preds=\{\fracP\}$.
+
+\subsection{Satisfiability}
+
+\begin{mathpar}
+\inferrule[FracPredSat]{\st=\fracc{x,q}}{\st\modelsp\corepred{\fracP}{[q]}{[x]}}	
+\and\inferrule[FracSymInterpretation]{\expeval{\sym x}=x \\ \expeval{\sym q}=q}{\theta,s,\fracc{x,q}\models\fracc{\sym x, \sym q}}
+\end{mathpar}
+
+\subsection{Compositional Concrete Rules}
+
+\begin{mathparpagebreakable}
+\inferrule[CFracLoadOk]{}{\ppexec{\load}{\fracc{x,q},[]}{\Ok,\fracc{x,q},[x],[]}}
+\and\inferrule[CFracLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss,\bot,[1]}}
+\and\inferrule[CFracStoreOk]{q=1}{\ppexec{\store}{\fracc{x,q},[x']}{\Ok,\fracc{x',q},[]}}
+\and\inferrule[CFracStorePerm]{q<1}{\ppexec{\store}{\fracc{x,q},[x']}{\Miss,\fracc{x,q},[1-q]}}
+\and\inferrule[CFracStoreMiss]{}{\ppexec{\store}{\bot,[x']}{\Miss,\bot,[1]}}
+\end{mathparpagebreakable}
+
+\subsection{Compositional Symbolic Rules}
+
+\begin{mathparpagebreakable}
+\inferrule[FracLoadOk]{}{\ppexec{\load}{\fracc{\sym x,\sym q},[]}{\Ok,\fracc{\sym x,\sym q},[\sym x],[]}}
+\and\inferrule[FracLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss,\bot,[1],[]}}
+\and\inferrule[FracStoreOk]{}{\ppexec{\store}{\fracc{\sym x,\sym q},[\sym x']}{\Ok,\fracc{\sym x',\sym q},[],[\sym q=1]}}
+\and\inferrule[FracStorePerm]{}{\ppexec{\store}{\fracc{\sym x,\sym q},[\sym x']}{\Miss,\fracc{\sym x,\sym q},[1-\sym q],[\sym q<1]}}
+\and\inferrule[FracStoreMiss]{}{\ppexec{\store}{\bot,[\sym x']}{\Miss,\bot,[1],[]}}
+\and\inferrule[FracConsAll]{}{\ppcons{\fracc{\sym x,\sym q},\fracP,[\sym q']}{\Ok,\bot,[\sym x],[\sym q=\sym q']}}
+\and\inferrule[FracConsSome]{}{\ppcons{\fracc{\sym x,\sym q},\fracP,[\sym q']}{\Ok,\fracc{\sym x,\sym q-\sym q'},[\sym x],[0 < \sym q' < \sym q]}}
+\and\inferrule[FracConsMiss]{}{\ppcons{\fracc{\sym x,\sym q},\fracP,[\sym q']}{\Miss,\fracc{\sym x,\sym q},[\sym q' - \sym q],[\sym q < \sym q' \leq 1]}}
+\and\inferrule[FracConsFail]{}{\ppcons{\fracc{\sym x,\sym q},\fracP,[\sym q']}{\LFail,\fracc{\sym x,\sym q},[],[\sym q' \leq 0 \lor 1 < \sym q']}}
+\and\inferrule[FracProdBot]{}{\ppprod{\bot,\fracP,[\sym q],[\sym x]}{\fracc{\sym x,\sym q},[0 < \sym q \leq 1]}}
+\and\inferrule[FracProdEq]{}{\ppprod{\fracc{\sym x,\sym q},\fracP,[\sym q'],[\sym x']}{\fracc{\sym x,\sym q+\sym q'},[\sym x=\sym x' \land 0<\sym q' \land \sym q+\sym q' \leq 1]}}
+\and\inferrule[FracFix]{}{\fix~[\sym q] = [\{ \exists \sym x. \corepred{\fracP}{\sym q}{\sym x} \}]}
+\end{mathparpagebreakable}
+
+\section{Sum} \label{rules:sum}
+
+\subsection{Resource Algebra}
+
+\begin{align*}
+	\Sum(X, Y) \defeq X+Y &\defeq l(x: X) ~|~ r(y: Y)\\
+	l(x)\cdot l(x') &\defeq l(x\cdot x')\\
+	r(y)\cdot r(y')&\defeq r(y\cdot y')\\
+	|l(x)|&\defeq \begin{cases}
+ 		\bot &\If~ |x|=\bot\\
+ 		l(|x|) &\Otherwise
+	 \end{cases}\\
+	 |r(y)|&\defeq \begin{cases}
+ 		\bot &\If~ |y|=\bot\\
+ 		r(|y|) &\Otherwise
+	 \end{cases}
+\end{align*}
+
+Given the sum $\mmdl_1 + \mmdl_2$ such that the actions and predicates of $\mmdl_1$ and $\mmdl_2$ are $\actions_1$ and $\preds_1$, and $\actions_2$ and $\preds_2$ respectively, the actions of the sum are defined as ${\actions = \{\code{L}\alpha : \alpha \in \actions_1 \} \uplus \{\code{R}\alpha : \alpha \in \actions_2 \}}$, and the core predicates as ${\preds = \{\code{L}\delta : \delta \in \preds_1 \} \uplus \{\code{R}\delta : \delta \in \preds_2 \}}$.
+
+\subsection{Satisfiability}
+
+\begin{mathpar}
+\inferrule[SumPredSatL]{\st_l=l(\st) \\ \st\modelsp\corepred{\delta}{\ins}{\outs}}{\st_l\modelsp\corepred{\code{L}\delta}{\ins}{\outs}}	
+\and\inferrule[SumPredSatR]{\st_r=r(\st) \\ \st\modelsp\corepred{\delta}{\ins}{\outs}}{\st_r\modelsp\corepred{\code{R}\delta}{\ins}{\outs}}	
+\\\and\inferrule[SumPredSatLBot]{\bot\modelsp\corepred{\delta}{\ins}{\outs}}{\bot\modelsp\corepred{\code{L}\delta}{\ins}{\outs}}	
+\and\inferrule[SumPredSatRBot]{\bot\modelsp\corepred{\delta}{\ins}{\outs}}{\bot\modelsp\corepred{\code{R}\delta}{\ins}{\outs}}	
+\\\and\inferrule[SumSymInterpretationL]{\st_l=l(\st) \\ \sst_l=l(\sst) \\ \theta,s,\st\models\sst}{\theta,s,\st_l\models\sst_l}
+\and\inferrule[SumSymInterpretationR]{\st_r=r(\st) \\ \sst_r=r(\sst) \\ \theta,s,\st\models\sst}{\theta,s,\st_r\models\sst_r}
+\end{mathpar}
+
+\subsection{Compositional Concrete Rules}
+
+\noindent\begin{minipage}{.5\linewidth}
+\begin{align*}
+	\text{Given }
+	\mathit{wrap}_l(x) &= \begin{cases}
+		\bot &\If~x=\bot\\
+	 	l(x)&\Otherwise
+	 \end{cases} \\
+	 \mathit{unwrap}_l(x_l) &= \begin{cases}
+ 		\bot &\If ~x=\bot\\
+ 		x &\If~x_l=l(x)\\
+ 		\text{undefined}&\Otherwise
+	 \end{cases}
+\end{align*}
+\end{minipage}%
+\begin{minipage}{.5\linewidth}
+\begin{align*}
+	\mathit{wrap}_r(x) &= \begin{cases}
+		\bot &\If~x=\bot\\
+	 	r(x)&\Otherwise
+	 \end{cases} \\
+	 \mathit{unwrap}_r(x_r) &= \begin{cases}
+ 		\bot &\If ~x=\bot\\
+ 		x &\If~x_r=r(x)\\
+ 		\text{undefined}&\Otherwise
+	 \end{cases}
+\end{align*}
+\end{minipage}
+\begin{mathparpagebreakable}
+\inferrule[CSumLAction]{\st=\mathit{unwrap}_l(\st_l) \\ \ppexecc{\alpha}{\st,\ins}{o,\st',\outs} \\ \st_l' = \mathit{wrap}_l(\st') \\ o \neq \Miss}{\ppexecc{\code{L}\alpha}{\st_l,\ins}{o,\st_l',\outs}}
+\and\inferrule[CSumLActionMiss]{\st=\mathit{unwrap}_l(\st_l) \\ \ppexecc{\alpha}{\st,\ins}{\Miss,\st',\outs} \\ \st_l' = \mathit{wrap}_l(\st')}{\ppexecc{\code{L}\alpha}{\st_l,\ins}{\Miss,\st_l',\strv{l}::\outs}}
+\and\inferrule[CSumRAction]{\st=\mathit{unwrap}_r(\st_r) \\ \ppexecc{\alpha}{\st,\ins}{o,\st',\outs} \\ \st_r' = \mathit{wrap}_r(\st') \\ o \neq \Miss}{\ppexecc{\code{R}\alpha}{\st_r,\ins}{o,\st_r',\outs}}
+\and\inferrule[CSumRActionMiss]{\st=\mathit{unwrap}_r(\st_r) \\ \ppexecc{\alpha}{\st,\ins}{\Miss,\st',\outs} \\ \st_r' = \mathit{wrap}_r(\st')}{\ppexecc{\code{R}\alpha}{\st_r,\ins}{\Miss,\st_r',\strv{r}::\outs}}
+\and\inferrule[CSumLActionIncompat]{}{\ppexecc{\code{L}\alpha}{r(\st),\ins}{\Err,r(\st),[]}}
+\and\inferrule[CSumRActionIncompat]{}{\ppexecc{\code{R}\alpha}{l(\st),\ins}{\Err,l(\st),[]}}
+\end{mathparpagebreakable}
+
+\subsection{Compositional Symbolic Rules}
+
+\begin{mathparpagebreakable}
+\inferrule[SumLAction]{\sst=\mathit{unwrap}_l(\sst_l) \\ \ppexec{\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \\ \sst_l' = \mathit{wrap}_l(\sst') \\ o \neq \Miss}{\ppexec{\code{L}\alpha}{\sst_l,\sins}{o,\sst_l',\souts,\pc}}
+\and\inferrule[SumLActionMiss]{\sst=\mathit{unwrap}_l(\sst_l) \\ \ppexec{\alpha}{\sst,\sins}{\Miss,\sst',\souts,\pc} \\ \sst_l' = \mathit{wrap}_l(\sst')}{\ppexec{\code{L}\alpha}{\sst_l,\sins}{\Miss,\sst_l',\strv{l}::\souts,\pc}}
+\and\inferrule[SumRAction]{\sst=\mathit{unwrap}_r(\sst_r) \\ \ppexec{\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \\ \sst_r' = \mathit{wrap}_r(\sst') \\ o \neq \Miss}{\ppexec{\code{R}\alpha}{\sst_r,\sins}{o,\sst_r',\souts,\pc}}
+\and\inferrule[SumRActionMiss]{\sst=\mathit{unwrap}_r(\sst_r) \\ \ppexec{\alpha}{\sst,\sins}{\Miss,\sst',\souts,\pc} \\ \sst_r' = \mathit{wrap}_r(\sst')}{\ppexec{\code{R}\alpha}{\sst_r,\sins}{\Miss,\sst_r',\strv{r}::\souts,\pc}}
+\and\inferrule[SumLActionIncompat]{}{\ppexec{\code{L}\alpha}{r(\sst),\sins}{\Err,r(\sst),[],[]}}
+\and\inferrule[SumRActionIncompat]{}{\ppexec{\code{R}\alpha}{l(\sst),\sins}{\Err,l(\sst),[],[]}}
+\and\inferrule[SumLCons]{\sst=\mathit{unwrap}_l(\sst_l) \\ \ppcons{\sst,\delta,\sins}{o,\sst',\souts,\pc} \\ \sst_l' = \mathit{wrap}_l(\sst') \\ o \neq \Miss}{\ppcons{\sst_l,\code{L}\delta,\sins}{o,\sst_l',\souts,\pc}}
+\and\inferrule[SumLConsMiss]{\sst=\mathit{unwrap}_l(\sst_l) \\ \ppcons{\sst,\delta,\sins}{\Miss,\sst',\souts,\pc} \\ \sst_l' = \mathit{wrap}_l(\sst')}{\ppcons{\sst_l,\code{L}\delta,\sins}{\Miss,\sst_l',\strv{l}::\souts,\pc}}
+\and\inferrule[SumRCons]{\sst=\mathit{unwrap}_r(\sst_r) \\ \ppcons{\sst,\delta,\sins}{o,\sst',\souts,\pc} \\ \sst_r' = \mathit{wrap}_r(\sst') \\ o \neq \Miss}{\ppcons{\sst_r,\code{R}\delta,\sins}{o,\sst_r',\souts,\pc}}
+\and\inferrule[SumRConsMiss]{\sst=\mathit{unwrap}_r(\sst_r) \\ \ppcons{\sst,\delta,\sins}{\Miss,\sst',\souts,\pc} \\ \sst_r' = \mathit{wrap}_r(\sst')}{\ppcons{\sst_r,\code{R}\delta,\sins}{\Miss,\sst_r',\strv{r}::\souts,\pc}}
+\and\inferrule[SumLConsIncompat]{}{\ppcons{r(\sst),\code{L}\delta,\sins}{\LFail,r(\sst),[],[]}}
+\and\inferrule[SumRConsIncompat]{}{\ppcons{l(\sst),\code{R}\delta,\sins}{\LFail,l(\sst),[],[]}}
+\and\inferrule[SumLProd]{\sst=\mathit{unwrap}_l(\sst_l) \\ \ppprod{\sst,\delta,\sins,\souts}{\sst',\pc} \\ \sst_l'=\mathit{wrap}_l(\sst')}{\ppprod{\sst_l,\code{L}\delta,\sins,\souts}{\sst_l',\pc}}
+\and\inferrule[SumRProd]{\sst=\mathit{unwrap}_r(\sst_r) \\ \ppprod{\sst,\delta,\sins,\souts}{\sst',\pc} \\ \sst_r'=\mathit{wrap}_r(\sst')}{\ppprod{\sst_r,\code{R}\delta,\sins,\souts}{\sst_r',\pc}}
+\and\inferrule[SumLFix]{\mmdl_1.\fix~\sins=a}{\fix~\strv{l}::\sins=a}
+\and\inferrule[SumRFix]{\mmdl_2.\fix~\sins=a}{\fix~\strv{r}::\sins=a}
+\end{mathparpagebreakable}
+
+\section{Product} \label{rules:product}
+
+\subsection{Resource Algebra}
+
+\begin{align*}
+	\Product(X,Y) \defeq X \times Y &\defeq X^? \times Y^? \backslash \{(\bot, \bot)\}\\
+	(x, y) \cdot (x', y') &\defeq (x \cdot x', y \cdot y')\\
+	|(x, y)| &\defeq \begin{cases}
+		\bot &\If~|x|=\bot\land |y|=\bot\\
+		(|x|, |y|) &\Otherwise
+ 	\end{cases}
+\end{align*}
+
+Given the product $\mmdl_1 \times \mmdl_2$ such that the actions and predicates of $\mmdl_1$ and $\mmdl_2$ are $\actions_1$ and $\preds_1$, and $\actions_2$ and $\preds_2$ respectively, the actions of the product are defined as ${\actions = \{\code{L}\alpha : \alpha \in \actions_1 \} \uplus \{\code{R}\alpha : \alpha \in \actions_2 \}}$, and the core predicates as ${\preds = \{\code{L}\delta : \delta \in \preds_1 \} \uplus \{\code{R}\delta : \delta \in \preds_2 \}}$.
+
+\subsection{Satisfiability}
+
+\begin{mathpar}
+\inferrule[ProductPredSatL]{\st_l\modelsp\corepred{\delta}{\ins}{\outs}}{(\st_l,\st_r)\modelsp\corepred{\code{L}\delta}{\ins}{\outs}}	
+\and\inferrule[ProductPredSatR]{\st_r\modelsp\corepred{\delta}{\ins}{\outs}}{(\st_l,\st_r)\modelsp\corepred{\code{R}\delta}{\ins}{\outs}}	
+\\\and\inferrule[ProductPredSatLBot]{\bot\modelsp\corepred{\delta}{\ins}{\outs}}{\bot\modelsp\corepred{\code{L}\delta}{\ins}{\outs}}	
+\and\inferrule[ProductPredSatRBot]{\bot\modelsp\corepred{\delta}{\ins}{\outs}}{\bot\modelsp\corepred{\code{R}\delta}{\ins}{\outs}}	
+\\\and\inferrule[ProductSymInterpretation]{\theta,s,\st_l\models\sst_l \\ \theta,s,\st_r\models\sst_r}{\theta,s,(\st_l,\st_r)\models(\sst_l,\sst_r)}
+\end{mathpar}
+
+\subsection{Compositional Concrete Rules}
+
+\begin{align*}
+	\text{Given }
+	\mathit{wrap}(x, y) = \begin{cases}
+		\bot &\If~x=\bot \land y=\bot\\
+		(x,y) &\Otherwise
+	 \end{cases} \text{ and }
+	 \mathit{unwrap}(s) = \begin{cases}
+ 		(\bot, \bot) &\If ~s=\bot\\
+		(x, y) &\Otherwise
+	 \end{cases}
+\end{align*}
+\begin{mathparpagebreakable}
+\inferrule[CProductLAction]{(\st_l,\st_r)=\mathit{unwrap}(\st) \\ \ppexecc{\alpha}{\st_l,\ins}{o,\st_l',\outs} \\ \st' = \mathit{wrap}(\st_l',\st_r) \\ o \neq \Miss}{\ppexecc{\code{L}\alpha}{\st,\ins}{o,\st',\outs}}
+\and\inferrule[CProductLActionMiss]{(\st_l,\st_r)=\mathit{unwrap}(\st) \\ \ppexecc{\alpha}{\st_l,\ins}{\Miss,\st_l',\outs} \\ \st' = \mathit{wrap}(\st_l',\st_r)}{\ppexecc{\code{L}\alpha}{\st,\ins}{\Miss,\st',\strv{l}::\outs}}	
+\and\inferrule[CProductRAction]{(\st_l,\st_r)=\mathit{unwrap}(\st) \\ \ppexecc{\alpha}{\st_r,\ins}{o,\st_r',\outs} \\ \st' = \mathit{wrap}(\st_l,\st_r') \\ o \neq \Miss}{\ppexecc{\code{R}\alpha}{\st,\ins}{o,\st',\outs}}
+\and\inferrule[CProductRActionMiss]{(\st_l,\st_r)=\mathit{unwrap}(\st) \\ \ppexecc{\alpha}{\st_r,\ins}{\Miss,\st_r',\outs} \\ \st' = \mathit{wrap}(\st_l,\st_r')}{\ppexecc{\code{R}\alpha}{\st,\ins}{\Miss,\st',\strv{r}::\outs}}	
+\end{mathparpagebreakable}
+
+\subsection{Compositional Symbolic Rules}
+
+\begin{mathparpagebreakable}
+\inferrule[ProductLAction]{(\sst_l,\sst_r)=\mathit{unwrap}(\sst) \\ \ppexec{\alpha}{\sst_l,\sins}{o,\sst_l',\souts,\pc} \\ \sst' = \mathit{wrap}(\sst_l',\sst_r) \\ o \neq \Miss}{\ppexec{\code{L}\alpha}{\sst,\sins}{o,\sst',\souts,\pc}}
+\and\inferrule[ProductLActionMiss]{(\sst_l,\sst_r)=\mathit{unwrap}(\sst) \\ \ppexec{\alpha}{\sst_l,\sins}{\Miss,\sst_l',\souts,\pc} \\ \sst' = \mathit{wrap}(\sst_l',\sst_r)}{\ppexec{\code{L}\alpha}{\sst,\sins}{\Miss,\sst',\strv{l}::\souts,\pc}}
+\and\inferrule[ProductRAction]{(\sst_l,\sst_r)=\mathit{unwrap}(\sst) \\ \ppexec{\alpha}{\sst_r,\sins}{o,\sst_r',\souts,\pc} \\ \sst' = \mathit{wrap}(\sst_l,\sst_r') \\ o \neq \Miss}{\ppexec{\code{R}\alpha}{\sst,\sins}{o,\sst',\souts,\pc}}
+\and\inferrule[ProductRActionMiss]{(\sst_l,\sst_r)=\mathit{unwrap}(\sst) \\ \ppexec{\alpha}{\sst_r,\sins}{\Miss,\sst_r',\souts,\pc} \\ \sst' = \mathit{wrap}(\sst_l,\sst_r')}{\ppexec{\code{R}\alpha}{\sst,\sins}{\Miss,\sst',\strv{r}::\souts,\pc}}
+\and\inferrule[ProductLCons]{(\sst_l,\sst_r)=\mathit{unwrap}(\sst) \\ \ppcons{\sst_l,\delta,\sins}{o,\sst_l',\souts,\pc} \\ \sst' = \mathit{wrap}(\sst_l',\sst_r) \\ o \neq \Miss}{\ppcons{\sst,\code{L}\delta,\sins}{o,\sst',\souts,\pc}}
+\and\inferrule[ProductLConsMiss]{(\sst_l,\sst_r)=\mathit{unwrap}(\sst) \\ \ppcons{\sst_l,\delta,\sins}{\Miss,\sst_l',\souts,\pc} \\ \sst' = \mathit{wrap}(\sst_l',\sst_r)}{\ppcons{\sst,\code{L}\delta,\sins}{\Miss,\sst',\strv{l}::\souts,\pc}}
+\and\inferrule[ProductRCons]{(\sst_l,\sst_r)=\mathit{unwrap}(\sst) \\ \ppcons{\sst_r,\delta,\sins}{o,\sst_r',\souts,\pc} \\ \sst' = \mathit{wrap}(\sst_l,\sst_r') \\ o \neq \Miss}{\ppcons{\sst,\code{R}\delta,\sins}{o,\sst',\souts,\pc}}
+\and\inferrule[ProductRConsMiss]{(\sst_l,\sst_r)=\mathit{unwrap}(\sst) \\ \ppcons{\sst_r,\delta,\sins}{\Miss,\sst_r',\souts,\pc} \\ \sst' = \mathit{wrap}(\sst_l,\sst_r')}{\ppcons{\sst,\code{R}\delta,\sins}{\Miss,\sst',\strv{r}::\souts,\pc}}
+\and\inferrule[ProductLProd]{(\sst_l,\sst_r)=\mathit{unwrap}(\sst) \\ \ppprod{\sst_l,\delta,\sins,\souts}{\sst_l',\pc} \\ \sst'=\mathit{wrap}(\sst_l',\sst_r)}{\ppprod{\sst,\code{L}\delta,\sins,\souts}{\sst',\pc}}
+\and\inferrule[ProductRProd]{(\sst_l,\sst_r)=\mathit{unwrap}(\sst) \\ \ppprod{\sst_r,\delta,\sins,\souts}{\sst_r',\pc} \\ \sst'=\mathit{wrap}(\sst_l,\sst_r')}{\ppprod{\sst,\code{R}\delta,\sins,\souts}{\sst',\pc}}
+\and\inferrule[ProductLFix]{\mmdl_1.\fix~\sins=a}{\fix~\strv{l}::\sins=a}
+\and\inferrule[ProductRFix]{\mmdl_1.\fix~\sins=a}{\fix~\strv{r}::\sins=a}
+\end{mathparpagebreakable}
+
+
+\section{Freeable} \label{rules:freeable}
+
+\subsection{Resource Algebra}
+
+The RA for $\Freeable(\mmdl)$ is defined as a construction: $\Freeable(\mmdl) \defeq \mmdl + \Ex(\{\freed\})$, which allows all associated rules to be kept. For clarity, we rename the core predicate $\code{R}\exP$ (defined by~$\Ex(\{\freed\})$) as $\freedP$. We also extend its actions with the $\free$ action.
+
+\subsection{Satisfiability}
+
+The symbolic interpretation and core predicate satisfiability are carried by construction via the sum.
+
+\subsection{Compositional Concrete Rules}
+
+We only define the additional action $\free$, the rest being carried by construction via the sum. The wrapped concrete state model $\mmdl$ must provide an ${\code{is\_exclusively\_owned}:\St\rarr\bools}$ function such that: \begin{align*}
+	\code{is\_exclusively\_owned}~\st \iff \nexists. \st'\ldotp \st\disj\st'
+\end{align*}
+
+It also must provide a $\code{fix\_owned}:\St\rarr\vallist$ giving values to fix the \Miss.
+
+\begin{mathparpagebreakable}
+\inferrule[CFreeableActionFree]{\code{is\_exclusively\_owned}~\st}{\ppexecc{\free}{l(\st),[]}{\Ok,r(\ex\freed),[]}}
+\and\inferrule[CFreeableActionFreeErr]{\neg\code{is\_exclusively\_owned}~\st}{\ppexecc{\free}{l(\st),[]}{\Miss,l(\st),\code{fix\_owned}~x}}
+\and\inferrule[CFreeableActionFreeMiss]{}{\ppexecc{\free}{\bot,[]}{\Miss,\bot,\code{fix\_owned}~\bot}}
+\and\inferrule[CFreeableActionDoubleFree]{}{\ppexec{\free}{r(\ex\freed),[]}{\Err,r(\ex\freed),[]}}
+\end{mathparpagebreakable}
+
+\subsection{Compositional Symbolic Rules}
+
+Similarly, we carry the symbolic rules for \execac, \consume, \produce{} and \fix{} by construction via the sum. The wrapped symbolic state model $\mmdl$ must provide an ${\code{is\_exclusively\_owned}:\Sst\rarr\LVal}$ function such that: \begin{align*}
+	\code{is\_exclusively\_owned}~\sst =\vtrue \iff (\forall \theta,s,\st\ldotp \theta,s,\st\models\sst \implies \nexists. \st'\ldotp \st\disj\st')
+\end{align*}
+
+It also must provide a $\code{fix\_owned}:\Sst^?\rarr\lvallist$ giving values to fix the \Miss.
+
+\begin{mathparpagebreakable}
+\inferrule[FreeableActionFree]{}{\ppexec{\free}{l(\sst),[]}{\Ok,r(\ex\freed),[],[\code{is\_exclusively\_owned}~\sst]}}
+\and\inferrule[FreeableActionFreeErr]{}{\ppexec{\free}{l(\sst),[]}{\Miss,l(\sst),\code{fix\_owned}~\sst,[\neg\code{is\_exclusively\_owned}~\sst]}}
+\and\inferrule[FreeableActionFreeMiss]{}{\ppexec{\free}{\bot,[]}{\Miss,\bot,\code{fix\_owned}~\bot,[]}}
+\and\inferrule[FreeableActionDoubleFree]{}{\ppexec{\free}{r(\ex\freed),[]}{\Err,r(\ex\freed),[],[]}}
+\end{mathparpagebreakable}
+
+\section{Partial Map} \label{rules:pmap}
+
+\subsection{Resource Algebra}
+
+\begin{breakalign*}
+	\PMap(I,\mmdl) &\defeq (I \finmap \mmdl.\Sigma) \times \pset(I)^?\\
+	(h,d)\cdot (h',d') &\defeq (h'', d'') \\
+	\text{where } h''&\defeq \lambda i.\begin{cases}
+		h(i)\cdot h'(i)&\If~i\in \dom(h)\cap\dom(h')\\
+		h(i) &\If~i\in \dom(h) \backslash \dom(h')\\
+		h'(i) &\If~i\in \dom(h') \backslash \dom(h)\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }d''&\defeq\begin{cases}
+		d&\If~d'=\bot\\
+		d'&\If~d=\bot\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }& d'' = \bot \lor \dom(h'')\subseteq d''\\
+	|(h, d)| &\defeq \begin{cases}
+		\bot &\If~\dom(h')=\emptyset\\
+		(h', \bot) &\Otherwise
+	\end{cases}\\
+	\text{where }h'&\defeq \lambda i.\begin{cases}
+		|h(i)| &\If~ i\in\dom(h) \land |h(i)| \neq \bot\\
+		\text{undefined} &\Otherwise
+	\end{cases}
+\end{breakalign*}
+
+For a wrapped state model $\mmdl$ such that its actions and predicates are $\actions_\mmdl$ and $\preds_\mmdl$, we define the actions of $\PMap(I,\mmdl)$ as ${\actions=\actions_\mmdl \uplus \{\alloc\}}$, and the predicates ${\preds=\preds_\mmdl\uplus\{\domainset\}}$.
+
+\subsection{Satisfiability}
+
+\begin{mathparpagebreakable}
+\inferrule[PMapPredSat]{\st_i\modelsp\corepred{\delta}{\ins}{\outs}}{([i\mapsto \st_i],\bot)\modelsp\corepred{\delta}{i::\ins}{\outs}}
+\and\inferrule[PMapPredSatBot]{\bot\modelsp\corepred{\delta}{\ins}{\outs}}{\bot\modelsp\corepred{\delta}{i::\ins}{\outs}}
+\and\inferrule[PMapPredDomainSet]{}{(\emptyset,d)\modelsp\corepred{\domainset}{}{d}}
+\and\inferrule[PMapSymInterpretation]{\forall \sym i\in\dom(\sym h)\ldotp \expeval{\sym i}=i \land i\in\dom(h) \land \theta,s,h(i) \models \sym h(\sym i) \\ \expeval{\dom(\sym h)}=\dom(h) \\ \expeval{\sym d}=d}{\theta,s,(h,d)\models (\sym h, \sym d)}
+\end{mathparpagebreakable}
+
+\subsection{Compositional Concrete Rules}
+
+We define the helper functions \code{get} and \code{set} as:
+\begin{align*}
+	\code{get}&: \PMap(I, \mmdl) \rarr I \rarr \mmdl.\St \\
+	\code{set}&: \PMap(I, \mmdl) \rarr I \rarr \mmdl.\St \rarr \PMap(I, \mmdl)
+\end{align*}
+
+We pretty-print \code{get} and \code{set} as \ppgetc{\st,i}{\st_i} and \ppset{\st,i,\st_i}{\st'}.
+\begin{align*}
+	\text{Given }
+	\fn{wrap}(h, d) &\defeq \begin{cases}
+		\bot &\If~\dom(h)=\emptyset \land d=\bot\\
+		(h,d)&\Otherwise
+	\end{cases}\\
+	\fn{unwrap}(\st) & \defeq \begin{cases}
+		([], \bot) &\If~\st=\bot\\
+		(h, d) &\If~\st=(h,d)
+	\end{cases}
+\end{align*}
+\begin{mathparpagebreakable}
+\inferrule[CPMapGetMatch]{(h,d)=\fn{unwrap}(\st) \\ i\in\dom(h) \\ \st_{i}=h(i)}{\ppgetc{\st, i}{\st_{i}}}
+\and\inferrule[CPMapGetAdd]{(h,d)=\fn{unwrap}(\st) \\ i\notin\dom(h) \\ d\neq\bot \\ i\in d}{\ppgetc{\st, i}{\bot}}
+\and\inferrule[CPMapGetBotDomain]{(h,d)=\fn{unwrap}(\st) \\ i\notin \dom(h) \\ d=\bot}{\ppgetc{\st,i}{\bot}}
+\and\inferrule[CPMapSetSome]{(h,d)=\fn{unwrap}(\st) \\ \st_i\neq\bot \\ h'=h[i\leftarrow \st_i] \\ \st'=\fn{wrap}(h', d)}{\ppset{\st,i,\st_i}{\st'}}
+\and\inferrule[CPMapSetNone]{(h,d)=\fn{unwrap}(\st) \\ \st_i=\bot \\ h'=h[i\not\leftarrow] \\ \st'=\fn{wrap}(h', d)}{\ppset{\st,i,\st_i}{\st'}}
+\end{mathparpagebreakable}
+
+The action rules are then:
+\begin{mathparpagebreakable}
+\inferrule[CPMapAction]{\ppgetc{\st,i}{\st_{i}} \\ \ppexecc{\alpha}{\st_{i},\ins}{o,\st'_{i},\outs} \\ \ppset{\st,i,\st'_{i}}{\st'}}{\ppexecc{\alpha}{\st,i::\ins}{o,\st',i::\outs}}
+\and\inferrule[CPMapActionOutOfBounds]{d\neq\bot \\ i\notin d}{\ppexecc{\alpha}{(h,d),i::\ins}{\Err, (h,d), []}}
+\and\inferrule[CPMapAlloc]{d\neq \bot \\ i = \code{fresh} \\ \st_i=\code{instantiate}(\ins) \\ h' = h[i\leftarrow \st_i] \\ d' = d\uplus \{i\}}{\ppexecc{\alloc}{(h,d), \ins}{\Ok, (h',d'), [i]}}
+\and\inferrule[CPMapAllocMiss]{(h,d)=\fn{unwrap}(\st) \\ d=\bot}{\ppexecc{\alloc}{\st,\ins}{\Miss,\st,[\strv{domainset}]}}
+\end{mathparpagebreakable}
+
+\subsection{Compositional Symbolic Rules}
+
+We now re-define \code{get} and \code{set}, lifting them to the symbolic realm (note \code{set} is unchanged, as it does not perform any sort of matching). \code{get} now returns a state and an index, that may be different from the input index -- it corresponds to the actual index of the state in the map.
+
+\begin{align*}
+	\code{get}&: \PMap(I, \mmdl) \rarr I \rarr \pset(I \times \mmdl.\Sst \times \Pc) \\
+	\code{set}&: \PMap(I, \mmdl) \rarr I \rarr \mmdl.\Sst \rarr \PMap(I, \mmdl)
+\end{align*}
+We pretty-print \code{get} and \code{set} as \ppget{\sst,\sym i}{\sym i',\sst_i,\pc} and \ppset{\sst,\sym i,\sst_i}{\sst'}.
+\begin{align*}
+	\text{Given }
+	\fn{wrap}(\sym h, \sym d) &\defeq \begin{cases}
+		\bot &\If~\dom(\sym h)=\emptyset \land \sym d=\bot\\
+		(\sym h,\sym d)&\Otherwise
+	\end{cases}\\
+	\fn{unwrap}(\sst) & \defeq \begin{cases}
+		([], \bot) &\If~\sst=\bot\\
+		(\sym h, \sym d) &\If~\sst=(\sym h,\sym d)
+	\end{cases}
+\end{align*}
+\begin{mathparpagebreakable}
+\inferrule[PMapGetMatch]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i'\in\dom(\sym h) \\ \sst_i=\sym h(\sym i')}{\ppget{\sst, \sym i}{\sym i', \sst_i, [\sym i=\sym i']}}
+\and\inferrule[PMapGetAdd]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\notin\dom(\sym h) \\ \sym d\neq\bot}{\ppget{\sst, \sym i}{\sym i,\bot, [\sym i\notin\dom(\sym h) \land \sym i\in \sym d]}}
+\and\inferrule[PMapGetBotDomain]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\notin \dom(\sym h) \\ \sym d=\bot}{\ppget{\sst,\sym i}{\sym i,\bot,[\sym i\notin\dom(\sym h)]}}
+\and\inferrule[PMapSetSome]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sst_i\neq\bot \\ \sym h'=\sym h[\sym i\leftarrow \sst_i] \\ \sst'=\fn{wrap}(\sym h', \sym d)}{\ppset{\sst,\sym i,\sst_i}{\sst'}}
+\and\inferrule[PMapSetNone]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sst_i=\bot \\ \sym h'=\sym h[\sym i\not\leftarrow] \\ \sst'=\fn{wrap}(\sym h', \sym d)}{\ppset{\sst,\sym i,\sst_i}{\sst'}}
+\end{mathparpagebreakable}
+
+And now for the relevant rules:
+
+\begin{align*}
+	\text{Given }
+	\fn{lift\_if\_miss}(o, \sym i, \sins) &\defeq \begin{cases}
+		\sym i :: \sins &\If~o=\Miss\\
+		\sins &\Otherwise
+	\end{cases}
+\end{align*}
+\begin{mathparpagebreakable}
+\inferrule[PMapAction]{\ppget{\sst,\sym i}{\sym i',\sst_i,\pc} \\ \ppexec{\alpha}{\sst_i,\sins}{o,\sst'_i,\souts,\pc'} \\ \ppset{\sst,\sym i',\sst'_i}{\sst'}}{\ppexec{\alpha}{\sst,\sym i::\sins}{o,\sst',\sym i'::\souts, \pc :: \pc'}}
+\and\inferrule[PMapActionOutOfBounds]{\sym d\neq\bot}{\ppexec{\alpha}{(\sym h,\sym d),\sym i::\sins}{\Err, (\sym h,\sym d), [], [\sym i\notin \sym d]}}
+\and\inferrule[PMapAlloc]{\sym d\neq \bot \\ \sym i = \code{fresh} \\ \sst_i=\code{instantiate}(\sins) \\ \sym h' = \sym h[\sym i\leftarrow \sst_i] \\ \sym d' = \sym d\uplus \{\sym i\}}{\ppexec{\alloc}{(\sym h,\sym d), \sins}{\Ok, (\sym h',\sym d'), [\sym i], [\sym i=\sym i]}}
+\and\inferrule[PMapAllocMiss]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym d=\bot}{\ppexec{\alloc}{\sst,\sins}{\Miss,\sst,[\strv{domainset}],[]}}
+\and\inferrule[PMapCons]{\ppget{\sst,\sym i}{\sym i',\sst_i,\pc} \\ \ppcons{\sst_i,\delta,\sins}{o,\sst'_i,\souts,\pc'} \\ \ppset{\sst,\sym i',\sst'_i}{\sst'} \\ \souts'=\fn{lift\_if\_miss}(o,\sym i',\souts)}{\ppcons{\sst,\delta,\sym i::\sins}{o,\sst',\souts', \pc::\pc'}}
+\and\inferrule[PMapConsIncompat]{\sym d\neq\bot}{\ppcons{(\sym h,\sym d),\delta,\sym i::\sins}{\LFail, (\sym h,\sym d), [], [\sym i\notin \sym d]}}
+\and\inferrule[PMapConsDomainSet]{\sym d\neq \bot}{\ppcons{(\sym h,\sym d),\domainset,[]}{\Ok,(\sym h,\bot), [\sym d],[]}}
+\and\inferrule[PMapConsDomainSetMiss]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym d=\bot}{\ppcons{\sst,\domainset,[]}{\Miss,\sst, [\strv{domainset}], []}}
+\and\inferrule[PMapProd]{\ppget{\sst,\sym i}{\sym i',\sst_i,\pc} \\ \ppprod{\sst_i,\delta,\sins,\souts}{\sst'_i,\pc'} \\ \ppset{\sst,\sym i',\sst'_i}{\sst'}}{\ppprod{\sst,\delta,\sym i::\sins,\souts}{\sst', \pc::\pc'}}
+\and\inferrule[PMapProdDomainSet]{(\sym h,\bot)=\fn{unwrap}(\sst)}{\ppprod{\sst,\domainset,[],[\sym d]}{(\sym h,\sym d),[\dom(\sym h)\subseteq \sym d]}}
+\and\inferrule[PMapFix]{\mmdl.\fix~\sins = a \\ a'=\fn{lift}(a,\sym i)}{\fix~\sym i::\sins = a'}
+\and\inferrule[PMapFixDomainSet]{}{\fix~[\strv{domainset}] = \exists \sym d\ldotp \corepred{\domainset}{}{\sym d}}
+\end{mathparpagebreakable}
+
+Note in the above we define $\fn{lift}(a,\sym i)$ as a function that traverses an assertion $a$ and lifts all core predicate assertions by adding the value $\sym i$ at the start of its in-values, such that $\fn{lift}(\corepred{\delta}{\sins}{\souts}, \sym i)=\corepred{\delta}{\sym i::\sins}{\souts}$.
+
+\section{Dynamic Partial Map} \label{rules:dynpmap}
+
+\section{List} \label{rules:list}
+
+\section{General Map} \label{rules:gmap}
+
+\section{Syntactic PMap} \label{rules:syntpmap}
+
+\section{Split PMap} \label{rules:splitpmap}
+
+\section{Abstract Locations PMap} \label{rules:alocpmap}
