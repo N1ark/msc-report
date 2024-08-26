@@ -19,7 +19,7 @@ Abstract separation logic historically has, as discussed previously, mostly used
 	\label{fig:pcm-properties}
 \end{figure}
 
-When bringing this concept to a Compositional Symbolic Execution (CSE) engine, the PCM must be endowed with a set of actions $\actions$, of core predicates $\preds$, and functions that allow modifying it; in particular, an \execac{} function that reflects program commands that modify the state, a \produce{} function to add an assertion to the state, a \consume{} function to remove an assertion from the state, and a \fix{} function to provide fixes for missing errors in bi-abduction. In \cite{cse1,cse2,sacha-phd}, the notion of state model is thus introduced, to represent a PCM equipped with these attributes. 
+When bringing this concept to a Compositional Symbolic Execution (CSE) engine, the PCM must be endowed with a set of actions $\actions$, of core predicates $\preds$, and functions that allow modifying it; in particular, an \execac{} function that reflects program commands that modify the state, a \produce{} function to add an assertion to the state, a \consume{} function to remove an assertion from the state, and a \fix{} function to provide fixes for missing errors in bi-abduction. In \cite{cse1,cse2,sacha-phd}, the notion of state model is thus introduced, to represent a PCM equipped with these attributes. See \autoref{fig:state-model-elements} for a summary of this. 
 
 All of these together enable a CSE engine to be \emph{parametric} on the state model; as long as the provided functions follows a set of axioms, the engine using the state model can be proved to be sound, either in Over-approXimate (OX) or Under-approXimate (UX) mode, in turn allowing for program verification, or true bug finding.
 
@@ -27,7 +27,25 @@ All of these together enable a CSE engine to be \emph{parametric} on the state m
 
 \emph{Actions} are used to represent program actions that interact with the state. Typical actions include \load{}, \store{}, \alloc{} or \free. These actions are called with a list of arguments, return a list of results, and may modify the state, as long as the modification are sound with regards to a set of axioms, presented later.
 
-\todobox{Little boxed out thing that presents the element of a state model. Just elements ($\St$, $\preds$, $\actions$) and functions (\execac, \consume, \produce, \fix), maybe descriptions, no signatures as they change later}
+\begin{figure}\centering
+\setlength{\fboxsep}{0.3cm}
+\noindent\fbox{\parbox{\textwidth-3cm}{
+\textbf{Elements of a state model:} \begin{compactitem}
+\item $(\St, (\cdot):\St\times \St\part \St, 0)$: Partially Commutative Monoid.
+\item $\actions$: Set of actions.
+\item $\preds$: Set of core predicates.
+\end{compactitem} \vspace{0.3cm}
+\textbf{Functions of a state model:} \begin{compactitem}
+\item \execac: execute an action with arguments, returns a value.
+\item \produce: add a core predicate assertion into the state, returns the new state.
+\item \consume: removes a core predicate assertion from the state, returns the new state and the outs of the assertion.
+\item \fix: returns the assertions needed to fix the given missing error.
+\end{compactitem}%
+}}%
+\vspace{0.2cm}
+\caption{High-level description of the elements of a state model}
+\label{fig:state-model-elements}
+\end{figure}
 
 We may now look at an example of function, to understand how the state model is used. In code, we denote a program variable \code{x} by it's name, a symbolic variable $\sym x$ by \code{\#x}, a core predicate \corepred{\delta}{\ins}{\outs} as \code{<$\delta$>($\ins$;$\outs$)}, and commands that use an action $\alpha$ as \code{[$\alpha$](args)}. The pre and postcondition are written before the function's declaration, enclosed in double square brackets \code{[[...]]}. Now looking at the function \code{set\_value} in \autoref{fig:example-spec}, which has the following specification:
 \begin{align*}%
@@ -129,13 +147,49 @@ These examples hopefully showed that PCMs enforce a unit that is unwieldy, and c
 
 \subsection{RAs for Iris}
 
-Iris \cite{iris} departs from this tradition and introduces Resource Algebras (RAs) to model state, defined as a tuple $(M, \irisval: M\rarr \bools, |-|:M\rarr M^?, (\cdot):M\times M\rarr M)$, being respectively the state elements, a validity function, a partial core function and a composition function.
+Iris \cite{iris1,iris2,iris3,iris} departs from this tradition of PCMs, and introduces Resource Algebras (RAs) to model state, defined as a tuple ${(M, \irisval: M\rarr \text{iProp}, |-|:M\rarr M^?, (\cdot):M\times M\rarr M)}$, containing the carrier set, a validity function, a partial core function and a \emph{total} composition operator. This definition makes use of the option RA $M^?\defeq M\uplus\{\bot\}$ \cite{iris-option}, that extends the set of $M$ with an ``empty'' element $\bot$, such that $|\bot|=\bot$, and $m\cdot\bot=\bot\cdot m=\bot$. Similarly to PCMs, a set of axioms must be satisfied, as seen in \autoref{fig:irisra-properties}.
 
-This makes Iris states more powerful, in that they have more flexibility in what they can express; for instance sum state models can be easily and soundly expressed, which isn't possible with PCMs due to the requirement of a single $0$ element.
+\begin{figure}
+\centering
+\begin{align}
+	\tag{Iris-RA-Assoc} \forall a,b,c&\ldotp (a\cdot b)\cdot c = a\cdot (b\cdot c)\\
+	\tag{Iris-RA-Comm} \forall a,b&\ldotp a\cdot b = b\cdot a\\
+	\tag{Iris-RA-Core-ID} \forall a&\ldotp |a| \in M \Rarr |a|\cdot a = a\\
+	\tag{Iris-RA-Core-Idem} \forall a&\ldotp |a|\in M\Rarr ||a|| = |a|\\
+	\tag{Iris-RA-Core-Mono} \forall a,b&\ldotp |a|\in M\land a\preo b \Rarr |b| \in M \land |a| \preo |b|\\
+	\tag{Iris-RA-Valid-Op} \forall a,b&\ldotp \irisval(a\cdot b)\Rarr \irisval(a)
+\end{align}
+\begin{align*}
+	\text{where}\qquad
+	M^? &\defeq M \uplus \{\bot\}\text{, with }a\cdot \bot \defeq \bot\cdot a\defeq a\\
+	a \preo b &\defeq \exists c\ldotp b = a\cdot c\\
+	a \rightsquigarrow B &\defeq \forall c^? \in M^?\ldotp \irisval(a\cdot c^?) \Rarr \exists b\in B\ldotp \irisval(b\cdot c^?)\\
+	a \rightsquigarrow b &\defeq a \rightsquigarrow \{b\}
+\end{align*}
+A \emph{unital} resource algebra is an RA $M$ with an element $\epsilon\in M$ such that:
+\begin{align*}
+	\irisval(\epsilon) &&
+	\forall a\in M. \epsilon\cdot a = a&&
+	|\epsilon|=\epsilon
+\end{align*}
+\caption{Definition of resource algebras in Iris}
+\label{fig:irisra-properties}
+\end{figure}
 
-Furthermore, Iris RAs comes with plenty proofs and properties making them easy to use and adapt, whereas PCMs can prove unwieldy even for simpler state models (eg. with the Freeable state model transformer).
+The \emph{core function} $|-|:M\rarr M^?$ associates to an element $m$ of the RA it's \emph{duplicable core}. The crucial difference here, compared to PCMs, is that aside from allowing multiple units, it allows having \emph{no unit}, in which case $|m|=\bot$. As we will see later, having no unit is a requirement for a state to be exclusively owned (i.e. it has no frame). Indeed, if the state $m$ has a core $|m|\neq\bot$, then that core always constitutes a valid frame.
 
-A similarity however is that the global RA in Iris must be unital, meaning it must have a single $\epsilon$ element, very much as it is the case with the 0 in PCMs. Any RA can be trivially extended to have a unit, which is what Iris defines as the option resource algebra \cite{iris-option}.
+The \emph{validity function} $\irisval:M\rarr \text{iProp}$ is used to rule out invalid compositions, rather than relying on the partiality of the composition operator. It returns an Iris property, \text{iProp}, which allows for step indexing and some more sophisticated logic, that it out of the scope of this project.
+
+This makes Iris states more powerful, in that they have more flexibility in what can be expressed; while a regular PCM can be trivially converted to a PCM, the opposite is not true. An example of construction that can easily be more easily constructed is the sum state model. The requirement for a transition from one side of the sum to the other can be more elegantly expressed, without having to worry about the existence of $0$s \cite{iris}. Given ${\text{exclusive}(a)\defeq \forall b\ldotp \neg\irisval(a\cdot b)}$, we have :
+\begin{mathpar}
+\inferrule[ExclusiveUpdate]{\text{exclusive(a)} \\ \irisval(b)}{a \rightsquigarrow b}
+\end{mathpar}
+
+Here we note that the Iris udpate $a \rightsquigarrow b$ is a form of frame preserving update: if we update $a$ into $b$, we know that any frame that was compatible with $a$ remains compatible with $b$.
+
+Furthermore, Iris is a battle-tested logic\ftnt{https://iris-project.org/#publications}, that comes with plenty proofs and properties making them easy to use and adapt, whereas PCMs can prove unwieldy even for simpler state models as shown previously.
+
+We note an interesting similarity between Iris and the PCM approach however, which is that ``the global RA must be unital, which means it should have a unit element $\epsilon$'' \cite{iris}. This is similar to what one would find in a PCM, where we have the $0$ element. Any RA can be trivially extended to have a unit, via the option RA. This in particular means that while the building blocks of both approaches are differents (PCMs or RAs), the end result that is used is similar. This is good news: it means that adapting an RA construction to a CSE engine that uses PCMs should be fairly straightforward, as one can rely on the unit $\epsilon$ as a de facto $0$.
 
 \section{State Models with RAs}  \label{sec:theory-state-model-ras}
 
