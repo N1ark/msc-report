@@ -147,7 +147,7 @@ These examples hopefully showed that PCMs enforce a unit that is unwieldy, and c
 
 \subsection{RAs for Iris}
 
-Iris \cite{iris1,iris2,iris3,iris} departs from this tradition of PCMs, and introduces Resource Algebras (RAs) to model state, defined as a tuple ${(M, \irisval: M\rarr \text{iProp}, |-|:M\rarr M^?, (\cdot):M\times M\rarr M)}$, containing the carrier set, a validity function, a partial core function and a \emph{total} composition operator. This definition makes use of the option RA $M^?\defeq M\uplus\{\bot\}$ \cite{iris-option}, that extends the set of $M$ with an ``empty'' element $\bot$, such that $|\bot|=\bot$, and $m\cdot\bot=\bot\cdot m=\bot$. Similarly to PCMs, a set of axioms must be satisfied, as seen in \autoref{fig:irisra-properties}.
+Iris \cite{iris1,iris2,iris3,iris} departs from this tradition of PCMs, and introduces Resource Algebras (RAs) to model state, defined as a tuple ${(M, \irisval: M\rarr \text{iProp}, |-|:M\rarr M^?, (\cdot):M\times M\rarr M)}$, containing the carrier set, a validity function, a partial core function and a \emph{total} composition operator. This definition makes use of the option RA $M^?\defeq M\uplus\{\bot\}$ \cite{iris-option}, that extends the set of $M$ with an ``empty'' element $\bot$, such that $m\cdot\bot=\bot\cdot m=\bot$. Similarly to PCMs, a set of axioms must be satisfied, as seen in \autoref{fig:irisra-properties}.
 
 \begin{figure}
 \centering
@@ -178,31 +178,31 @@ A \emph{unital} resource algebra is an RA $M$ with an element $\epsilon\in M$ su
 
 The \emph{core function} $|-|:M\rarr M^?$ associates to an element $m$ of the RA it's \emph{duplicable core}. The crucial difference here, compared to PCMs, is that aside from allowing multiple units, it allows having \emph{no unit}, in which case $|m|=\bot$. As we will see later, having no unit is a requirement for a state to be exclusively owned (i.e. it has no frame). Indeed, if the state $m$ has a core $|m|\neq\bot$, then that core always constitutes a valid frame.
 
-The \emph{validity function} $\irisval:M\rarr \text{iProp}$ is used to rule out invalid compositions, rather than relying on the partiality of the composition operator. It returns an Iris property, \text{iProp}, which allows for step indexing and some more sophisticated logic, that it out of the scope of this project.
+The \emph{validity function} $\irisval:M\rarr \text{iProp}$ is used to rule out invalid compositions, rather than relying on the partiality of the composition operator. It returns an Iris property, \text{iProp}, which allows for step indexing and some more sophisticated logic, that it out of the scope of this project. As such, most RAs are extended with an invalid element $\lightning$, and validity is often defined as $\irisval(m)\defeq m\neq \lightning$. For instance for the \Ex{} RA: \begin{align*}
+	\Ex(X) &\defeq \ex{x:X} ~|~ \lightning \\
+	\irisval(a) &\defeq a \neq \lightning \\
+	|\ex{a}| &\defeq \bot\\
+	a \cdot b &\defeq \lightning
+\end{align*}
 
-This makes Iris states more powerful, in that they have more flexibility in what can be expressed; while a regular PCM can be trivially converted to a PCM, the opposite is not true. An example of construction that can easily be more easily constructed is the sum state model. The requirement for a transition from one side of the sum to the other can be more elegantly expressed, without having to worry about the existence of $0$s \cite{iris}. Given ${\text{exclusive}(a)\defeq \forall b\ldotp \neg\irisval(a\cdot b)}$, we have :
-\begin{mathpar}
+The validity and core functions thus make Iris states more powerful, in that they have more flexibility in what can be expressed; while a regular PCM can be trivially converted to an RA, the opposite is not true. An example of construction that can easily be more easily constructed is the sum state model. The requirement for a transition from one side of the sum to the other can be more elegantly expressed, without having to worry about the existence of $0$s \cite{iris}. Given ${\text{exclusive}(a)\defeq \forall b\ldotp \neg\irisval(a\cdot b)}$, we have:\begin{mathpar}
 \inferrule[ExclusiveUpdate]{\text{exclusive(a)} \\ \irisval(b)}{a \rightsquigarrow b}
 \end{mathpar}
 
 Here we note that the Iris udpate $a \rightsquigarrow b$ is a form of frame preserving update: if we update $a$ into $b$, we know that any frame that was compatible with $a$ remains compatible with $b$.
 
-Furthermore, Iris is a battle-tested logic\ftnt{https://iris-project.org/#publications}, that comes with plenty proofs and properties making them easy to use and adapt, whereas PCMs can prove unwieldy even for simpler state models as shown previously.
+Furthermore, Iris is a battle-tested logic\footnote{See \url{https://iris-project.org/\#publications}, where more than a hundred publications are cited as using Iris, allowing for the verification of, among others, Scala, OCaml, Rust, WASM, Go or C.}, that comes with plenty proofs and properties making them easy to use and adapt, whereas PCMs can prove unwieldy even for simpler state models as shown previously.
 
 We note an interesting similarity between Iris and the PCM approach however, which is that ``the global RA must be unital, which means it should have a unit element $\epsilon$'' \cite{iris}. This is similar to what one would find in a PCM, where we have the $0$ element. Any RA can be trivially extended to have a unit, via the option RA. This in particular means that while the building blocks of both approaches are differents (PCMs or RAs), the end result that is used is similar. This is good news: it means that adapting an RA construction to a CSE engine that uses PCMs should be fairly straightforward, as one can rely on the unit $\epsilon$ as a de facto $0$.
 
-\section{State Models with RAs}  \label{sec:theory-state-model-ras}
+\section{State Models with RAs} \label{sec:theory-state-model-ras}
+
+We have seen how PCMs are unpractical for a CSE engine, as they easily create incorrect behaviour that can be quite tricky to notice. We will now see how we may adapt a CSE to instead use RAs. We first define the notion of partial RAs, followed by the description of the changes done to the engine's layers to support partial RAs. Finally, we list the new axioms that must be respected by the functions of the state model.
 
 \subsection{Partial RAs}
 
+A property of Iris RAs is that composition is \emph{total} -- to take into account invalid composition, states are usually extended with a $\lightning$ state, such that $\neg \irisval(\lightning)$ (while for states $\st\neq\lightning$, $\irisval(\st)$ holds). While this is needed in the Iris framework for higher-order ghost state and step-indexing, this doesn't come into play when one is only manipulating RAs. As such, because having to define and later verify the validity of states can be quite unwieldy, we remove it by instead making use of partiality, as was originally the case in PCMs. This translation is done by removing the invalid state $\lightning$ when present, and instead defining compositions that lead to it as undefined. From this, we can get rid of the validity function, and define composition as being partial: $(\cdot): M\times M\part M$. This is also in line with the core function $(-)$ being partial.
 
-A property of Iris RAs is that composition is \emph{total} -- to take into account invalid composition, states are usually extended with a $\lightning$ state, such that $\neg \irisval(\lightning)$ (while for states $\st\neq\lightning$, $\irisval(\st)$ holds). While this is needed in the Iris framework for higher-order ghost state and step-index, this doesn't come into play when only manipulating RAs. As such, because this is quite unwieldy, we can remove it by adding partiality instead, such that invalid ($\lightning$) states simply don't exist and the need for a $\irisval$ function vanishes. This is also inline with the core function $(-)$ being partial.
-
-It is worth noting that \emph{partial} RAs are equivalent to regular RAs, \emph{so long as $\irisval$ always holds for valid states}\footnote{This, to our knowledge, is the case for all of the simpler RAs defined in Iris: Ex, Ag${}_0$, sum, product, etc.}. Indeed, compositions that yield $\lightning$ can be made undefined, and the validity function removed, to gain partiality, and inversely to go back to the Iris definition.
-
-An interesting property of this is that because validity is replaced by the fact composition is defined, the validity of a composition is equivalent to the fact two states are disjoint: $\irisval(a\cdot b) \iff a \disj b$.
-
-We now define the properties of RAs taking this change into account -- see \autoref{fig:ra-def}. From now, the term RA will be used to refer to these partial RAs.
 \begin{figure}
 A \emph{resource algebra} (RA) is a triple $(M, |\!-\!|: M\rarr M^?, (\cdot): M\times M \part M)$
 
@@ -221,12 +221,24 @@ A \emph{resource algebra} (RA) is a triple $(M, |\!-\!|: M\rarr M^?, (\cdot): M\
 \end{align*}
 A \emph{unital} resource algebra is a resource algebra $M$ with an element $\epsilon\in M$ such that:
 \begin{align*}
-	\forall a\in M. \epsilon\cdot a = a&&
+	\forall a\in M\ldotp \epsilon\cdot a = a&&
 	|\epsilon|=\epsilon
 \end{align*}
-\caption{Definition of Resource Algebras}
-\label{fig:ra-def}
+\caption{Definition of (partial) resource algebras}
+\label{fig:ra-properties}
 \end{figure}
+
+\begin{remark}[Partiality and the option RA]
+	One may note that we use the term ``partial'' to refer to two different signatures; the core $|-|:M \rarr M^?$ is called partial but is in fact total, with undefined mappings being equal to $\bot$, while the composition $(\cdot):M\times M\part M$ is an actual partial function.
+	
+	While one could adapt the core to be $M\part M$, this would prove unpractical, in cases when one still wants to use $|m|$ even when it is $\bot$. On the other hand, defining composition as $M\times M\rarr M^?$ is simply incorrect: let $a\cdot b$ undefined, it is untrue that $(a\cdot b)\cdot c=c$, while defining an undefined composition to equal $\bot$ would render this statement true.
+\end{remark}
+
+It is worth noting that \emph{partial} RAs are equivalent to regular RAs, \emph{so long as $\irisval$ always holds for valid states}\footnote{This, to our knowledge, is the case for all of the simpler RAs defined in Iris: $\Ex$, $\Ag_0$, $\Sum$, $\Product$, etc.}. Indeed, compositions that yield $\lightning$ can be made undefined, and the validity function removed, to gain partiality, and inversely to go back to the Iris definition.
+
+An interesting property of this change is that because validity is replaced by the fact composition is defined, the validity of a composition $\irisval(a\cdot b)$ in a RA is exactly equivalent to the fact two elements are disjoint in a partial RA $a \disj b$, when we define disjointness as composition being defined.
+
+We now define the properties of partial RAs taking this change into account -- see \autoref{fig:ra-properties}. From now, the term RA will be used to refer to these partial RAs.
 
 \subsection{Core Engine}
 
