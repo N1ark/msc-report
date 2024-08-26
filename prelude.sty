@@ -45,9 +45,11 @@
     linkcolor=blue,
     urlcolor=blue,
 }
+\usepackage{cleveref}
+\crefformat{section}{\S#2#1#3}
+\crefformat{subsection}{\S#2#1#3}
+\crefformat{subsubsection}{\S#2#1#3}
 
-% add footnotes without the \footnote{\url{...}} command
-\newcommand{\ftnt}[1]{\footnote{See \url{#1}}}
 
 % custom packages
 \usepackage{macros}

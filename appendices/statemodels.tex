@@ -1,4 +1,4 @@
-\chapter{State Model Definitions}
+\chapter{State Model Definitions} \label{ap:definitions}
 
 We list here the different state models developed. In particular, we list their components in the following order: the definition of the Resource Algebra, along with its core $|-|$ and composition $(\cdot)$ rules, the list of actions $\actions$ and core predicates $\preds$ it has, the rules for symbolic interpretation $\models$, the rules for predicate satisfiability $\modelsp$, the rules for \execac{} on concrete states, the rules for \execac{} on symbolic state, the rules for \consume, the rules for \produce, and finally the rules for \fix.
 
@@ -166,7 +166,7 @@ Given the sum $\mmdl_1 + \mmdl_2$ such that the actions and predicates of $\mmdl
 \subsection{Compositional Concrete Rules}
 
 \noindent\begin{minipage}{.5\linewidth}
-\begin{align*}
+\begin{breakalign*}
 	\text{Given }
 	\mathit{wrap}_l(x) &= \begin{cases}
 		\bot &\If~x=\bot\\
@@ -177,10 +177,10 @@ Given the sum $\mmdl_1 + \mmdl_2$ such that the actions and predicates of $\mmdl
  		x &\If~x_l=l(x)\\
  		\text{undefined}&\Otherwise
 	 \end{cases}
-\end{align*}
+\end{breakalign*}
 \end{minipage}%
 \begin{minipage}{.5\linewidth}
-\begin{align*}
+\begin{breakalign*}
 	\mathit{wrap}_r(x) &= \begin{cases}
 		\bot &\If~x=\bot\\
 	 	r(x)&\Otherwise
@@ -190,7 +190,7 @@ Given the sum $\mmdl_1 + \mmdl_2$ such that the actions and predicates of $\mmdl
  		x &\If~x_r=r(x)\\
  		\text{undefined}&\Otherwise
 	 \end{cases}
-\end{align*}
+\end{breakalign*}
 \end{minipage}
 \begin{mathparpagebreakable}
 \inferrule[CSumLAction]{\st=\mathit{unwrap}_l(\st_l) \\ \ppexecc{\alpha}{\st,\ins}{o,\st',\outs} \\ \st_l' = \mathit{wrap}_l(\st') \\ o \neq \Miss}{\ppexecc{\code{L}\alpha}{\st_l,\ins}{o,\st_l',\outs}}

@@ -1,12 +1,73 @@
 %% This BibTeX bibliography file was created using BibDesk.
 %% https://bibdesk.sourceforge.io/
 
-%% Created for Opale Sjöstedt at 2024-08-24 13:56:29 +0100 
+%% Created for Opale Sjöstedt at 2024-08-26 10:41:29 +0100 
 
 
 %% Saved with string encoding Unicode (UTF-8) 
 
 
+
+@misc{lowlevelbiab,
+	archiveprefix = {arXiv},
+	author = {Luk{\'a}{\v s} Hol{\'\i}k and Petr Peringer and Adam Rogalewicz and Veronika {\v S}okov{\'a} and Tom{\'a}{\v s} Vojnar and Florian Zuleger},
+	date-added = {2024-08-26 10:04:21 +0100},
+	date-modified = {2024-08-26 10:04:26 +0100},
+	eprint = {2205.02590},
+	primaryclass = {cs.LO},
+	title = {Low-Level Bi-Abduction},
+	url = {https://arxiv.org/abs/2205.02590},
+	year = {2022},
+	bdsk-url-1 = {https://arxiv.org/abs/2205.02590}}
+
+@article{iris1,
+	abstract = {We present Iris, a concurrent separation logic with a simple premise: monoids and invariants are all you need. Partial commutative monoids enable us to express---and invariants enable us to enforce---user-defined *protocols* on shared state, which are at the conceptual core of most recent program logics for concurrency. Furthermore, through a novel extension of the concept of a *view shift*, Iris supports the encoding of *logically atomic specifications*, i.e., Hoare-style specs that permit the client of an operation to treat the operation essentially as if it were atomic, even if it is not.},
+	address = {New York, NY, USA},
+	author = {Jung, Ralf and Swasey, David and Sieczkowski, Filip and Svendsen, Kasper and Turon, Aaron and Birkedal, Lars and Dreyer, Derek},
+	date-added = {2024-08-25 14:52:57 +0100},
+	date-modified = {2024-08-25 14:53:34 +0100},
+	doi = {10.1145/2775051.2676980},
+	issn = {0362-1340},
+	issue_date = {January 2015},
+	journal = {SIGPLAN Not.},
+	keywords = {separation logic, partial commutative monoids, invariants, higher-order logic, fine-grained concurrency, compositional verification, atomicity},
+	month = {jan},
+	number = {1},
+	numpages = {14},
+	pages = {637--650},
+	publisher = {Association for Computing Machinery},
+	title = {Iris: Monoids and Invariants as an Orthogonal Basis for Concurrent Reasoning},
+	url = {https://doi.org/10.1145/2775051.2676980},
+	volume = {50},
+	year = {2015},
+	bdsk-url-1 = {https://doi.org/10.1145/2775051.2676980}}
+
+@unpublished{cse2,
+	author = {L{\"o}{\"o}w, Andreas  and Park, Seung Hoon and Nantes-Sobrinho, Daniele and Ayoun, Sacha-{\'E}lie and Sj{\"o}stedt, Opale and Maksimovi{\'c}, Petar and Gardner, Philippa},
+	date-added = {2024-08-25 14:46:35 +0100},
+	date-modified = {2024-08-25 14:48:06 +0100},
+	title = {Parametric Compositional Symbolic Execution (working title)}}
+
+@article{abstractpcm,
+	abstract = {Concurrent separation logic is distinguished by transfer of state ownership upon parallel composition and framing. The algebraic structure that underpins ownership transfer is that of partial commutative monoids (PCMs). Extant research considers ownership transfer primarily from the logical perspective while comparatively less attention is drawn to the algebraic considerations. This paper provides an algebraic formalization of ownership transfer in concurrent separation logic by means of structure-preserving partial functions (i.e., morphisms) between PCMs, and an associated notion of separating relations. Morphisms of structures are a standard concept in algebra and category theory, but haven't seen ubiquitous use in separation logic before. Separating relations. are binary relations that generalize disjointness and characterize the inputs on which morphisms preserve structure. The two abstractions facilitate verification by enabling concise ways of writing specs, by providing abstract views of threads' states that are preserved under ownership transfer, and by enabling user-level construction of new PCMs out of existing ones.},
+	address = {New York, NY, USA},
+	articleno = {5},
+	author = {Farka, Franti\v{s}ek and Nanevski, Aleksandar and Banerjee, Anindya and Delbianco, Germ\'{a}n Andr\'{e}s and F\'{a}bregas, Ignacio},
+	date-added = {2024-08-25 14:38:24 +0100},
+	date-modified = {2024-08-25 14:38:31 +0100},
+	doi = {10.1145/3434286},
+	issue_date = {January 2021},
+	journal = {Proc. ACM Program. Lang.},
+	keywords = {Program Logics for Concurrency, Hoare/Separation Logics, Coq},
+	month = {jan},
+	number = {POPL},
+	numpages = {32},
+	publisher = {Association for Computing Machinery},
+	title = {On algebraic abstractions for concurrent separation logics},
+	url = {https://doi.org/10.1145/3434286},
+	volume = {5},
+	year = {2021},
+	bdsk-url-1 = {https://doi.org/10.1145/3434286}}
 
 @article{nominallogic,
 	abstract = {This paper formalises within first-order logic some common practices in computer science to do with representing and reasoning about syntactical structures involving lexically scoped binding constructs. It introduces Nominal Logic, a version of first-order many-sorted logic with equality containing primitives for renaming via name-swapping, for freshness of names, and for name-binding. Its axioms express properties of these constructs satisfied by the FM-sets model of syntax involving binding, which was recently introduced by the author and M.J. Gabbay and makes use of the Fraenkel--Mostowski permutation model of set theory. Nominal Logic serves as a vehicle for making two general points. First, name-swapping has much nicer logical properties than more general, non-bijective forms of renaming while at the same time providing a sufficient foundation for a theory of structural induction/recursion for syntax modulo α-equivalence. Secondly, it is useful for the practice of operational semantics to make explicit the equivariance property of assertions about syntax -- namely that their validity is invariant under name-swapping.},
@@ -284,11 +345,13 @@ verification tool and describe the fix necessary to make it sound.},
 	title = {{Gillian: Foundations, Implementation and Applications of Compositional Symbolic Execution}}}
 
 @unpublished{cse1,
-	author = {L{\"o}{\"o}w, Andreas and Nantes Sobrinho, Daniele and Ayoun, Sacha-\'{E}lie and Cronj{\"a}ger, Caroline and Maksimovi{\'c}, Petar and Gardner, Philippa},
+	author = {L{\"o}{\"o}w, Andreas and Sobrinho, Daniele and Ayoun, Sacha-{\'E}lie and Cronj{\"a}ger, Caroline and Maksimovi{\'c}, Petar and Gardner, Philippa},
 	date-added = {2024-06-02 17:38:49 +0100},
-	date-modified = {2024-06-02 18:04:42 +0100},
+	date-modified = {2024-08-25 14:50:06 +0100},
+	month = {07},
 	read = {1},
 	title = {{Compositional Symbolic Execution for Correctness and Incorrectness Reasoning}},
+	year = {2024},
 	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhYYm9va21hcmtfEB0uLi8uLi8uLi9EZXNrdG9wL21zY2kvY3NlLnBkZk8RA+Rib29r5AMAAAAABBAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADUAgAABQAAAAEBAABVc2VycwAAAAUAAAABAQAAb3NjYXIAAAAHAAAAAQEAAERlc2t0b3AABAAAAAEBAABtc2NpBwAAAAEBAABjc2UucGRmABQAAAABBgAABAAAABQAAAAkAAAANAAAAEAAAAAIAAAABAMAAJ5YAAAAAAAACAAAAAQDAADzmgMAAAAAAAgAAAAEAwAA+JoDAAAAAAAIAAAABAMAABetBAgAAAAACAAAAAQDAACs4DkJAAAAABQAAAABBgAAbAAAAHwAAACMAAAAnAAAAKwAAAAIAAAAAAQAAEHF/mT1gAAAGAAAAAECAAABAAAAAAAAAA8AAAAAAAAAAAAAAAAAAAAIAAAABAMAAAMAAAAAAAAABAAAAAMDAAD1AQAACAAAAAEJAABmaWxlOi8vLwwAAAABAQAATWFjaW50b3NoIEhECAAAAAQDAAAAUKEbcwAAAAgAAAAABAAAQcX1BKwAAAAkAAAAAQEAAEQ1MzU3NEMxLUE3REItNEY2Qy1CMzVGLTNFMjNCMjJDMTBFOBgAAAABAgAAgQAAAAEAAADvEwAAAQAAAAAAAAAAAAAAAQAAAAEBAAAvAAAAAAAAAAEFAAAaAAAAAQEAAE5TVVJMRG9jdW1lbnRJZGVudGlmaWVyS2V5AAAEAAAAAwMAADgDAADTAAAAAQIAAGY5MGExNzFmOTY5YWMxNGMyNDU3ZDIyOWIyMDNkZTViNWRkZGEwNGViYTI4Mzk5ZjcwMjcwNWY0MTNlYmQyYTA7MDA7MDAwMDAwMDA7MDAwMDAwMDA7MDAwMDAwMDA7MDAwMDAwMDAwMDAwMDAyMDtjb20uYXBwbGUuYXBwLXNhbmRib3gucmVhZC13cml0ZTswMTswMTAwMDAxMDswMDAwMDAwMDA5MzllMGFjOzU1Oy91c2Vycy9vc2Nhci9kZXNrdG9wL21zY2kvY3NlLnBkZgAA2AAAAP7///8BAAAAAAAAABEAAAAEEAAAUAAAAAAAAAAFEAAAvAAAAAAAAAAQEAAA6AAAAAAAAABAEAAA2AAAAAAAAAACIAAAtAEAAAAAAAAFIAAAJAEAAAAAAAAQIAAANAEAAAAAAAARIAAAaAEAAAAAAAASIAAASAEAAAAAAAATIAAAWAEAAAAAAAAgIAAAlAEAAAAAAAAwIAAAwAEAAAAAAAABwAAACAEAAAAAAAARwAAAFAAAAAAAAAASwAAAGAEAAAAAAACA8AAA+AEAAAAAAADIAQCA7AEAAAAAAAAACAANABoAIwBDAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAABCs=}}
 
 @inproceedings{next700seplogics,
@@ -958,13 +1021,13 @@ verification tool and describe the fix necessary to make it sound.},
 		<key>group name</key>
 		<string>statemodels</string>
 		<key>keys</key>
-		<string>sepalgebra,fracpermissions,abstractseplogic,higherorderseplogic,fracpermissions2,statesoundness,monotonicstate,next700seplogics,iris</string>
+		<string>sepalgebra,fracpermissions,abstractseplogic,higherorderseplogic,fracpermissions2,statesoundness,monotonicstate,next700seplogics,iris,iris1</string>
 	</dict>
 	<dict>
 		<key>group name</key>
 		<string>tools</string>
 		<key>keys</key>
-		<string>verifast,surveysymex,cbmc,pulse,infer,javert2,javert1,jstar,klee,macke,spaceinvader,cosette,compcert,viper,gillian0,gillian1,gillian2,smallfoot,corestar</string>
+		<string>verifast,surveysymex,cbmc,pulse,infer,javert2,javert1,jstar,klee,macke,spaceinvader,cosette,compcert,viper,gillian0,gillian1,gillian2,smallfoot,corestar,lowlevelbiab</string>
 	</dict>
 </array>
 </plist>
