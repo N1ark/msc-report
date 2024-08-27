@@ -6,7 +6,7 @@ In this chapter we will cover the theoretical foundations for resource algebras 
 
 \subsection{State Models with PCMs for CSE}
 
-Abstract separation logic historically has, as discussed previously, mostly used Partially Commutative Monoids (PCMs) \cite{abstractseplogic,sepalgebra,iris1,higherorderseplogic}. These are defined as a tuple $(M, (\cdot):M\times M\part M, 0)$, corresponding to the carrier set, composition operator, and a unique identity element. These elements must also satisfy the properties highlighted in \autoref{fig:pcm-properties}. PCMs are useful for representing state in Separation Logic, as they ``mathematically represent the essential notions of state ownership and ownership transfer'' \cite{abstractpcm}, while being simple and abstract enough that they can represent a variety of concrete states (the traditional case being that of heaps).
+Abstract separation logic historically has, as discussed previously, mostly used Partially Commutative Monoids (PCMs) \cite{abstractseplogic,sepalgebra,iris1,higherorderseplogic}. These are defined as a tuple ${(M, (\cdot):M\times M\part M, 0)}$, corresponding to the carrier set, composition operator, and a unique identity element. These elements must also satisfy the properties highlighted in \autoref{fig:pcm-properties}. PCMs are useful for representing state in Separation Logic, as they ``mathematically represent the essential notions of state ownership and ownership transfer'' \cite{abstractpcm}, while being simple and abstract enough that they can represent a variety of concrete states (the traditional case being that of heaps).
 
 \begin{figure}
 	\centering
@@ -23,24 +23,32 @@ When bringing this concept to a Compositional Symbolic Execution (CSE) engine, t
 
 All of these together enable a CSE engine to be \emph{parametric} on the state model; as long as the provided functions follows a set of axioms, the engine using the state model can be proved to be sound, either in Over-approXimate (OX) or Under-approXimate (UX) mode, in turn allowing for program verification, or true bug finding.
 
-\emph{Core predicates} (sometimes simply called predicates) are used to make the assertion language of the engine parametric. They take inspiration from \cite{abstractseplogic}, and are written $\delta\in\preds$. To enable this parametricity, the assertions of the language are extended with a core predicate assertion, written $\corepred{\delta}{\ins}{\outs}$, where $\delta$ is the core predicate, $\ins$ are the \emph{in-values} (or ``ins'') of the predicate, and $\outs$ are the \emph{out-values} (or ``outs''). This distinction is used for automation purposes, to create matching plans: they tell the engine that given the values $\ins$, the state can return the corresponding $\outs$ associated with it. For instance, the traditional ``points to'' assertion $a \mapsto v$, where $a$ is an address and $v$ a value, can be written as $\corepred{\code{points\_to}}{a}{v}$: given the address $a$, a heap can return the value store at the location $v$. Core predicate also thus imply a satisfiability relation, denoted $\st\modelsp\corepred{\delta}{\ins}{\outs}$ to signify a state satisfies a given predicate. We note that predicate satisfiability happens at the concrete level, and is later lifted to the symbolic realm by simply evaluating the ins and outs. Another traditional example is the \emp{} core predicate, that is satisfied by the empty memory; it can be written $\corepred{\code{emp}}{}{\!}$.
+\emph{Core predicates} (sometimes simply called predicates) are used to make the assertion language of the engine parametric. They take inspiration from \cite{abstractseplogic}, and are written $\delta\in\preds$. To enable this parametricity, the assertions of the language are extended with a core predicate assertion, written $\corepred{\delta}{\ins}{\outs}$, where $\delta$ is the core predicate, $\ins$ are the \emph{in-values} (or ``ins'') of the predicate, and $\outs$ are the \emph{out-values} (or ``outs''). This distinction is used for automation purposes, to create matching plans: they tell the engine that given the values $\ins$, the state can return the corresponding $\outs$ associated with it. For instance, the traditional ``points to'' assertion $a \mapsto v$, where $a$ is an address and $v$ a value, can be written as $\corepred{\code{points\_to}}{a}{v}$: given the address $a$, a heap can return the value store at the location $v$. Core predicate also thus imply a satisfiability relation, denoted $\st\modelsp\corepred{\delta}{\ins}{\outs}$ to signify a state satisfies a given predicate. Predicate satisfiability happens at the concrete level, and is later lifted to the symbolic realm by evaluating the ins and outs using a substitution $\theta$ and variable store $s$; expression evaluation is denoted $\expeval{\sym e}=e$. Another traditional example is the \emp{} core predicate, that is satisfied by the empty memory; it can be written $\corepred{\code{emp}}{}{\!}$.
+
+\todobox{Maybe put a remark here on \code{emp} wrt. classical vs intuitionistic SL.}
 
 \emph{Actions} are used to represent program actions that interact with the state. Typical actions include \load{}, \store{}, \alloc{} or \free. These actions are called with a list of arguments, return a list of results, and may modify the state, as long as the modification are sound with regards to a set of axioms, presented later.
 
 \begin{figure}\centering
 \setlength{\fboxsep}{0.3cm}
 \noindent\fbox{\parbox{\textwidth-3cm}{
-\textbf{Elements of a state model:} \begin{compactitem}
-\item $(\St, (\cdot):\St\times \St\part \St, 0)$: Partially Commutative Monoid.
+\textbf{Elements:} \begin{compactitem}
+\item $(\St, (\cdot):\St\times \St\part \St, 0)$: PCM of concrete states.
+\item $\Sst$: Set of symbolic states.
 \item $\actions$: Set of actions.
 \item $\preds$: Set of core predicates.
 \end{compactitem} \vspace{0.3cm}
-\textbf{Functions of a state model:} \begin{compactitem}
+\textbf{Functions:} \begin{compactitem}
 \item \execac: execute an action with arguments, returns a value.
 \item \produce: add a core predicate assertion into the state, returns the new state.
 \item \consume: removes a core predicate assertion from the state, returns the new state and the outs of the assertion.
 \item \fix: returns the assertions needed to fix the given missing error.
-\end{compactitem}%
+\end{compactitem}\vspace{0.3cm}
+\textbf{Theoretical Properties:} \note{Is `properties' the right word?}
+\begin{compactitem}
+\item $\models$: symbolic interpretation relation.
+\item $\modelsp$: core predicate satisfiability relation.
+\end{compactitem}
 }}%
 \vspace{0.2cm}
 \caption{High-level description of the elements of a state model}
@@ -81,7 +89,7 @@ In \cite{sacha-phd}, the concept of RA constructions from \cite{iris} is brought
 
 The first example is with $\Freeable(\mmdl)$. This state model \emph{transformer} is given a state model $\mmdl$, and extends it with the capacity to free state, via the \free{} action. It also adds a \freedP{} predicate, to represent freed memory.
 
-Now consider the simple state model $\Freeable(\Ex(\nats))$. Here $\Ex(X)$ is the exclusive state model, that represents exclusive ownership of a value of type $X$\footnote{Note we write $\Ex(X)$ and $\Freeable(\mmdl)$ -- the $\Ex$ state model accepts a set, $X$, whereas $\Freeable$ accepts a state model, $\mmdl$.}. Ownership is indicated via the $\exP$ core predicate: \corepred{\exP}{}{x} means the state currently has the value $x$ -- this state model will be further defined later, and is only used here for the example. For now, simply note that the PCM version of $\Ex(X)$ is defined as:
+Now consider the simple state model $\Freeable(\Ex(\nats))$. Here $\Ex(X)$ is the exclusive state model, that represents exclusive ownership of a value of type $X$\footnote{Note we write $\Ex(X)$ and $\Freeable(\mmdl)$ -- the $\Ex$ state model accepts a set, $X$, whereas $\Freeable$ accepts a state model, $\mmdl$.}. Ownership is indicated via the $\exP$ core predicate: \corepred{\exP}{}{x} means the state currently has the value $x$ -- this state model will be further defined later, and is only used here for the example. For now, we define the PCM version of $\Ex(X)$ as:
 \begin{align*}
 	\Ex(X) &\defeq \ex{x: X} ~|~ 0
 \end{align*}
@@ -189,7 +197,7 @@ The validity and core functions thus make Iris states more powerful, in that the
 \inferrule[ExclusiveUpdate]{\text{exclusive(a)} \\ \irisval(b)}{a \rightsquigarrow b}
 \end{mathpar}
 
-Here we note that the Iris udpate $a \rightsquigarrow b$ is a form of frame preserving update: if we update $a$ into $b$, we know that any frame that was compatible with $a$ remains compatible with $b$.
+The Iris udpate $a \rightsquigarrow b$ is a form of frame preserving update: if we update $a$ into $b$, we know that any frame that was compatible with $a$ remains compatible with $b$.
 
 Furthermore, Iris is a battle-tested logic\footnote{See \url{https://iris-project.org/\#publications}, where more than a hundred publications are cited as using Iris, allowing for the verification of, among others, Scala, OCaml, Rust, WASM, Go or C.}, that comes with plenty proofs and properties making them easy to use and adapt, whereas PCMs can prove unwieldy even for simpler state models as shown previously.
 
@@ -240,83 +248,107 @@ An interesting property of this change is that because validity is replaced by t
 
 We now define the properties of partial RAs taking this change into account -- see \autoref{fig:ra-properties}. From now, the term RA will be used to refer to these partial RAs.
 
+We may compare the definition of $\Ex$, presented earlier, for partial RAs and Iris RAs -- the main difference is the removal of $\irisval$ and the $\lightning$ element, making the definition simpler.
+
+\noindent\begin{minipage}{.5\linewidth}
+\begin{align*}
+	\Ex_{\textsc{Iris}}(X) &\defeq \ex{x:X} ~|~ \lightning \\
+	\irisval(a) &\defeq a \neq \lightning \\
+	|\ex{a}| &\defeq \bot\\
+	a \cdot b &\defeq \lightning
+\end{align*}\end{minipage}%
+\begin{minipage}{.5\linewidth}
+\begin{align*}
+	\Ex_{\textsc{Partial}}(X) &\defeq \ex{x:X} \\
+	|\ex{a}| &\defeq \bot\\
+	a \cdot b &\defeq \text{undefined}
+\end{align*}\end{minipage}
+
+
 \subsection{Core Engine}
 
+We're now interested into what changes need to be brought to our CSE to handle RAs. To do this, we use the axioms and definitions specified in \cite{cse2}. We will also specify additional changes that exist in Gillian and that were formalised in \cite{sacha-phd}, but that haven't been added to the formalisation described in \cite{cse2}.
 
-The core engine enables whole-program symbolic execution. For this state models must firstly define the set of states the execution will happen on; this is done via a partial resource algebra: a tuple  $(M, |\!-\!|:M\rarr M^?,(\cdot):M\times M\part M)$. They are further equipped with a set of actions $\cal A$, an \execac{} function and a \code{sat} relation.
+This CSE engine is split into three layers, each adding functionality to the layer below, allowing for a lear separation of concerns. These layers are, from bottom to top: the core engine, the compositional engine, and the bi-abduction engine (see \autoref{fig:layers-cse-engine}).
+
+\begin{figure}
+	\centering
+	\includegraphics[width=12cm]{diagrams/engine-layers.drawio.pdf}
+	\caption{Layers of the CSE engine}
+	\label{fig:layers-cse-engine}
+\end{figure}
+
+The core engine enables whole-program symbolic execution. For this, state models must firstly define the set of states the execution will happen on. While \emph{concrete} compositional state is modelled as an RA, \emph{symbolic} compositional state is simply a set of elements that does not come with composition or cores. This is because when one handles symbolic values, composition isn't a partial function anymore, as it can branch, and thus output more than one value. Take for instance the RA of trees, where nodes are defined as having an offset and size. Composing two trees made of a single node with a symbolic offset may lead to different results, depending on the interpretation of the offsets: are the two nodes adjacent? Which is on the left or the right? This cannot be modelled with an RA. Soundness of the engine is instead verified by unlifting symbolic states to concrete states via symbolic interpretation $\models$, and then using the properties of these concretes states, which do form a valid RA. 
+
+Once the set of symbolic states $\Sst\ni\sst$ are defined, they must be further equipped with a set of actions $\actions$ and an $\execac$ function that allow the program to modify the state. We also include the definition of the $\models$ relation, called \code{sat}, noting that this is a purely theoretical construct that isn't implemented in the actual engine.
 \begin{align*}
-	\execac &: \Sst^? \rarr {\cal A} \rarr \vallist \rarr \pset(\full\outcomes_e \times \Sst^? \times \vallist \times \Pc) \\
+	\execac &: \St^? \rarr \actions \rarr \vallist \rarr \outcomes_e \times \St^? \times \vallist\\
+	\execac &: \Sst^? \rarr \actions \rarr \lvallist \rarr \pset(\outcomes_e \times \Sst^? \times \lvallist \times \Pc) \\
 	\code{sat} &: \Theta \rarr \text{Store} \rarr \Sst \rarr \pset(\St)
 \end{align*}
-The arguments of \execac{} are, in order: the \emph{optional} state the action is executed on, the action, and the received arguments. It returns a set of branches, with an outcome, the new state, the returned values, and the path condition of that branch. It is pretty-printed as \ppexec{\alpha}{\sst,\sins}{o, \sst', \souts, \pc}.
 
-Here, the outcome is an outcome in the set of \emph{full execution outcomes} $\full\outcomes_e=\{ \Ok,\Err \}$. In the next subsection, this set will be extended to account for misses and logical failures, but these do not exist with full semantics.
+We define two different versions of \execac{}: one operating on concrete states, that is deterministic, and one operating on symbolic states, that allows branching. The concrete version of the function is used in the theory, to prove the soundness of its symbolic counterpart, while the symbolic version is what is actually used by the engine to execute the analysed program.
 
-The main difference here is that the state may be $\bot$, if the action is executed on empty state. This ensures non-unital RAs are not ruled out as invalid -- indeed, many useful RAs are not unital and sometimes don't have a unit at all, as is the case for instance for \Ex, the exclusively owned cell. One could decide to internally make all RAs of state models unital, and have the state model provide an \code{empty} function that returns said unit (this is what happens in Gillian). However this introduces unsoundness to certain state model constructions (in particular the sum), as this means the state cannot be \emph{exclusively owned} -- the empty state could always be composed with it.
+In the concrete case, the arguments of \execac{} are, in order: the \emph{optional} state the action is executed on, the action, and the received arguments. It returns an outcome, the new state and the returned values. It is pretty-printed as \ppexecc{\alpha}{\st,\ins}{o, \st', \outs}.
 
-Whole-program symbolic execution is, by definition, non-compositional -- it thus operates on \emph{full state}, a notion introduced in \cite{sacha-phd}. As such, the only valid outcomes here are \Ok{} and \Err{}.
+For its symbolic counterpart, the arguments are lifted to the symbolic realm. It also returns a set of branches, along with a path condition $\pc$ (PC) representing the condition for the branch to exist -- if the PC is not satisfiable, the branch must be cut. It is pretty-printed as \ppexec{\alpha}{\sst,\sins}{o, \sst', \souts, \pc}.
 
-Because we operate in symbolic memory, an additional piece of information is the \emph{path condition}, the set of constraints accumulated throughout execution. A path condition $\pc\in\Pc$ is a \emph{list of symbolic values}, that evaluates to a boolean. We decide to define it as a list rather than a single conjunction of boolean symbolic values, as this allows us to easily check if a path condition is an extension (or a strengthening) of another, with $\pc'\supseteq\pc$. We further define the predicate \code{SAT}, that is true if, given the substitution $\theta$, store $s$ and a path condition $\pc$, the conjunction of the elements of $\pc$ resolves to $\vtrue$ once evaluated:
+Here, the outcome is in the set of \emph{execution outcomes} $\outcomes_e=\{ \Ok,\Err,\Miss \}$. Where $\Ok$ represents succesful execution and $\Err$ program errors, $\Miss$ outcomes come from the compositional nature of the state. An action that leads to a $\Miss$ doesn't necessarily represent a bug in the code, but simply that additional state is needed to determine whether execution is succesful or not. In the next subsection, this set will be extended to account for logical failures, which exist outside the semantics of the language.
+
+The main difference with \cite{cse2} is that the state may be $\bot$, if the action is executed on empty state; this is made explicit from using $\Sst^?$ (rather than $\Sst$). This ensures non-unital RAs are not ruled out as invalid -- indeed, many useful RAs are not unital and sometimes don't have a unit at all, as is the case for instance for \Ex, the exclusively owned value. 
+
+We also modify the definition of a path condition. It is typically defined as a logical value $\LVal$ that must evaluate to a boolean, and which is extended via conjunction. Internally, the engine however still needs to split the conjunction into a list of terms to manipulate it. As such, to make the theory closer to what is effectively done within the engine, we make the choice of defining the path condition as a \emph{list of logical values}: $\pc\in\Pc=\lvallist$. Extension is then defined as concatening new logical values to the path condition, and strenghtening of the path condition can be trivially checked by checking $\pc'\supseteq\pc$. We further define the predicate \code{SAT}, that is true if, given the substitution $\theta$, store $s$ and a path condition $\pc$, the conjunction of the elements of $\pc$ resolves to $\vtrue$ once evaluated:
 \begin{align*}
 	\SAT(\pc) \defeq \left\llbracket \bigwedge_{i}^{|\pc|}\pc(i) \right\rrbracket_{\theta,s} = \vtrue
 \end{align*}
 
-We note that \cite{cse2} also has an `\textit{SV}' argument in action execution, that contains all existing symbolic variables, and that must be used when creating a new symbolic variable to ensure it is fresh. While necessary for proofs within the engine with Rocq, we omit it here. It is only used for allocation and it can instead be kept implicit, by assuming we can always generate a fresh symbolic variable.
+The original definition of the symbolic \execac{} presented in \cite{cse2} also has an ``\SV'' argument, a set containing all existing symbolic variables. This set is used when an action creates a fresh symbolic variable, to ensure the variable is fresh. While necessary for proofs within the engine in Rocq, we omit it here, as it is only relevant for one action (\alloc), and pen and paper proofs do not require the same rigidity as a Rocq proof. 
 
-Finally, the user must define the \code{sat} relation, relating concrete and symbolic states. It is pretty printed as $\theta,s,\st\models \sst$, meaning that given a substitution $\theta$ and a store $s$, the concrete state $\st$ can be matched by a symbolic state $\sst$. We define this relation for non-$\bot$ states; we can then lift it to the option state model $\St^?$, by simply adding that $\forall \theta, s\ldotp \theta,s,\bot \models \bot$. This relieves users from needing to take $\bot$ into account when defining $\models$ and from proving the fairly trivial axiom \ref{eq:empty-mem}.
+Finally, the user must define the \code{sat} relation, relating concrete and symbolic states. It is pretty printed as $\theta,s,\st\models \sst$ for $\st\in\code{sat}~\theta~s~\sst$, meaning that given a substitution $\theta$ and a store $s$, the concrete state $\st$ can be matched by a symbolic state $\sst$. The user must only define this relation for non-$\bot$ states; we can then lift it to the option state model $\St^?$, by simply adding that $\forall \theta, s\ldotp \theta,s,\bot \models \bot$. This relieves users from needing to take $\bot$ into account when defining $\models$ and from proving the axiom \ref{eq:empty-mem}.
 
 \subsection{Compositional Engine}
 
-
-The compositional engine, built on top of the core engine, allows for verification of function specifications, and handles calling functions by their specification. As such, the state model must be extended with a set of core predicates $\Delta$ and a pair of \consume{} and \produce{} functions (equivalent, respectively, to a resource assert and assume). Finally, to link core predicates to states, it provides a $\code{sat}_\Delta$ relation.
+The compositional engine, built on top of the core engine, allows for verification of function specifications, and handles calling functions by their specification. As such, the state model must be extended with a set of core predicates $\preds$ and a pair of \consume{} and \produce{} functions (equivalent, respectively, to a resource assert and assume). Finally, to link core predicates to states, a core predicate satisfiability relation $\modelsp$ (called $\code{sat}_\preds$) must be defined in the theory, to prove soundness of \consume{} and \produce.
 \begin{align*}
 	\text{for }M=\{\OX, \UX\}\\
-	\consume &: M\rarr \Sst^? \rarr \Delta \rarr \vallist \rarr \pset(\outcomes_l \times \Sst^? \times \vallist \times \Pc) \\
-	\produce &: \Sst^? \rarr \Delta \rarr \vallist \rarr \vallist \rarr \pset(\Sst^? \times \Pc)\\
+	\consume &: M\rarr \Sst^? \rarr \Delta \rarr \lvallist \rarr \pset(\outcomes_l \times \Sst^? \times \lvallist \times \Pc) \\
+	\produce &: \Sst^? \rarr \Delta \rarr \lvallist \rarr \lvallist \rarr \pset(\Sst^? \times \Pc)\\
 	\code{sat}_\Delta &:\St^? \rarr \Delta \rarr \vallist \rarr \pset(\vallist)
 \end{align*}
-Similarly to \execac, the input state can be $\bot$. While intuitively one may assume that the input state of \consume{} and the output state of \produce{} may never be $\bot$, this would limit what core predicates can do. In particular, this means an $\emp$ predicate couldn't be defined, since it's production on an empty state results in an empty state.
+Similarly to \execac, the input state can be $\bot$. While intuitively one may assume that the input state of \consume{} and the output state of \produce{} may never be $\bot$ (as there must be a non-empty state to consume an assertion from or produce an assertion into), this would limit what core predicates can do. In particular, this means an $\emp$ predicate couldn't be defined, since it's production on an empty state results in an empty state.
 
-The arguments of \consume{} are, in order: the mode of execution to distinguish between under-approximate and over-approximate reasoning, the state, the core predicate being consumed, the ins of the predicate. It outputs a \emph{logical outcome}, the state with the matching predicate removed (which may result in an empty state $\bot$), the outs of the predicate and the associated path condition. It is pretty-printed as \ppcons{m,\sst,\delta,\sins}{o, \sst_f, \souts, \pc}, and when the consumption is valid in both OX and UX the mode is omitted.
+The arguments of \consume{} are, in order: the mode of execution, to distinguish between under-approximate and over-approximate reasoning, the state, the core predicate being consumed, the ins of the predicate. It outputs a \emph{logical outcome}, the state with the matching predicate removed (which may result in an empty state $\bot$), the outs of the predicate and the associated path condition. It is pretty-printed as \ppcons{m,\sst,\delta,\sins}{o, \sst_f, \souts, \pc}, and when the consumption is valid for both \OX{} and \UX{} the mode is omitted.
 
-For \produce{}, the arguments are the state, the core predicate being produced, the ins and the outs of the predicate, resulting in a set of new states and their associated path condition. As an example, producing $x \mapsto 0$ in a state $[1 \mapsto 2]$ results in a new state $[1\mapsto 2, x \mapsto 0]$ with the path condition $x \neq 1$. If the produced predicate is incompatible with the state (eg. by producing $1 \mapsto y$ in a state containing $1 \mapsto x$), the producer \emph{vanishes}. Inversely, if the assertion can be interpreted in several ways, the producer may branch. It is pretty-printed as $\ppprod{\sst,\delta,\sins,\souts}{\sst', \pc}$.
+For \produce{}, the arguments are the state, the core predicate being produced, the ins and the outs of the predicate, resulting in a set of new states and their associated path condition. As an example, producing $\sym x \mapsto 0$ in a state $[1 \mapsto 2]$ results in a new state $[1\mapsto 2, \sym x \mapsto 0]$ with the path condition $[\sym x \neq 1]$. If the produced predicate is incompatible with the state (e.g. producing $1 \mapsto y$ in a state containing $1 \mapsto x$), the producer \emph{vanishes}. Inversely, if the assertion can be interpreted in several ways, the producer may branch. It is pretty-printed as $\ppprod{\sst,\delta,\sins,\souts}{\sst', \pc}$.
 
 The $\code{sat}_\Delta$ relation relates a possibly empty \emph{concrete} state, core predicate and in-values to a set of out-values. It is pretty-printed as $\st \modelsp \corepred{\delta}{\ins}{\outs}$ for $\outs \in \code{sat}_\Delta~\st~\delta~\ins$. For instance in the linear heap state model, we have $[ 1 \mapsto 2 ] \modelsp \corepred{\code{points\_to}}{1}{2}$. We also lift this relation to the symbolic realm: 
 \begin{align*}
 	\theta,s,\st\modelsp \corepred{\delta}{\sins}{\souts} \defeq \expeval{\sins}=\ins \land \expeval{\souts}=\outs \land \st\modelsp \corepred{\delta}{\ins}{\outs}
 \end{align*}
 
-Here we define logical outcomes $\outcomes_l = \{\Ok, \LFail, \Miss \}$. These are outcomes that happen during reasoning; in particular, \LFail{} equates to a logical failure due to an incompatibility between the consumed predicate and the state. For instance, consuming $1 \mapsto 1$ when in state $1 \mapsto 2$ would yield a \LFail{}, while consuming it in state $5 \mapsto 3$ would yield a \Miss{}, as a state $1\mapsto x$ could be composed with it to yield a non-miss outcome.
+Here we define logical outcomes $\outcomes_l = \{\Ok, \LFail, \Miss \}$. These are outcomes that happen during reasoning; in particular, \LFail{} equates to a logical failure due to an \emph{incompatibility} between the consumed predicate and the state. For instance, consuming $1 \mapsto 1$ from a state $[1 \mapsto 2]$ would yield a \LFail{}, while consuming it from state $[2 \mapsto 1]$ would yield a \Miss{}, as the state $[1\mapsto 1]$ could be composed with it to yield a non-miss outcome. 
 
-We must also modify the signature of \execac, to include \Miss{} outcomes, via the set of execution outcomes $\outcomes_e=\{\Ok,\Err,\Miss\}$.
+An addition to what \cite{cse2} previously defined, taking inspiration from \cite{sacha-phd}, is thus the split of what was the \code{Abort} outcome into \LFail{} and \Miss{}, which improves the quality of error messages and allows \emph{fixing} consumptions that yield a \Miss{} -- this will be described in the next subsection. 
 
-An addition to what CSE previously defined is thus the split of what was the \code{Abort} outcome into \LFail{} and \Miss{}, this improves the quality of error messages and allows fixing consumption errors due to missing state -- this will be described in the next subsection.
+We thus $\outcomes_e$ for execution outcomes, and $\outcomes_l$ for reasoning outcomes -- one is returned by action execution, and one for predicate consumption. They overlap on one particular feature of the engine, which is function calls by specification: when calling a function, any outcome can happen: $\Ok$ if the function call succeeds, $\Err$ if the function call faults (as defined by its specification), $\Miss$ if additional resources are needed to satisfy the precondition of the function specification, and $\LFail$ if the state is incompatible with the function specification.
 
-A last change compared to CSE is that we drop the path condition parameter to consume and produce -- the function instead directly returns the path condition required for the resulting branches, and the engine can filter these. For instance, in UX all consumption branches that result in \LFail{} can be dropped, as dropping branches is allowed in UX. This has the advantage of simplifying the axioms, as the path condition is strengthened by definition; the function itself has no way of weakening it. \note{Mention that this also makes checkpointing with the SAT engine trivial -- just set a checkpoint before \consume/\produce, add whatever that returns. No need to separate the old from new, avoids duplicating/deduplicating, etc.}
+A last change done to what \cite{cse2} defines is that the path condition parameter of  \consume{} and \produce{} is removed, disallowing both functions from inspecting the path condition -- the functions instead directly return the path condition required for the resulting branches. This brings several advantages: firstly, it simplifies the axioms for \consume{} and \produce{}, as there is no need to require that they strengthen the PC. Instead, the returned PC is always concatenated with the current PC, ensuring it can only be strengthened. Secondly, it simplifies the definition of \consume{}, as whether the branch is cut or not (to satisfy \OX{} and \UX{} soundness) is also delegated to the engine. For instance, in UX all consumption branches that result in \LFail{} can be dropped, as dropping branches is UX-sound -- in OX however, this is not sound. A typical pattern in \consume{} implementations is thus to evaluate the modified PC, and if an \LFail{} is reached drop the branch depending on the mode. By omitting the PC from the arguments, this responsability is thus delegated to the engine. Finally, this makes a particular optimisation of the engine simpler to implement: incremental SMT solving\footnote{Z3, which is used in Gillian, uses ``scopes'' for this -- see \url{https://microsoft.github.io/z3guide/docs/logic/basiccommands/\#using-scopes}}. This is a mechanism that allows storing an intermediary state in the SMT solver (a ``checkpoint''), adding to the state, and later backtracking to the checkpointed state to evaluate another branch if needed. By ensuring \consume{} and \produce{} only returns what to append to the PC, the checkpoint can easily be added before the call, and then each branch's PC added and evaluated. Allowing \consume{} and \produce{} to modify the PC directly would mean the PC must be parsed and filtered, to tell apart old from new terms -- modified terms would make this even harder.
 
 \subsection{Bi-Abduction Engine}
 
-To support bi-abduction in the style of Infer:Pulse \cite{pulse}, \Miss{} outcomes must be fixed. These outcomes may happen during consumption or during action execution. For this, the state model must provide a \fix{} function, that given the details of a miss error (these details being of type \Val{} and returned with the outcome) returns a list of sets of assertions that must be produced to fix the missing error.
+To support bi-abduction in the style of Infer:Pulse \cite{pulse}, \Miss{} outcomes must be fixed. This enables true UX bug finding in under-specified or unspecified functions. For this, the state model must provide a \fix{} function, that given the details of a miss error (these details being of type \lvallist{} and returned with the outcome) returns a \emph{list of sets of assertions} that must be produced to fix the missing error. 
 \begin{align*}
-	\fix &: \Val \rarr \pset(\text{Asrt}) ~\code{list}
+	\fix &: \lvallist \rarr \pset(\text{Asrt}) ~\code{list}
 \end{align*}
-Note here we return a \emph{list} of different fixes, which themselves are a set of assertions -- this is because, for a given missing error, multiple fixes may be possible which causes branching. For instance, in the typical linear heap, accessing a cell that is not in the state fragment at address $a$ results in a miss that has two fixes: either the cell exists and points to some existentially quantified variable (the fix is thus $\exists x\ldotp a \mapsto x$), or the cell exists and has been freed ($a\mapsto\varnothing$).
-
-This approach is different from how Gillian handles it. There the function \fix{} returns \emph{pure} assertions (type information, pure formulae) and arbitrary values of type \code{fix\_t}, which can then be used with the $\code{apply\_fix}:\Sigma \rarr \code{fix\_t} \rarr \Sigma$ method of the monadic state. This means fixes can be arbitrary modifications to the state that don't necessarily equate to new assertions to add to the anti-frame.
-
-This is a source of unsoundness, as the engine may interpret these modifications as fixes despite them not reliably modifying the state. This can be seen in \cite{sacha-phd}, where not finding the binding in a PMap(X) returns a \code{MissingBinding} error. While being labelled as a miss, this error can actually not be fixed; PMap simply \emph{lifts} predicates with an additional in parameter for the index. An implementation of that version of PMap(X) could attempt to fix this state by add a binding to $X.0$ (PMaps were originally made for PCMs, which always have a 0 element), which would then eventually lead to another error once the action gets called on the empty state. On top of being under-performing (as several fixes would need to be generated for one action), this requires PMap(X) to allow empty states in the codomain, which means a PMap is never exclusively owned (as a state with a singleton map to $X.0$ can always be composed with it), which limits its usability; aside from not being modelable using RAs, since $\bot$ is not an element of X's carrier set. Finally, if the underlying state model doesn't provide any additional fixes, then the fix for \code{MissingBinding} cannot be added to the UX specification of a function: there is no assertion generatable from within PMap to represent this modification. As such, having \fix{} returns assertions without modifying any state directly ensures fixes are always soundly handled.
-
-To finish this, we may note the solution to the above bug is to proceed executing the action on the underlying state model, giving it an empty state -- it will then raise the appropriate \Miss{}, which can be fixed, as it is aware of what core predicates are needed to create the required state. For instance, for PMap(Exc) a \code{load} action on a missing binding would be executed against $\bot$, which would return a \code{MissingValue} error. The PMap could then wrap the error with information about the index at which the error occurred, $\code{SubError}(i, \code{MissingValue})$. When getting the fix, PMap can then call Exc.\fix, which returns $\exists x\ldotp \corepred{points\_to}{}{x}$, and lift the fix by adding the index as an in-argument, resulting in the final fix $\exists x\ldotp\corepred{points\_to}{i}{x}$, which is a valid assertion and can be added to the UX specification for this execution.
-
+A \emph{list} of different fixes is returned, which themselves are a set of assertions -- this is because, for a given missing error, multiple fixes may be possible which causes branching. For instance, trying to load a cell that is not found in the state can lead to two possible fixes: either the cell is present, and the fix is $\{ \corepred{\code{points\_to}}{\sym a}{\sym x} \}$, either the cell is not present anymore because it has been freed (which would then lead to a use after free error), giving the fix $\{{\corepred{\code{freed}}{\sym a}{}}\}$.
 
 \subsection{Axioms}
 
+We may now go over the axioms that must be respected by the above defined functions for the soundness of the engine. Note we only mention the axioms related specifically to the state models -- axioms relating to the overall soundness of the engine or the core semantics are out of the scope of this report.
 
-We may now go over the axioms that must be respected by the above defined functions for the soundness of the engine. Note we will thus focus on the axioms related to the state models in particular, and not the general semantics of the engine.
+For all of the axioms we assume we have a symbolic state model $\mmdl$, made of the concrete states RA $\St \ni \st$, symbolic states set $\Sst \ni \st$, actions $\actions$ and core predicates $\preds$.
 
-It is worth noting that Gillian supports both over-approximate (OX) and under-approximate (UX) reasoning -- for which \emph{frame subtraction} or \emph{frame addition} must hold, respectively.
-
-For all of the axioms we assume we have a symbolic state model $\mmdl$, made of the RA $\Sst \ni \sst$. We consider the initial state $\sst$ well-formed.
+We split the axioms into two parts: those relating to the symbolic nature of state and ensuring soundness with regards to a concrete state, and those relating to the parametricity of the state.
 
 \subsubsection{Symbolicness Axioms}
 
@@ -332,18 +364,22 @@ The above axiom is obtained for free, by lifting the $\models$ relation to the o
 \begin{array}{l}
 \theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs} \land \expeval{\sins}=\ins ~\land \\
 (\forall o', \sst', \souts', \pc'\ldotp \ppexec{\alpha}{\sst,\sins}{o',\sst',\souts',\pc'} \Rarr o' \in \{ \Ok, \Err \}) \implies \exists \sst',\souts,\pc,\theta'\ldotp\\
-\quad \ppexec{\sym\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \theta',s,\st'\models \sst' \land  \SAT[\theta',s](\pc) \land \expeval[\theta',s]{\souts}=\outs
+\quad \ppexec{\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \theta',s,\st'\models \sst' \land  \SAT[\theta',s](\pc) \land \expeval[\theta',s]{\souts}=\outs
 \end{array}
 \end{equation}
 
 \begin{equation}
 \tag{Memory Model UX Soundness}\label{eq:mem-ux-soundness}
 \begin{array}{l}
-\ppexec{\sym\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT[\theta',s](\pc) \land \theta,s,\st'\models\sst' \land \\
+\ppexec{\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT[\theta',s](\pc) \land \theta,s,\st'\models\sst' \land \\
 \expeval[\sym s,\pc]{\souts}\rightsquigarrow(\outs,\pc')\land \expeval[\sym s,\pc']{\sins}\rightsquigarrow(\ins,\pc'')\implies\\
 \quad \exists \st\ldotp \theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs}
 \end{array}
 \end{equation}
+
+The above two axioms are at the core of OX and UX soundness, respectively. The former ensure that if a concrete execution exists, then it must also exist in the symbolic semantics; it however doesn't ensure that more executions that those that actually exist may happen. The latter ensures that if a symbolic execution exists, then it must also exist in the concrete world; this time, no guarantees are made regarding the existence of such symbolic transition: for instance, symbolic semantics that never result in any branches are UX-sound (though they are of limited use).
+
+Because incorrectness separation logic does execution backwards (ensuring all states satisfying a postcondition $Q$ are reachable from a precondition $P$), we also prove UX soundness of the memory model backwards: if the resulting state has a concrete model, then so must the state before. In OX, soundness is instead forwards: if the starting state is sound, so must be the resulting state.
 
 \subsubsection{Compositionality Axioms}
 
@@ -364,7 +400,7 @@ The above axiom is obtained for free, by lifting the $\models$ relation to the o
 \end{array}
 \end{equation}
 
-Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from Iris is a form of frame subtraction: it guarantees $\forall c\ldotp \irisval(a \cdot c)\Rarr \irisval(b\cdot c)$, with $c$ a frame that can be added to the state ($\sst_f$ in the axiom). This becomes evident when noticing that disjointness of partial RAs equates to validity in Iris RAs, giving us $\forall c\ldotp a\disj c\Rarr b\disj c$. In fact, the Iris frame-preserving update implies frame subtraction modulo action outcomes. This makes sense, as Iris is used for OX reasoning, and frame subtraction is the property needed for OX soundness. \note{Maybe move this elsewhere.}
+The above two axioms are what enable the traditional frame rule of separation logic, but bringing it to operational semantics\note{(Does this make any sense?)}. For frame subtraction, if executing an action on a state from which a frame was removed yields a non-\Miss, then that action did not that frame, and the frame can be added to the result. For frame addiction, which is needed in UX, we go backwards again: if a frame can be added to the state after executing an action and the action doesn't cause a \Miss, then it can also be added to the state before without interfering with the action execution.
 
 \begin{equation}
 \tag{Consume OX Soundness}\label{eq:consume-ox-sound}
@@ -392,6 +428,8 @@ Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from I
 \end{array}
 \end{equation}
 
+The above three axioms show the soundness of \consume{} for OX and UX operations. They are similar to \ref{eq:mem-ox-soundness} and \ref{eq:mem-ux-soundness} respectively. We also have an additional requirement for OX execution, stating that if there is no erroneous execution of \consume{} then at least one succesful execution exists. 
+
 \begin{equation}
 \tag{Produce: OX Soundness}\label{eq:produce-ox-sound}
 \begin{array}{l}
@@ -408,6 +446,10 @@ Here, we may note that the frame-preserving update $a \rightsquigarrow b$ from I
 \qquad \st_\delta\disj\st_f \land \st=\st_\delta\cdot\st_f \land \theta,s,\st_\delta \modelsp \corepred{\delta}{\sins}{\souts} \land \theta,s,\st_f \models \sst_f
 \end{array}
 \end{equation}
+
+Again, these two axioms show soundness of \produce{} for OX and UX operation. For the former, we show that if two disjoint states exist in the concrete world and one of the two satisfies a core predicate, then producing that predicate onto the other yields their composition. For the latter, we state that if \produce{} yields a branch that is satisfiable then there must exist a model of the result.
+
+There are no axioms that \fix{} needs to satisfy -- as it simply results in assertions, it cannot break soundness. Either it produces no fixes or only incompatible fixes and we vanish, which is UX sound, or it finds fixes that work, in which case we already know the execution exists in the concrete world and we remain UX sound.
 
 \section{State Models} \label{sec:theory-state-models}
 

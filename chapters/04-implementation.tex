@@ -4,6 +4,15 @@
 
 \subsection{State Model Interface}
 
+\todobox{Move this on implementation of fixes}
+
+This approach is different from how Gillian handles it. There the function \fix{} returns \emph{pure} assertions (type information, pure formulae) and arbitrary values of type \code{fix\_t}, which can then be used with the $\code{apply\_fix}:\Sigma \rarr \code{fix\_t} \rarr \Sigma$ method of the monadic state. This means fixes can be arbitrary modifications to the state that don't necessarily equate to new assertions to add to the anti-frame.
+
+This is a source of unsoundness, as the engine may interpret these modifications as fixes despite them not reliably modifying the state. This can be seen in \cite{sacha-phd}, where not finding the binding in a PMap(X) returns a \code{MissingBinding} error. While being labelled as a miss, this error can actually not be fixed; PMap simply \emph{lifts} predicates with an additional in parameter for the index. An implementation of that version of PMap(X) could attempt to fix this state by add a binding to $X.0$ (PMaps were originally made for PCMs, which always have a 0 element), which would then eventually lead to another error once the action gets called on the empty state. On top of being under-performing (as several fixes would need to be generated for one action), this requires PMap(X) to allow empty states in the codomain, which means a PMap is never exclusively owned (as a state with a singleton map to $X.0$ can always be composed with it), which limits its usability; aside from not being modelable using RAs, since $\bot$ is not an element of X's carrier set. Finally, if the underlying state model doesn't provide any additional fixes, then the fix for \code{MissingBinding} cannot be added to the UX specification of a function: there is no assertion generatable from within PMap to represent this modification. As such, having \fix{} returns assertions without modifying any state directly ensures fixes are always soundly handled.
+
+To finish this, we may note the solution to the above bug is to proceed executing the action on the underlying state model, giving it an empty state -- it will then raise the appropriate \Miss{}, which can be fixed, as it is aware of what core predicates are needed to create the required state. For instance, for PMap(Exc) a \code{load} action on a missing binding would be executed against $\bot$, which would return a \code{MissingValue} error. The PMap could then wrap the error with information about the index at which the error occurred, $\code{SubError}(i, \code{MissingValue})$. When getting the fix, PMap can then call Exc.\fix, which returns $\exists x\ldotp \corepred{points\_to}{}{x}$, and lift the fix by adding the index as an in-argument, resulting in the final fix $\exists x\ldotp\corepred{points\_to}{i}{x}$, which is a valid assertion and can be added to the UX specification for this execution.
+
+
 \subsection{Exclusive}
 
 \subsection{Partial Map}
