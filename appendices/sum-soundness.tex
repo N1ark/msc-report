@@ -4,8 +4,8 @@ We first prove that a transition in a sum is not sound when no additional proper
 
 \section{Proof of Unsoundness}
 
-The sum state model transformer, $\mmdl_1 + \mmdl_2$ with $\St_1$ and $\St_2$ the carrier sets of each side's RA, is unsound for actions that allow flipping the sum from one side to the other, if the actions doesn't have additional requirements to preserve soundness. Using PCMs, we define the \Sum{} PCM as: \begin{align*}
-	\Sum(\mmdl_1, \mmdl_2) \defeq \mmdl_1 + \mmdl_2 &\defeq l(\st: \St_1) ~|~ r(\st: \St_2) ~|~ 0 \\
+The sum state model transformer, $\mmdl_1 + \mmdl_2$ with $\St_1$ and $\St_2$ the carrier sets of each side's RA, is unsound for actions that allow flipping the sum from one side to the other, if the actions doesn't have additional requirements to preserve soundness. We define the PCM of $\Sum_\PCM$ PCM as: \begin{align*}
+	\Sum_\PCM(\mmdl_1, \mmdl_2) \defeq \mmdl_1 + \mmdl_2 &\defeq l(\st: \St_1) ~|~ r(\st: \St_2) ~|~ 0 \\
 	\st \cdot 0 = 0 \cdot \st &= \st\\
 	l(\st) \cdot l(\st') &= l(\st\cdot\st')\\
 	r(\st) \cdot r(\st') &= r(\st\cdot\st')\\
