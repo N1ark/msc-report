@@ -167,3 +167,6 @@
 \newenvironment{breakalign*}[1][]{\begingroup\allowdisplaybreaks\notag\align}{\endalign\endgroup}
 \newcommand{\ftnt}[1]{\footnote{See \url{#1}}}
 \newtheorem*{remark}{Remark}
+
+\let\oldcite\cite
+\renewcommand{\cite}[1]{\mbox{\oldcite{#1}}} % disallow line breaks in citations

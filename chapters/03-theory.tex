@@ -141,7 +141,7 @@ While this state is useful in that it allows modelling transitions from one side
 	\code{is\_exclusively\_owned}~\st \defeq \forall \st'\ldotp \st'\neq 0\implies \neg(\st\disj\st')
 \end{align*}
 
-The proof that the above properties must hold can be found in \cref{app:sum-soundness}. Again we note how the presence of a $0$ adds requirements around these constructions, cluttering otherwise elegant definitions.
+The proof that the above properties must hold can be found in \cref{ap:sum-soundness}. Again we note how the presence of a $0$ adds requirements around these constructions, cluttering otherwise elegant definitions.
 
 \subsubsection{Unsoundness in PMap}
 
@@ -267,7 +267,7 @@ We may compare the definition of $\Ex$, presented earlier, for partial RAs and I
 \begin{align*}
 	\Ex_{\textsc{Partial}}(X) &\defeq \ex{x:X} \\
 	|\ex{a}| &\defeq \bot\\
-	a \cdot b &\defeq \text{undefined}
+	a \cdot b & \text{ is always undefined}
 \end{align*}\end{minipage}
 
 
@@ -466,13 +466,133 @@ There are no axioms that \fix{} needs to satisfy -- as it simply results in asse
 
 \section{State Models} \label{sec:theory-state-models}
 
+Now that the CSE engine is defined and the properties of state models are axiomatised, we focus on primitive state model, that can be later used to build up complex state. We first look at the base case, \Ex{}, followed by the state model of knowledge or agreement, \Ag. Finally, we look at an in-between, \Frac, that allows exclusive ownership with a form of sharing.
+
 \subsection{Exclusive}
+
+The exclusive state model $\Ex(X)$ presented earlier is the simplest form of state model. It asserts ownership of an element of the set $X$, provide one core predicate $\exP$, and two actions to modify the state, $\load$ and $\store$. The $\exP$ predicate has no ins, and one out: the value stored.
+\begin{align*}
+ 	\Ex(X) &\defeq	\ex{x: X}\\
+ 	|\ex{x}| &\defeq \bot\\
+ 	\ex{x_1} \cdot \ex{x_2}&~\text{is always undefined}
+\end{align*}
+
+\begin{figure}
+	\centering
+	\begin{mathpar}
+\inferrule[ExStoreOk]{}{\ppexec{\store}{\ex{\sym x}, [\sym x']}{\Ok, \ex{\sym x'}, [], []}}
+\and\inferrule[ExStoreMiss]{}{\ppexec{\store}{\bot,[\sym x']}{\Miss,\bot,[],[]}}
+\and\inferrule[ExConsOk]{}{\ppcons{\ex{\sym x}, \exP, []}{\Ok, \bot, [\sym x], []}}
+\and\inferrule[ExProd]{}{\ppprod{\bot,\exP, [], [\sym x]}{\ex{\sym x}, []}}
+\and\inferrule[ExFix]{}{\fix ~[] = [\{ \exists \sym x\ldotp \corepred{\exP}{}{\sym x} \}]}
+	\end{mathpar}
+	\caption{Some rules for \Ex}
+	\label{fig:ex-rules-example}
+\end{figure}
+
+The first notation, $\Ex(X)$ is the state model instantiation from the set $X$ to the $\Ex$ resource algebra. The notation $\ex{x:X}$ stands for $\{\ex{x} : \forall x\in X \}$ -- here `$\ex{x}$' refers to the particular element of the $\Ex(X)$ RA where the value is $x\in X$.
+
+See \autoref{fig:ex-rules-example} for an extract of the rules for \Ex{} -- the full definition can be found in \autoref{rules:ex}. We also show side by side the rules for the concrete and symbolic actions in \autoref{fig:ex-rules-con-vs-sym}: in particular we note that they are strikingly similar, the latter simply being lifted from the former.
+
+\begin{figure}
+	\centering
+	\begin{mathpar}
+\inferrule[CExStoreOk]{}{\ppexecc{\store}{\ex{x}, [x']}{\Ok, \ex{x'}, []}}
+\and\inferrule[ExStoreOk]{}{\ppexec{\store}{\ex{\sym x}, [\sym x']}{\Ok, \ex{\sym x'}, [], []}}
+\and\inferrule[CExStoreMiss]{}{\ppexecc{\store}{\bot,[x']}{\Miss,\bot,[]}}
+\and\inferrule[ExStoreMiss]{}{\ppexec{\store}{\bot,[\sym x']}{\Miss,\bot,[],[]}}
+	\end{mathpar}
+	\caption{Side by side comparison of concrete and symbolic action rules for \Ex{} -- concrete rules are prefixed with \textsc{C}.}
+	\label{fig:ex-rules-con-vs-sym}
+\end{figure}
+
+The only difference for \Ex{} between RAs and PCMs is the absence of a $0$, which is instead $\bot$; in fact $\Ex_{\textsc{RA}}(X)^?$ is strictly equivalent to $\Ex_{\textsc{PCM}}(X)$.
+
+To provide at least one full of example of state model, we also include the definition of the symbolic interpretation and core predicate satisfiability relations -- both are trivial, simply checking for equality:
+\begin{mathpar}
+\inferrule[ExSymInterpretation]{\expeval{\sym x}=x}{\theta,s,\ex{x}\models\ex{\sym x}}
+\and\inferrule[ExPredSat]{\st=\ex{x}}{\st\modelsp\corepred{\exP}{[]}{[x]}}
+\end{mathpar}
 
 \subsection{Agreement}
 
+The agreement state model $\Ag(X)$ is the counterpart to the exclusively owned state model -- it allows sharing, and is duplicable. It defines one predicate, $\agP$, and a single action, $\load$. Again, $\agP$ has no ins and one out, the value. Mutating state is not sound with a duplicable resource, as that doesn't satisfy \ref{eq:frame-add} or \ref{eq:frame-add}: a frame that is compatible with the original value is not compatible with the modified value, as they are not equal anymore.
+\begin{align*}
+	\Ag(X) &\defeq \ag{x: X}\\
+	|\ag{x}| &\defeq \ag{x}\\
+	\ag{x} \cdot \ag{x'} &\defeq \begin{cases}
+ 	\ag{x} &\If~x = x' \\
+ 	\text{undefined} &\Otherwise
+ \end{cases}
+\end{align*}
+
+\begin{figure}
+	\centering
+	\begin{mathpar}
+\inferrule[AgLoadOk]{}{\ppexec{\load}{\ag{\sym x},[]}{\Ok,\ag{\sym x},[\sym x],[]}}
+\and\inferrule[AgConsOk]{}{\ppcons{\ag{\sym x},\agP,[]}{\Ok,\ag{\sym x},[\sym x],[]}}
+\and\inferrule[AgProdBot]{}{\ppprod{\bot,\agP,[],[\sym x]}{\ag{\sym x}, []}}
+\and\inferrule[AgProdEq]{}{\ppprod{\ag{\sym x},\agP,[],[\sym x']}{\ag{\sym x}, [\sym x = \sym x']}}
+	\end{mathpar}
+	\caption{Some rules for \Ag}
+	\label{fig:ag-rules-example}
+\end{figure}
+
+See \autoref{fig:ag-rules-example} for an extract of its rules. Its duplicative nature can be seen in the rules \textsc{AgConsOk} and \textsc{AgProdEq}: consuming the predicate doesn't turn it into $\bot$ but leaves it untouched, while producing into an already present state suceeds as long as the predicate's out and the state are equal, as seen in the path condition: $[\sym x = \sym x']$.
+
+An observation that can be made from this is that for consumption to be sound, the resulting state can never be \emph{anything less than the input's core}. \note{Otherwise function call by specification is not frame preserving, I think? (At least with \Ag.) But this isn't defined as an axiom or anything, so I'm not sure what to do with it. It doesn't follow from any axiom, and I haven't proved it for any state model (though I'm sure it holds). Is it OK to just leave it here as it is still an insight, without building upon it?} \begin{align*}
+	\ppcons{\sst,\sins}{\Ok,\sst',\souts,\pc} \land \theta,s,\st\models\sst \land \theta,s,\st'\models\sst' \implies |\st| \preo \st'
+\end{align*}
+
+Unline \Ex, \Ag{} is \emph{not cancellative}: in other words, $a\cdot b = a\cdot c \nRightarrow b=c$, since for instance $\ag{x} \cdot \bot=\ag{x}\cdot\ag{x}$, but $\bot\neq\ag{x}$. Cancellativity is a property that was initially thought to be required for separation algebras \cite{abstractseplogic,sepalgebra}, but that has since been dropped \cite{statesoundness,iris}.
+
+The agreement state model is thus useful to model immutable, shareable state -- for instance, it is used in the JavaScript instantiation (discussed in a later section) to represent the address of an object's metadata, as this information is immutable.
+
 \subsection{Fraction}
 
+The fractional state model $\Frac(X)$ allows for exclusive ownership while allowing sharing, via fractional permissions. This was first introduced in \cite{fracpermissions,fracpermissions2}, where the ``points to'' assertion was equipped with a fraction $q$: a state satisfying $a\mapstoq{1}x$ has full ownership (read and write) of $x$, and can be split into $a\mapstoq{q}x \star a\mapstoq{1-q}x$, creating two states with read-only permissions. The \Frac{} memory model is a generalisation of this at the value level. It defines one predicate, $\fracP$, that has one in, the fraction $q$, and one out, the value $x$. Just like $\Ex$, it provides a \load{} and a \store{} action -- the only difference being that a fraction of $1$ is required to modify the value. Because the max fraction is $1$, we know that when it is $1$ no frame can have ownership of the value, and it can thus safely be modified.
+\begin{align*}
+	\Frac(X)&\defeq \fracc{x: X, q: (0;1]}\\
+	|\fracc{x, q}| &\defeq \bot\\
+	\fracc{x,q}\cdot\fracc{x',q'}&\defeq \begin{cases}
+		\fracc{x,q+q'} & \If~ x=x' \land q+q' \leq 1\\
+		\text{undefined} &\Otherwise
+	\end{cases}
+\end{align*}
+
+We put the fraction $q$ in the in values of the $\fracP$ core-predicate to allow \consume{} to subtract exactly the permission required from the state -- if both the permission and the value were out-values, then \consume{} would always evaluate to $\bot$, cancelling the main advantage of this state model. The rules for \consume{} can be seen in \autoref{fig:frac-consume-rules}. We note here that in the symbolic state model, the fraction part is also lifted to the symbolic realm, allowing for a symbolic permission.
+
+\begin{figure}
+	\centering
+	\begin{mathpar}
+\inferrule[FracConsAll]{}{\ppcons{\fracc{\sym x,\sym q},\fracP,[\sym q']}{\Ok,\bot,[\sym x],[\sym q=\sym q']}}
+\and\inferrule[FracConsSome]{}{\ppcons{\fracc{\sym x,\sym q},\fracP,[\sym q']}{\Ok,\fracc{\sym x,\sym q-\sym q'},[\sym x],[0 < \sym q' < \sym q]}}
+\and\inferrule[FracConsMiss]{}{\ppcons{\fracc{\sym x,\sym q},\fracP,[\sym q']}{\Miss,\fracc{\sym x,\sym q},[\sym q' - \sym q],[\sym q < \sym q' \leq 1]}}
+\and\inferrule[FracConsFail]{}{\ppcons{\fracc{\sym x,\sym q},\fracP,[\sym q']}{\LFail,\fracc{\sym x,\sym q},[],[\sym q' \leq 0 \lor 1 < \sym q']}}
+	\end{mathpar}
+	\caption{\consume{} rules for \Frac}
+	\label{fig:frac-consume-rules}
+\end{figure}
+
+Because the outcome of actions depends on the amount of permission owned, \Frac{} is also a good example to show how one may adapt a concrete state model into a symbolic state model, by moving the relevant concrete conditions into the path condition. The rules for the concrete and symbolic \store{} are shown in \autoref{fig:frac-store-rules}. Note how, between \textsc{CFracStorePerm} and \textsc{FracStorePerm}, the condition $q < 1$ is replaced by $\sym q < 1$, and is returned in the path condition, rather than being checked for in the rule itself, since the value of $\sym q$ depends on the current PC.
+
+\begin{figure}
+	\centering
+	\begin{mathpar}
+\inferrule[CFracStoreOk]{q=1}{\ppexecc{\store}{\fracc{x,q},[x']}{\Ok,\fracc{x',q},[]}}
+\and\inferrule[FracStoreOk]{}{\ppexec{\store}{\fracc{\sym x,\sym q},[\sym x']}{\Ok,\fracc{\sym x',\sym q},[],[\sym q=1]}}
+\and\inferrule[CFracStorePerm]{q<1}{\ppexecc{\store}{\fracc{x,q},[x']}{\Miss,\fracc{x,q},[1-q]}}
+\and\inferrule[FracStorePerm]{}{\ppexec{\store}{\fracc{\sym x,\sym q},[\sym x']}{\Miss,\fracc{\sym x,\sym q},[1-\sym q],[\sym q<1]}}
+	\end{mathpar}
+	\caption{\store{} rules for \Frac}
+	\label{fig:frac-store-rules}
+\end{figure}
+
+While this state model is conceived taking into account fractional permissions, other separation algebras exist to tackle the same problem. For instance, \cite{fracpermissions} also proposes a counting permissions system: $a\mapstoq{0}x$ is a writing permission, and it can issue reading permissions denoted $a\part x$, such that $a\mapstoq{q}x \iff a\mapstoq{q+1}x \star a\part x$. Though we do not define it in full, this could also be implemented as a state model, providing two core predicates: \corepred{\code{write}}{q}{x} and \corepred{\code{read}}{}{x}, with every consumption of \code{read} from a writeable state increasing $q$, and inversely every production of \code{read} decreasing it, and checking $q=0$ when using \store. This shows state modes seem to be the right abstraction, as they support a variety of resource algebras.
+
 \section{State Model Transformers} \label{sec:theory-state-model-transf}
+
+While the above state models can prove useful, they are limited in use, only allowing the storage of one value. One would likely want to model state that is more complex than this, storing a range of values in a variety of ways. Iris introduces the idea of RA constructions \cite{iris} -- this idea has then been adapted to Gillian in \cite{sacha-phd}, with PCMs. Here we re-visit these constructions, porting them to RAs.
 
 \subsection{Sum}
 

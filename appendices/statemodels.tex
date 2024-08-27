@@ -25,9 +25,9 @@ It defines two actions, $\actions=\{\load, \store\}$ and a predicate $\preds=\{\
 
 \begin{mathparpagebreakable}
 \inferrule[CExLoadOk]{}{\ppexecc{\load}{\ex{x},[]}{\Ok,\ex{x},[x]}}
-\and\inferrule[CExLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss, \bot,[]}}
-\and\inferrule[CExStoreOk]{}{\ppexec{\store}{\ex{x}, [x']}{\Ok, \ex{x'}, []}}
-\and\inferrule[CExStoreMiss]{}{\ppexec{\store}{\bot,[x']}{\Miss,\bot,[]}}
+\and\inferrule[CExLoadMiss]{}{\ppexecc{\load}{\bot,[]}{\Miss, \bot,[]}}
+\and\inferrule[CExStoreOk]{}{\ppexecc{\store}{\ex{x}, [x']}{\Ok, \ex{x'}, []}}
+\and\inferrule[CExStoreMiss]{}{\ppexecc{\store}{\bot,[x']}{\Miss,\bot,[]}}
 \end{mathparpagebreakable}
 
 \subsection{Compositional Symbolic Rules}
@@ -46,6 +46,7 @@ It defines two actions, $\actions=\{\load, \store\}$ and a predicate $\preds=\{\
 \section{Agreement} \label{rules:ag}
 
 \subsection{Resource Algebra}
+
 \begin{align*}
 	\Ag(X) &\defeq \ag{x: X}\\
 	|\ag{x}| &\defeq \ag{x}\\
@@ -108,11 +109,11 @@ We define the actions $\actions=\{\load,\store\}$ and the core predicate $\preds
 \subsection{Compositional Concrete Rules}
 
 \begin{mathparpagebreakable}
-\inferrule[CFracLoadOk]{}{\ppexec{\load}{\fracc{x,q},[]}{\Ok,\fracc{x,q},[x],[]}}
-\and\inferrule[CFracLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss,\bot,[1]}}
-\and\inferrule[CFracStoreOk]{q=1}{\ppexec{\store}{\fracc{x,q},[x']}{\Ok,\fracc{x',q},[]}}
-\and\inferrule[CFracStorePerm]{q<1}{\ppexec{\store}{\fracc{x,q},[x']}{\Miss,\fracc{x,q},[1-q]}}
-\and\inferrule[CFracStoreMiss]{}{\ppexec{\store}{\bot,[x']}{\Miss,\bot,[1]}}
+\inferrule[CFracLoadOk]{}{\ppexecc{\load}{\fracc{x,q},[]}{\Ok,\fracc{x,q},[x],[]}}
+\and\inferrule[CFracLoadMiss]{}{\ppexecc{\load}{\bot,[]}{\Miss,\bot,[1]}}
+\and\inferrule[CFracStoreOk]{q=1}{\ppexecc{\store}{\fracc{x,q},[x']}{\Ok,\fracc{x',q},[]}}
+\and\inferrule[CFracStorePerm]{q<1}{\ppexecc{\store}{\fracc{x,q},[x']}{\Miss,\fracc{x,q},[1-q]}}
+\and\inferrule[CFracStoreMiss]{}{\ppexecc{\store}{\bot,[x']}{\Miss,\bot,[1]}}
 \end{mathparpagebreakable}
 
 \subsection{Compositional Symbolic Rules}
