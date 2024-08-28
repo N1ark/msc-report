@@ -5,7 +5,7 @@ We first prove that a transition in a sum is not sound when no additional proper
 \section{Proof of Unsoundness}
 
 The sum state model transformer, $\mmdl_1 + \mmdl_2$ with $\St_1$ and $\St_2$ the carrier sets of each side's RA, is unsound for actions that allow flipping the sum from one side to the other, if the actions doesn't have additional requirements to preserve soundness. We define the PCM of $\Sum_\PCM$ PCM as: \begin{align*}
-	\Sum_\PCM(\mmdl_1, \mmdl_2) \defeq \mmdl_1 + \mmdl_2 &\defeq l(\st: \St_1) ~|~ r(\st: \St_2) ~|~ 0 \\
+	\Sum_\PCM(\mmdl_1, \mmdl_2) \defeq \mmdl_1 + \mmdl_2 &\defeq l(\st\colon \St_1) ~|~ r(\st\colon \St_2) ~|~ 0 \\
 	\st \cdot 0 = 0 \cdot \st &= \st\\
 	l(\st) \cdot l(\st') &= l(\st\cdot\st')\\
 	r(\st) \cdot r(\st') &= r(\st\cdot\st')\\
@@ -41,7 +41,7 @@ To satisfy frame substraction, as the outcome in \hyp{eval} is \Ok, we would nee
 \section{Sound Sum}
 
 To define a sound version of sum that supports flipping the side, we thus need to remove the $0$ element of both sides from the allowed states. This ensure the states $l(0_1)$ and $r(0_2)$ aren't allowed, avoiding the problem seen with frame substraction. \begin{align*}
-	\mmdl_1 + \mmdl_2 \defeq l(\st: \St_1\backslash \{0_1\}) ~|~ r(\st:\St_2\backslash\{0_2\}) ~|~ 0
+	\mmdl_1 + \mmdl_2 \defeq l(\st\colon \St_1\backslash \{0_1\}) ~|~ r(\st\colon \St_2\backslash\{0_2\}) ~|~ 0
 \end{align*} 
 
 \newcommand{\isexowned}[0]{\code{is\_exclusively\_owned}}
@@ -59,7 +59,7 @@ Assuming
 \begin{hypvlist}
 \hypvitem{pcm} $\mmdl_1$ is a sound state model with a PCM $(\St_1, \cdot, 0_1)$.
 \hypvitem{pcm2} $\mmdl_2$ is a sound state model with a PCM $(\St_2, \cdot, 0_2)$.
-\hypvitem{sumdef} A sum state model is defined as $\mmdl_1 + \mmdl_2 \defeq l(\st: \St_1') ~|~ r(\st:\St_2') ~|~ 0$, such that $\St_1'\subseteq \St_1$ and $\St_2'\subseteq \St_2$. We re-use the definition of composition shown before.
+\hypvitem{sumdef} A sum state model is defined as $\mmdl_1 + \mmdl_2 \defeq l(\st\colon \St_1') ~|~ r(\st\colon \St_2') ~|~ 0$, such that $\St_1'\subseteq \St_1$ and $\St_2'\subseteq \St_2$. We re-use the definition of composition shown before.
 \hypvitem{swapexists} There is an action \swap{} that may flip the side of a sum from the left to then right-hand side: $\exists\st,\st',\ins,\outs\ldotp \execswap{l(\st),\ins}{\Ok,r(\st'),\outs}$
 \end{hypvlist}
 

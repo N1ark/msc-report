@@ -7,7 +7,7 @@ We list here the different state models developed. In particular, we list their 
 \subsection{Resource Algebra}
 
 \begin{align*}
- 	\Ex(X) &\defeq	\ex{x: X}\\
+ 	\Ex(X) &\defeq	\ex{x\colon X}\\
  	|\ex{x}| &\defeq \bot\\
  	\ex{x_1} \cdot \ex{x_2}&~\text{is always undefined}
 \end{align*}
@@ -48,7 +48,7 @@ It defines two actions, $\actions=\{\load, \store\}$ and a predicate $\preds=\{\
 \subsection{Resource Algebra}
 
 \begin{align*}
-	\Ag(X) &\defeq \ag{x: X}\\
+	\Ag(X) &\defeq \ag{x\colon X}\\
 	|\ag{x}| &\defeq \ag{x}\\
 	\ag{x} \cdot \ag{x'} &\defeq \begin{cases}
  	\ag{x} &\If~x = x' \\
@@ -89,7 +89,7 @@ It defines $\actions=\{\load\}$, and one predicate, $\Delta=\{\agP\}$.
 \subsection{Resource Algebra}
 
 \begin{align*}
-	\Frac(X)&\defeq \fracc{x: X, q: (0;1]}\\
+	\Frac(X)&\defeq \fracc{x\colon X, q\colon (0;1]}\\
 	|\fracc{x, q}| &\defeq \bot\\
 	\fracc{x,q}\cdot\fracc{x',q'}&\defeq \begin{cases}
 		\fracc{x,q+q'} & \If~ x=x' \land q+q' \leq 1\\
@@ -137,17 +137,18 @@ We define the actions $\actions=\{\load,\store\}$ and the core predicate $\preds
 
 \subsection{Resource Algebra}
 
+Let $\St_1$ and $\St_2$ be the carrier sets of the RAs of $\mmdl_1$ and $\mmdl_2$ respectively.
 \begin{align*}
-	\Sum(X, Y) \defeq X+Y &\defeq l(x: X) ~|~ r(y: Y)\\
-	l(x)\cdot l(x') &\defeq l(x\cdot x')\\
-	r(y)\cdot r(y')&\defeq r(y\cdot y')\\
-	|l(x)|&\defeq \begin{cases}
- 		\bot &\If~ |x|=\bot\\
- 		l(|x|) &\Otherwise
+	\Sum(\mmdl_1, \mmdl_2) \defeq \mmdl_1+\mmdl_2 &\defeq l(\st\colon \St_1) ~|~ r(\st\colon \St_2)\\
+	l(\st)\cdot l(\st') &\defeq l(\st\cdot \st')\\
+	r(\st)\cdot r(\st') &\defeq r(\st\cdot \st')\\
+	|l(\st)|&\defeq \begin{cases}
+ 		\bot &\If~ |\st|=\bot\\
+ 		l(|\st|) &\Otherwise
 	 \end{cases}\\
-	 |r(y)|&\defeq \begin{cases}
- 		\bot &\If~ |y|=\bot\\
- 		r(|y|) &\Otherwise
+	 |r(\st)|&\defeq \begin{cases}
+ 		\bot &\If~ |\st|=\bot\\
+ 		r(|\st|) &\Otherwise
 	 \end{cases}
 \end{align*}
 
@@ -227,12 +228,13 @@ Given the sum $\mmdl_1 + \mmdl_2$ such that the actions and predicates of $\mmdl
 
 \subsection{Resource Algebra}
 
+Let $\St_1$ and $\St_2$ be the carrier sets of the RAs of $\mmdl_1$ and $\mmdl_2$ respectively.
 \begin{align*}
-	\Product(X,Y) \defeq X \times Y &\defeq X^? \times Y^? \backslash \{(\bot, \bot)\}\\
-	(x, y) \cdot (x', y') &\defeq (x \cdot x', y \cdot y')\\
-	|(x, y)| &\defeq \begin{cases}
-		\bot &\If~|x|=\bot\land |y|=\bot\\
-		(|x|, |y|) &\Otherwise
+	\Product(\mmdl_1,\mmdl_2) \defeq \mmdl_1 \times \mmdl_2 &\defeq \St_1^? \times \St_2^? \backslash \{(\bot, \bot)\}\\
+	(\st_l, \st_r) \cdot (\st_l', \st_r') &\defeq (\st_l \cdot \st_l', \st_r \cdot \st_r')\\
+	|(\st_l, \st_r)| &\defeq \begin{cases}
+		\bot &\If~|\st_l|=\bot\land |\st_r|=\bot\\
+		(|\st_l|, |\st_r|) &\Otherwise
  	\end{cases}
 \end{align*}
 
@@ -290,7 +292,7 @@ Given the product $\mmdl_1 \times \mmdl_2$ such that the actions and predicates 
 
 \subsection{Resource Algebra}
 
-The RA for $\Freeable(\mmdl)$ is defined as a construction: $\Freeable(\mmdl) \defeq \mmdl + \Ex(\{\freed\})$, which allows all associated rules to be kept. For clarity, we rename the core predicate $\code{R}\exP$ (defined by~$\Ex(\{\freed\})$) as $\freedP$. We also extend its actions with the $\free$ action.
+The RA for $\Freeable(\mmdl)$ is defined as a construction: $\Freeable(\mmdl) \defeq \mmdl + \Ex(\{\freed\})$, which allows all associated rules to be kept. For clarity, we rename the core predicate $\code{R}~\exP$ (defined by~$\Ex(\{\freed\})$) as $\freedP$. We also extend its actions with the $\free$ action.
 
 \subsection{Satisfiability}
 
@@ -298,11 +300,11 @@ The symbolic interpretation and core predicate satisfiability are carried by con
 
 \subsection{Compositional Concrete Rules}
 
-We only define the additional action $\free$, the rest being carried by construction via the sum. The wrapped concrete state model $\mmdl$ must provide an ${\code{is\_exclusively\_owned}:\St\rarr\bools}$ function such that: \begin{align*}
+We only define the additional action $\free$, the rest being carried by construction via the sum. The wrapped concrete state model $\mmdl$ must provide an ${\code{is\_exclusively\_owned}\colon\St\rarr\bools}$ function such that: \begin{align*}
 	\code{is\_exclusively\_owned}~\st \iff \nexists. \st'\ldotp \st\disj\st'
 \end{align*}
 
-It also must provide a $\code{fix\_owned}:\St\rarr\vallist$ giving values to fix the \Miss.
+It also must provide a $\code{fix\_owned}\colon \St\rarr\vallist$ giving values to fix the \Miss.
 
 \begin{mathparpagebreakable}
 \inferrule[CFreeableActionFree]{\code{is\_exclusively\_owned}~\st}{\ppexecc{\free}{l(\st),[]}{\Ok,r(\ex\freed),[]}}
@@ -313,11 +315,11 @@ It also must provide a $\code{fix\_owned}:\St\rarr\vallist$ giving values to fix
 
 \subsection{Compositional Symbolic Rules}
 
-Similarly, we carry the symbolic rules for \execac, \consume, \produce{} and \fix{} by construction via the sum. The wrapped symbolic state model $\mmdl$ must provide an ${\code{is\_exclusively\_owned}:\Sst\rarr\LVal}$ function such that: \begin{align*}
+Similarly, we carry the symbolic rules for \execac, \consume, \produce{} and \fix{} by construction via the sum. The wrapped symbolic state model $\mmdl$ must provide an ${\code{is\_exclusively\_owned}\colon\Sst\rarr\LVal}$ function such that: \begin{align*}
 	\code{is\_exclusively\_owned}~\sst =\vtrue \iff (\forall \theta,s,\st\ldotp \theta,s,\st\models\sst \implies \nexists. \st'\ldotp \st\disj\st')
 \end{align*}
 
-It also must provide a $\code{fix\_owned}:\Sst^?\rarr\lvallist$ giving values to fix the \Miss.
+It also must provide a $\code{fix\_owned}\colon \Sst^?\rarr\lvallist$ giving values to fix the \Miss.
 
 \begin{mathparpagebreakable}
 \inferrule[FreeableActionFree]{}{\ppexec{\free}{l(\sst),[]}{\Ok,r(\ex\freed),[],[\code{is\_exclusively\_owned}~\sst]}}
@@ -370,8 +372,8 @@ For a wrapped state model $\mmdl$ such that its actions and predicates are $\act
 
 We define the helper functions \code{get} and \code{set} as:
 \begin{align*}
-	\code{get}&: \PMap(I, \mmdl) \rarr I \rarr \mmdl.\St \\
-	\code{set}&: \PMap(I, \mmdl) \rarr I \rarr \mmdl.\St \rarr \PMap(I, \mmdl)
+	\code{get}&\colon \PMap(I, \mmdl) \rarr I \rarr \mmdl.\St \\
+	\code{set}&\colon \PMap(I, \mmdl) \rarr I \rarr \mmdl.\St \rarr \PMap(I, \mmdl)
 \end{align*}
 
 We pretty-print \code{get} and \code{set} as \ppgetc{\st,i}{\st_i} and \ppset{\st,i,\st_i}{\st'}.
@@ -407,8 +409,8 @@ The action rules are then:
 We now re-define \code{get} and \code{set}, lifting them to the symbolic realm (note \code{set} is unchanged, as it does not perform any sort of matching). \code{get} now returns a state and an index, that may be different from the input index -- it corresponds to the actual index of the state in the map.
 
 \begin{align*}
-	\code{get}&: \PMap(I, \mmdl) \rarr I \rarr \pset(I \times \mmdl.\Sst \times \Pc) \\
-	\code{set}&: \PMap(I, \mmdl) \rarr I \rarr \mmdl.\Sst \rarr \PMap(I, \mmdl)
+	\code{get}&\colon \PMap(I, \mmdl) \rarr I \rarr \pset(I \times \mmdl.\Sst \times \Pc) \\
+	\code{set}&\colon \PMap(I, \mmdl) \rarr I \rarr \mmdl.\Sst \rarr \PMap(I, \mmdl)
 \end{align*}
 We pretty-print \code{get} and \code{set} as \ppget{\sst,\sym i}{\sym i',\sst_i,\pc} and \ppset{\sst,\sym i,\sst_i}{\sst'}.
 \begin{align*}
