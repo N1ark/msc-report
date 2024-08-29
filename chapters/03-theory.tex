@@ -31,7 +31,7 @@ There are two accepted and clashing semantics of the \emp{} assertion; either it
 Here we make the arbitrary choice of defining it as only being satisfied by the empty memory. Because the engine is parametric on the core predicates, a user is free to chose the semantics appropriate to their use case -- this is a strength of the parametric approach.
 \end{remark}
 
-\emph{Actions} are used to represent program actions that interact with the state. Typical actions include \load{}, \store{}, \alloc{} or \free. These actions are called with a list of arguments, return a list of results, and may modify the state, as long as the modification are sound with regards to a set of axioms, presented later.
+\emph{Actions} are used to represent program actions that interact with the state. Typical actions include \load{}, \store{}, \alloc{} or \free. These actions are called with a list of arguments, return a list of results, and may modify the state, as long as the modification are sound with respect to a set of axioms, presented later.
 
 \begin{figure}\centering
 \setlength{\fboxsep}{0.3cm}
@@ -359,7 +359,7 @@ We may now go over the axioms that must be respected by the above defined functi
 
 For all of the axioms we assume we have a symbolic state model $\mmdl$, made of the concrete states RA $\St \ni \st$, symbolic states set $\Sst \ni \st$, actions $\actions$ and core predicates $\preds$.
 
-We split the axioms into two parts: those relating to the symbolic nature of state and ensuring soundness with regards to a concrete state, and those relating to the parametricity of the state.
+We split the axioms into two parts: those relating to the symbolic nature of state and ensuring soundness with respect to a concrete state, and those relating to the parametricity of the state.
 
 \subsubsection{Symbolicness Axioms}
 
@@ -558,7 +558,7 @@ The fractional state model $\Frac(X)$ allows for exclusive ownership while allow
 	\end{cases}
 \end{align*}
 
-We put the fraction $q$ in the in values of the $\fracP$ core-predicate to allow \consume{} to subtract exactly the permission required from the state -- if both the permission and the value were out-values, then \consume{} would always evaluate to $\bot$, cancelling the main advantage of this state model. The rules for \consume{} can be seen in \autoref{fig:frac-consume-rules}. We note here that in the symbolic state model, the fraction part is also lifted to the symbolic realm, allowing for a symbolic permission.
+We put the fraction $q$ in the in values of the $\fracP$ core predicate to allow \consume{} to subtract exactly the permission required from the state -- if both the permission and the value were out-values, then \consume{} would always evaluate to $\bot$, cancelling the main advantage of this state model. The rules for \consume{} can be seen in \autoref{fig:frac-consume-rules}. We note here that in the symbolic state model, the fraction part is also lifted to the symbolic realm, allowing for a symbolic permission.
 
 \begin{figure}
 	\centering
@@ -590,7 +590,7 @@ While this state model is conceived taking into account fractional permissions, 
 
 \section{State Model Transformers} \label{sec:theory-state-model-transf}
 
-While the above state models can prove useful, they are limited in use, only allowing the storage of one value. One would likely want to model state that is more complex than this, storing a range of values in a variety of ways. Iris introduces the idea of RA constructions \cite{iris} -- this idea has then been adapted to Gillian in \cite{sacha-phd}, with PCMs. Here we re-visit these constructions, porting them to RAs.
+While the above state models can prove useful, they are limited in use, only allowing the storage of one value. One would likely want to model state that is more complex than this, storing a range of values in a variety of ways. Iris introduces the idea of RA constructions \cite{iris} -- this idea has then been adapted to Gillian in \cite{sacha-phd}, with PCMs. Here we revisit these constructions, porting them to RAs. We call them \emph{state model transformers}\footnote{Not to be confused with ``state monad transformers'', which allow adding state to a monad.}, or state transformers.
 
 \subsection{Sum}
 
@@ -621,19 +621,19 @@ The rules of the \Sum{} state model are otherwise straightforward, lifting \exec
 	\centering
 \begin{align*}
 	\text{Given }
-	\mathit{wrap}_l(x) = \begin{cases}
+	\fn{wrap}_l(x) = \begin{cases}
 		\bot &\If~x=\bot\\
 	 	l(x)&\Otherwise
 	 \end{cases} \text{ and }
-	 \mathit{unwrap}_l(x_l) = \begin{cases}
+	 \fn{unwrap}_l(x_l) = \begin{cases}
  		\bot &\If ~x=\bot\\
  		x &\If~x_l=l(x)\\
  		\text{undefined}&\Otherwise
 	 \end{cases}
 \end{align*}
 	\begin{mathpar}
-\inferrule[SumLAction]{\sst=\mathit{unwrap}_l(\sst_l) \\ \ppexec{\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \\ \sst_l' = \mathit{wrap}_l(\sst') \\ o \neq \Miss}{\ppexec{\code{L}\alpha}{\sst_l,\sins}{o,\sst_l',\souts,\pc}}
-\and\inferrule[SumLActionMiss]{\sst=\mathit{unwrap}_l(\sst_l) \\ \ppexec{\alpha}{\sst,\sins}{\Miss,\sst',\souts,\pc} \\ \sst_l' = \mathit{wrap}_l(\sst')}{\ppexec{\code{L}\alpha}{\sst_l,\sins}{\Miss,\sst_l',\strv{l}::\souts,\pc}}
+\inferrule[SumLAction]{\sst=\fn{unwrap}_l(\sst_l) \\ \ppexec{\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \\ \sst_l' = \fn{wrap}_l(\sst') \\ o \neq \Miss}{\ppexec{\code{L}\alpha}{\sst_l,\sins}{o,\sst_l',\souts,\pc}}
+\and\inferrule[SumLActionMiss]{\sst=\fn{unwrap}_l(\sst_l) \\ \ppexec{\alpha}{\sst,\sins}{\Miss,\sst',\souts,\pc} \\ \sst_l' = \fn{wrap}_l(\sst')}{\ppexec{\code{L}\alpha}{\sst_l,\sins}{\Miss,\sst_l',\strv{l}::\souts,\pc}}
 \and\inferrule[SumLFix]{\mmdl_1.\fix~\sins=a}{\fix~\strv{l}::\sins=a}
 	\end{mathpar}
 	\caption{Rules for handling \Miss{} in \Sum}
@@ -672,17 +672,17 @@ We take advantage of the option state model $-^?$ and use that instead, thus all
 	\centering
 \begin{align*}
 	\text{Given }
-	\mathit{wrap}(x, y) = \begin{cases}
+	\fn{wrap}(x, y) = \begin{cases}
 		\bot &\If~x=\bot \land y=\bot\\
 		(x,y) &\Otherwise
 	 \end{cases} \text{ and }
-	 \mathit{unwrap}(s) = \begin{cases}
+	 \fn{unwrap}(s) = \begin{cases}
  		(\bot, \bot) &\If ~s=\bot\\
 		(x, y) &\Otherwise
 	 \end{cases}
 \end{align*}
 	\begin{mathpar}
-\inferrule[ProductLAction]{(\sst_l,\sst_r)=\mathit{unwrap}(\sst) \\ \ppexec{\alpha}{\sst_l,\sins}{o,\sst_l',\souts,\pc} \\ \sst' = \mathit{wrap}(\sst_l',\sst_r) \\ o \neq \Miss}{\ppexec{\code{L}\alpha}{\sst,\sins}{o,\sst',\souts,\pc}}
+\inferrule[ProductLAction]{(\sst_l,\sst_r)=\fn{unwrap}(\sst) \\ \ppexec{\alpha}{\sst_l,\sins}{o,\sst_l',\souts,\pc} \\ \sst' = \fn{wrap}(\sst_l',\sst_r) \\ o \neq \Miss}{\ppexec{\code{L}\alpha}{\sst,\sins}{o,\sst',\souts,\pc}}
 \end{mathpar}
 	\caption{Example of action rules in \Product}
 	\label{fig:product-rules-example}
@@ -690,9 +690,11 @@ We take advantage of the option state model $-^?$ and use that instead, thus all
 
 \subsection{Freeable}
 
-The $\Freeable(\mmdl)$ state model transformer allows extending a state model with a \free{} action, that allows freeing a part of memory. The freed memory can then not be accessed, and attempting to use it raises a use-after-free error. This is similar to the \textsc{OneShot} RA of Iris, with the key difference that the \freedP{} predicate used to mark a resource as freed is \emph{not duplicable}. Iris defines $\textsc{OneShot}(X) \defeq \Ex(\{1\}) + \Ag(X)$ \cite{iris}, which is not UX-sound; in order for the switch of the side of a sum to be UX-sound, the resulting state (here, $\freed$) must be exclusively owned, which of course $\Ag$ never is. This is not a problem for Iris, that is only concerned with OX soundness, but because our goal is to make our state models both OX and UX sound for additional flexibility, we do make this change.
+The $\Freeable(\mmdl)$ state model transformer allows extending a state model with a \free{} action, that allows freeing a part of memory. The freed memory can then not be accessed, and attempting to use it raises a use-after-free error. The notion of marking freed memory as freed, rather than simply discarding it, has come from Incorrectness Separation Logic \cite{isl}, as indeed simply discarding the memory would break \ref{eq:frame-add}.
 
-To ensure frame preservation, the underlying state model must provide an additional function ${\isexowned\colon\St\rarr\bools}$, which equates to the property `exclusive' presented before. Because actions in the symbolic realm need to be sound with regards to the concrete realm, we then lift its definition to ${\isexowned\colon\Sst\rarr\LVal}$, making it return a symbolic value, that can be appended to the path condition.
+\Freeable{} is similar to the \textsc{OneShot} RA of Iris, with the key difference that the \freedP{} predicate used to mark a resource as freed is \emph{not duplicable}. Iris defines $\textsc{OneShot}(X) \defeq \Ex(\{1\}) + \Ag(X)$ \cite{iris}, which is not UX-sound; in order for the switch of the side of a sum to be UX-sound, the resulting state (here, $\freed$) must be exclusively owned, which of course $\Ag$ never is. This is not a problem for Iris, that is only concerned with OX soundness, but because our goal is to make our state models both OX and UX sound for additional flexibility, we do make this change.
+
+To ensure frame preservation, the underlying state model must provide an additional function ${\isexowned\colon\St\rarr\bools}$, which equates to the property `exclusive' presented before. Because actions in the symbolic realm need to be sound with respect to the concrete realm, we then lift its definition to ${\isexowned\colon\Sst\rarr\LVal}$, making it return a symbolic value, that can be appended to the path condition.
 
 While not needed for the core and compositional engines, the bi-abductive engine requires that  misses may be fixed; $\Freeable(\mmdl)$ however cannot access directly the core predicates of \mmdl{} to provide fixes when freeing an empty state. As such, the state model must also provide a ${\code{fix\_owned}\colon\Sst^?\rarr\lvallist}$ function that returns possible fixes to make the given state exclusively owned. This also implies that for any state $\st$ of \mmdl{}, if it is not exclusively owned then there exists a bigger state $\st'$ such that $\st\preo\st' \land \isexowned~\st'$. This is not the case, for instance, for \Ag. As such, constructions such as $\Freeable(\Ag(X))$ are not sound.
 
@@ -813,12 +815,94 @@ Defining \PMap{} and \List{} with a \GMap{} would require using the discriminato
 
 For the above two examples it is also needed to exclude the $\store$ actions defined by the discriminator (via \Ex), as modifying the domain set of a partial map or the bound of a list is not frame preserving. In general, it is unsound to modify the discriminator directly without also modifying the map: ``increasing'' it breaks \ref{eq:frame-add} (as states compatible with the new state aren't compatible with the old state), while ``decreasing'' it breaks \ref{eq:frame-sub} (for the inverse reason). Here increasing and decreasing refer to modifying the discriminator such that more or less indices are considered \emph{within} it.
 
+\section{Optimising Partial Maps} \label{sec:theory-optim-pmap}
 
+Map-like state models are both widely used and of varied applications, as seen before. They are also quite complex, as they can lead to many branches, even when only a small number of these is feasible. Take for instance the \PMap{} state $([ \sym a_1\mapsto x_1, ..., \sym a_n\mapsto x_n ], \bot)$. Executing a lookup on it will yield $n+1$ branches: one for each possible match, and one for the case where the index is different from all others. Such a state also needs to carry the fact that all addresses are distinct; for $n$ addresses, this is $\frac{n(n+1)}{2}$ inequalities. While at the theory level this isn't an issue, as we only worry about the soundness of the actions when the path condition is satisfiable, this can have a significant performance impact on the implementation.
 
+Optimisations exist to reduce the number of branches generated, and while they have been implemented succesfully in Gillian, there currently exists no theoretical justification to them proving their soundness. Here, we define \emph{theoretically} how to optimise \PMap-like state models, how to prove the soundness of these optimisations, and explore three different optimisations that already exist in Gillian.
 
 \subsection{Syntactic Checking}
 
+The simplest optimisation done to lookups is \emph{syntactic} checking: before attempting to branch on every index on the map, we check if the symbolic index is already present in the map, in which case nothing branching is not needed. 
+
+This only requires modifying the matching rule for the \code{get} function, adding $\sym i\notin \dom(\sym h)$ to the precondition, and adding a rule that directly gets the relevant state; both rules can be seen in \autoref{fig:syntactic-check-rules}.
+
+\begin{figure}
+	\centering
+	\begin{mathpar}
+\inferrule[SyntacticPMapGetMatch]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\in\dom(\sym h) \\ \sst_i=\sym h(\sym i)}{\ppget{\sst, \sym i}{\sym i, \sst_{i}, []}}
+\and\inferrule[SyntacticPMapGetBranch]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\notin\dom(\sym h) \\ \sym i'\in\dom(\sym h) \\ \sst_{i}=\sym h(\sym i')}{\ppget{\sst, \sym i}{\sym i', \sst_{i}, [\sym i=\sym i']}}
+	\end{mathpar}
+	\caption{Modified rules for syntactic matching}
+	\label{fig:syntactic-check-rules}
+\end{figure}
+
+This optimisation is what justifies returning an an index for every action in \PMap. As an example, take the state model $\PMap(\Ex(\Val))$ in the state $([\sym a_1\mapsto x_a, ..., \sym a_n\mapsto x_n])$. When executing $\code{load(}\sym b\code{)}$ with a fresh symbolic variable $\sym b$, we branch $n+1$ times, and return the value stored there \emph{along with the used index}, for instance returning $[\sym a_3, \sym x_3]$. The program is then free to use $\sym a_3$ instead of $\sym b$ for further accesses to that cell, and thanks to syntactic checking only one branch will be created (thus not branching). Without syntactic checking, every access invariably causes branching, even if the index is already present.
+
+An observation is that thanks to our \code{get} and \code{set} abstractions over accessing states at a given index, we can restrict ourselves to only modify these two definitions and carry over the rest of the rules of \PMap. Because these optimisations are purely due to the symbolicness of the heap indices, the concrete state model is untouched and we can prove soundness with respect to the concrete \PMap. Furthermore, we define symbolic \code{get} \emph{axioms}, which further ease proving soundness of the optimisations: when proving soundness of $\PMap$, we only use these axioms, meaning that any optimisation that satisfies the axioms is also automatically sound.
+\begin{equation}
+\tag{Get OX Soundness}\label{eq:get-complete}
+\begin{array}{l}
+\theta,s,\st \models \sst \land \ppgetc{\st, i}{\st_i} \land \expeval{\sym i}=i \implies \exists \sst_i, \sym i', \pc \ldotp \\
+\quad \ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \theta,s,\st_i\models\sst_i \land \expeval{\sym i'}=i \land \SAT(\pc)
+\end{array}
+\end{equation}
+\begin{equation}
+\tag{Get UX Soundness}\label{eq:get-sound}
+\begin{array}{l}
+\ppget{\sst,\sym i}{\sym i', \sst_i, \pc} \land \expeval{\sym i}=\expeval{\sym i'}=i \land \SAT(\pc) \implies \\
+\quad \forall \st\ldotp \theta,s,\st \models \sst \implies \exists \st_i \ldotp \ppgetc{\st, i}{\st_i} \land \theta,s,\st_i \models \sst_i
+\end{array}
+\end{equation}
+
+They are quite simple: for the OX case, any \code{get} call that exists in the concrete world must exist in the symbolic world. For the UX soundness, if a symbolic \code{get} returns a satisfiable branch then there is also a matching state $\st_i$ in the concrete world.
+
+We also define two additional axioms that we do not prove but that must hold for all \code{get} and \code{set} pairs:
+\begin{equation}
+\tag{Get-Set Forwards Soundness}\label{eq:getset-sound}
+\begin{array}{l}
+\ppget{\sst,\sym i}{\sym i', \sst_i} \land \ppset{\sst, \sym i', \sst_i'}{\sst'} \implies \\
+\quad (\exists \st,\st_i'\ldotp \theta,s,\st\models\sst \land \theta,s,\st_i'\models\sst_i') \implies \\
+\qquad \exists \st'\ldotp \theta,s,\st'\models\sst'
+\end{array}
+\end{equation}
+\begin{equation}
+\tag{Get-Set Backwards Soundness}\label{eq:getset-sound}
+\begin{array}{l}
+\ppget{\sst,\sym i}{\sym i', \sst_i} \land \ppset{\sst, \sym i', \sst_i'}{\sst'} \implies \\
+\quad (\exists \st',\st_i\ldotp \theta,s,\st'\models\sst' \land \theta,s,\st_i\models\sst_i) \implies \\
+\qquad \exists \st\ldotp \theta,s,\st\models\sst
+\end{array}
+\end{equation}
+
+These are quite straightforward: the former states that if a state exists in the concrete world and is modified with a substate that also exists in the concrete world, then the result must exist too. The latter states the reverse: if a state after \code{set} exists in the concrete, and we know that the subtate that used to be at the modified location also exists in the concrete world, then the original state also must exist.
+
+These two axioms simply follow from the fact that $\sym i'$ represents the location to directly modify the returned state, and that \code{set} only modifies the state at the given index, the rest being untouched. The axioms are used when proving OX and UX soundness respectively, as they each use either forwards or backwards reasoning.
+
 \subsection{Split PMap}
+
+The \emph{split} partial map, \SplitPMap, goes further for reducing branches: it split the heap into two, one side being the \emph{concrete} part, and the other the \emph{symbolic}. A concrete value is a value that contains no symbolic variables, such that it's evaluation is unaffected by substitutions: $\exists e\ldotp \forall \theta,s\ldotp \expeval{\sym e}=e$. We introduce the predicate $\code{is\_concrete}$ that is true if a value is concrete. The symbolicness of a binding in the heap is determined from the value (the substate) \emph{and the key}; a concrete key pointing to a symbolic substate, or a symbolic key pointing to a concrete substate, both go in the symbolic part of the heap. A state is symbolic if all of its elements are symbolic; \SplitPMap(I,\mmdl) thus requires the state model to implement an $\code{is\_concrete}_\mmdl\colon \Sst \rarr \bools$ function, which determines whether the entire state is concrete. For instance for the $\Ex(X)$ state model, we have ${\code{is\_concrete}_\Ex~\ex{x}\defeq \code{is\_concrete}~x}$.
+
+This has two advantages; the first minor advantage is that when looking for syntactic matches in the heaps, if the address is symbolic then we only must check in the symbolic part of the heap, as symbolic keys are not permitted in the concrete part\footnote{This doesn't hold for concrete keys, as it can be that the concrete key maps to a symbolic state, in which case it goes in the symbolic part of the heap.}. The second major advantage of this technique is related to an implementation detail of some CSE engines: \emph{substitution}. 
+
+Substitution is the process of replacing logical values in a state with a new value\footnote{Here we define substitution in states; this is different to substitution in expressions -- also known as $\alpha$-conversion -- which cannot be avoided. State substitution usually uses expression substitution.}. For instance when learning $\sym a_1 = \sym a_2$, the engine may decide to substitute all occurrences of $\sym a_2$ with $\sym a_1$ and remove the equality from the PC if it is sound to do so (if $\sym a_2$ never occurs again). Because this process applies to the entire state, it can lead to unfortunate consequences, such as needing to merge two state fragments that live at the same location. Reusing the above example, if the state contained $[\sym a_1 \mapsto \sst_1, \sym a_2\mapsto \sst_2]$, then the substituted state would be $[\sym a_1 \mapsto \sst_1 \cdot \sst_2]$. This is problematic, as composition is not defined for symbolic state. Current implementations usually mimic the composition of the concrete counterpart, branching when relevant; this is however not justified in the theory presented in this project, as it is caused by an implementation quirk rather than a theoretical necessity. In fact, what causes this is also a ``defect'' from the implementation, as it would mean the engine didn't assert that two different locations are in fact different. This phenomenon exists in Gillian under the name substitutions \cite{gillian2}, and in Viper under the name consolidation \cite{viper-consolidation}.
+
+Despite the fact it is only needed due to implementation details, we argue that optimisations are also something that is only needed because of an implementation, which justifies attempting to prove soundness of techniques that are caused by theoretically unsound solutions.
+
+The second advantage of \SplitPMap{}, relating to substitutions, is that these can be entirely skipped for the concrete part of the heap since we already know that it doesn't contain any symbolic variables. Substitutions are computationally expensive, as they require traversing the entire state and attempting substitutions on all values; for large state, this can take a significant amount of time.
+
+In \autoref{fig:splitpmap-set-rules} we present the rules relating to \code{set} for \SplitPMap. In particular, when this requires modifying the binding for one side of the heap, we must delete it from the other, as it can be that the state was concrete and became symbolic, or inversely.
+
+\begin{figure}
+	\centering
+\begin{mathpar}
+\inferrule[SplitPMapSetSomeCon]{(\sym h_c,\sym h_s,\sym d)=\fn{unwrap}(\sst) \\ \sst_i\neq\bot \\ \code{is\_concrete}_\St~\sst_i \\ \code{is\_concrete}~\sym i \\ \sym h'_c=\sym h_c[\sym i\leftarrow \sst_i] \\ \sym h'_s=\sym h_s[\sym i\not\leftarrow] \\ \sst'=\fn{wrap}(\sym h'_c, \sym h'_s, \sym d)}{\ppset{\sst,\sym i,\sst_i}{\sst'}}
+\and\inferrule[SplitPMapSetSomeSym]{(\sym h_c,\sym h_s,\sym d)=\fn{unwrap}(\sst) \\ \sym s_i\neq\bot \\ \neg(\code{is\_concrete}_\St~\sst_i \lor \code{is\_concrete}~\sym i) \\ \sym h'_c=\sym h_c[\sym i\not\leftarrow] \\ \sym h'_s=\sym h_s[\sym i\leftarrow \sst_i] \\ \sst'=\fn{wrap}(\sym h'_c, \sym h'_s, \sym d)}{\ppset{\sst,\sym i,\sst_i}{\sst'}}
+\and\inferrule[SplitPMapSetNone]{(\sym h_c,\sym h_s,\sym d)=\fn{unwrap}(\sst) \\ \sst_i=\bot \\ \sym h'_c=\sym h_c[\sym i\not\leftarrow] \\ \sym h'_s=\sym h_s[\sym i\not\leftarrow] \\ \sst'=\fn{wrap}(\sym h'_c, \sym h'_s, \sym d)}{\ppset{\sst,\sym i,\sst_i}{\sst'}}
+\end{mathpar}
+\caption{Rules for \code{set} in \SplitPMap}
+\label{fig:splitpmap-set-rules}
+\end{figure}
 
 \subsection{Abstract Location PMap}
 
