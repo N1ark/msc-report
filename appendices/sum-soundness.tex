@@ -41,10 +41,9 @@ To satisfy frame substraction, as the outcome in \hyp{eval} is \Ok, we would nee
 \section{Sound Sum}
 
 To define a sound version of sum that supports flipping the side, we thus need to remove the $0$ element of both sides from the allowed states. This ensure the states $l(0_1)$ and $r(0_2)$ aren't allowed, avoiding the problem seen with frame substraction. \begin{align*}
-	\mmdl_1 + \mmdl_2 \defeq l(\st\colon \St_1\backslash \{0_1\}) ~|~ r(\st\colon \St_2\backslash\{0_2\}) ~|~ 0
+	\mmdl_1 + \mmdl_2 \defeq l(\st\colon \St_1\setminus \{0_1\}) ~|~ r(\st\colon \St_2\setminus\{0_2\}) ~|~ 0
 \end{align*} 
 
-\newcommand{\isexowned}[0]{\code{is\_exclusively\_owned}}
 
 Additionally, to allow for a frame-preserving \swap{} action, another requirement must be met: the state must be \textit{exclusively owned} -- no other non-empty state can be composed with it. This thus requires for a \isexowned{} function to be provided, defined as:\footnote{This definition is for PCMs -- the formulation of \isexowned{} for RAs is simpler: $\isexowned~\st \defeq \nexists \st'\ldotp \st\disj\st'$}%
 \begin{align*}

@@ -129,14 +129,14 @@ proc call_dispose() {
 
 Let's now, step by step, inspect the verification of \code{call\_dispose}. First, we set up the initial state, producing \corepred{\exP}{}{1} onto the empty state $0$ -- our state is now, according to the above definitions, $\text{sub}(\ex{1})$. We now execute the function's body, calling the \code{dispose} function. To do this, we first need to consume its precondition: we consume \corepred{\exP}{}{1} from the state $\text{sub}(\ex{1})$. To do this, $\Freeable_\PCM$ calls the \consume{} function of $\Ex_\PCM(\nats)$, with the state $\ex{1}$, which returns $0$. $\Freeable_\PCM$ then wraps this state back, resulting in $\text{sub}(0)$. We then produce the post-condition of \code{dispose}, thus producing \corepred{\freedP}{}{} into $\text{sub}(0)$. This however is not valid, according to the rules outlined earlier! Indeed the state can't both be freed and something else. Of course, $\text{sub}(0)$ represents an empty state, but that means that the \consume{} and \produce{} rules of $\Freeable_\PCM$ must take this into account -- a simple implementation could miss it, resulting in such errors.
 
-This difficulty in fact turns out from the existence of both $0$ and $\text{sub}(0)$ as two distinct states, despite them being the same semantically: empty. To fix this, one must either make $\text{sub}(0)$ invalid, defining it as $\text{sub}(x\colon \St \backslash \{0\})$, or instead remove the definition of $0$ and instead use $\text{sub}(0)$ as the unit of $\Freeable_\PCM$. Either cases require one to be quite careful around the unit, as forgetting about it may lead to unwanted errors.
+This difficulty in fact turns out from the existence of both $0$ and $\text{sub}(0)$ as two distinct states, despite them being the same semantically: empty. To fix this, one must either make $\text{sub}(0)$ invalid, defining it as $\text{sub}(x\colon \St \setminus \{0\})$, or instead remove the definition of $0$ and instead use $\text{sub}(0)$ as the unit of $\Freeable_\PCM$. Either cases require one to be quite careful around the unit, as forgetting about it may lead to unwanted errors.
 
 \subsubsection{Unsoundness in Sum}\label{sec:unsoundness-in-sum}
 
 The sum state model $\Sum(\mmdl_1, \mmdl_2)$, also written $\mmdl_1 + \mmdl_2$, represents a state where either one of the two sides is owned, but not both. It is a useful as it allows representing states with transitions -- for instance, $\Freeable(\mmdl)$, introduced before, can also be defined as $\mmdl + \Ex(\{\freed\})$.
 
 While this state is useful in that it allows modelling transitions from one side of the sum to another, it is in fact non-trivial to define in a way that is both OX-sound and UX-sound. In particular, neither sides of the sum must permit the $0$ element, if a state $\st$ allows swapping no other smaller state $\st'\preo\st$ must allow swapping, and the state swapped into must be \emph{exclusively owned}. This property is taken from \cite{iris}, and for PCMs can be defined as: \begin{align*}
-	\code{is\_exclusively\_owned}_\PCM~\st \defeq \forall \st'\ldotp \st'\neq 0\implies \neg(\st\disj\st')
+	\isexowned_\PCM~\st \defeq \forall \st'\ldotp \st'\neq 0\implies \neg(\st\disj\st')
 \end{align*}
 
 The proof that the above properties must hold can be found in \cref{ap:sum-soundness}. Again we note how the presence of a $0$ adds requirements around these constructions, cluttering otherwise elegant definitions.
@@ -594,19 +594,227 @@ While the above state models can prove useful, they are limited in use, only all
 
 \subsection{Sum}
 
+The sum state model $\Sum(\mmdl_1,\mmdl_2)$, also written $\mmdl_1 + \mmdl_2$, allows representing states that can be in either the states of $\mmdl_1$ or $\mmdl_2$. This state model doesn't introduce any core predicates or actions, and instead simply lifts those of the two underlying state models. Let $\actions_1$ and $\preds_1$ the actions and core predicates of $\mmdl_1$, and $\actions_2$ and $\preds_2$ those of $\mmdl_2$, the actions of the sum are defined as ${\actions = \{\code{L}\alpha : \alpha \in \actions_1 \} \uplus \{\code{R}\alpha : \alpha \in \actions_2 \}}$, and the core predicates as ${\preds = \{\code{L}\delta : \delta \in \preds_1 \} \uplus \{\code{R}\delta : \delta \in \preds_2 \}}$. Actions and predicates are simply tagged with what side of the sum they originate from.
+
+Let $\St_1$ and $\St_2$ be the carrier sets of the RAs of $\mmdl_1$ and $\mmdl_2$ respectively; the RA of $\Sum(\mmdl_1,\mmdl_2)$ is:
+\begin{align*}
+	\Sum(\mmdl_1, \mmdl_2) \defeq \mmdl_1+\mmdl_2 &\defeq l(\st\colon \St_1) ~|~ r(\st\colon \St_2)\\
+	l(\st)\cdot l(\st') &\defeq l(\st\cdot \st')\\
+	r(\st)\cdot r(\st') &\defeq r(\st\cdot \st')\\
+	|l(\st)|&\defeq \begin{cases}
+ 		\bot &\If~ |\st|=\bot\\
+ 		l(|\st|) &\Otherwise
+	 \end{cases}\\
+	 |r(\st)|&\defeq \begin{cases}
+ 		\bot &\If~ |\st|=\bot\\
+ 		r(|\st|) &\Otherwise
+	 \end{cases}
+\end{align*}
+
+In \cref{sec:unsoundness-in-sum} we showed how $\Sum_\PCM$ must disallow the unit on each side to be sound. In RAs however, this is not an issue anymore, as the underlying state models can simply not define a unit. We may also redefine \isexowned, to take into account that the unit is not present in the carrier set, giving a much simpler definition: \begin{align*}
+	\isexowned~\st \defeq \nexists \st'\in\St\ldotp \st\disj\st'
+\end{align*}
+
+The rules of the \Sum{} state model are otherwise straightforward, lifting \execac, \consume{} and \produce{} to the sum from the underlying state models. The only minor difference is when a \Miss{} occurs -- because fixes are only generated from a $\lvallist$, \Sum{} has no way of knowing which side raised the \Miss, and can thus not call the \fix{} function of the correct side. To avoid this, when the outcome of \execac{} or \consume{} is a \Miss{} we concatenate an identifier to the values to allow discriminating between the two. An extract of these rules is shown in \autoref{fig:sum-miss-example}.
+
+\begin{figure}
+	\centering
+\begin{align*}
+	\text{Given }
+	\mathit{wrap}_l(x) = \begin{cases}
+		\bot &\If~x=\bot\\
+	 	l(x)&\Otherwise
+	 \end{cases} \text{ and }
+	 \mathit{unwrap}_l(x_l) = \begin{cases}
+ 		\bot &\If ~x=\bot\\
+ 		x &\If~x_l=l(x)\\
+ 		\text{undefined}&\Otherwise
+	 \end{cases}
+\end{align*}
+	\begin{mathpar}
+\inferrule[SumLAction]{\sst=\mathit{unwrap}_l(\sst_l) \\ \ppexec{\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \\ \sst_l' = \mathit{wrap}_l(\sst') \\ o \neq \Miss}{\ppexec{\code{L}\alpha}{\sst_l,\sins}{o,\sst_l',\souts,\pc}}
+\and\inferrule[SumLActionMiss]{\sst=\mathit{unwrap}_l(\sst_l) \\ \ppexec{\alpha}{\sst,\sins}{\Miss,\sst',\souts,\pc} \\ \sst_l' = \mathit{wrap}_l(\sst')}{\ppexec{\code{L}\alpha}{\sst_l,\sins}{\Miss,\sst_l',\strv{l}::\souts,\pc}}
+\and\inferrule[SumLFix]{\mmdl_1.\fix~\sins=a}{\fix~\strv{l}::\sins=a}
+	\end{mathpar}
+	\caption{Rules for handling \Miss{} in \Sum}
+	\label{fig:sum-miss-example}
+\end{figure}
+
+This example is interesting in that it also the constraint imposed by the fact $\bot\notin\Sst$: it is often needed to define auxiliary $\fn{unwrap}$ and $\fn{wrap}$ functions, that get the state out a value if it is not $\bot$, and returns $\bot$ otherwise. In other words, $\fn{unwrap}\colon\Sst_1^?\part\Sst_2^?$ and $\fn{wrap}\colon\Sst_2^?\rarr\Sst_1^?$. While these are straightforward to define and use, they can clutter rules a bit, in favour of not needing to handle $\bot$ and non-$\bot$ cases separately.
+
 \subsection{Product}
+
+The product state model $\Product(\mmdl_1, \mmdl_2)$, also written $\mmdl_1 \times \mmdl_2$, allows representing pairs of states, where each side belongs to a specific state model. For instance, one could chose to represent the $\Frac(X)$ state model as $\Ex(X) \times \Frac_{\mathbb{Q}}$, where $\Frac_{\mathbb{Q}}$ is an exclusively owned rational in the $(0;1]$ where composition is addition. This is, in fact, the way Iris defines $\Frac$ \cite{iris-thesis} -- however, this approach makes using the state model less practical, as one would need to define a separate predicate for each side.
+
+Iris also defines the product RA, by simply lifting pointwise the operations on each side of the product. We call this initial definition $\Product_0$, defining it as: \begin{align*}
+ 	\Product_0(\mmdl_1,\mmdl_2)&\defeq \St_1 \times \St_2\\
+ 	(\st_l,\st_r)\cdot(\st_l',\st_r') &\defeq (\st_l\cdot \st_l',\st_r\cdot \st_r')\\
+ 	|(\st_l,\st_r)|&\defeq \begin{cases}
+(|\st_l|, |\st_r|) &\If~|\st_l|\neq\bot \land |\st_r|\neq\bot\\
+\bot&\Otherwise
+\end{cases}
+\end{align*}
+
+This definition, while straightforward, has a problem: indeed, while its sets of states is $\St_1\times\St_2$, we still have that $\bot\notin\St$. If an empty ($\bot$) states produces a core predicate for one of its sides, what happens to the other side? Indeed, while one side becomes defined, such that $\st_l\in\St_1$, $(\st_l, \bot)$ is not a valid state, since $\bot \notin \St_s$. This is a problem, since in our CSE engine all states are initialised as $\bot$ and can only be built upon via actions or predicate production, one predicate at a time (this problem wouldn't exist if we could produce a pair of predicates). It seems here that the consume-produce interface of our engine, which allows creating state bit by bit, can thus be unadapted for certain RAs. Of course one can define additional predicate for a specific product instantiation that combines predicates of underlying state models, however this go against the core idea of state model transformers to minimise the amount of effort needed to construct new state models. Finally, we also note that this problem is not encountered in $\Product_\PCM$, since there the unit of the PCM can be defined as $(0_1, 0_2)$ and work straightforwardly.
+
+We define an alternative product RA that is more suited to this engine: \begin{align*}
+	\Product(\mmdl_1,\mmdl_2) \defeq \mmdl_1 \times \mmdl_2 &\defeq (\St_1^? \times \St_2^?) \setminus \{(\bot, \bot)\}\\
+	(\st_l, \st_r) \cdot (\st_l', \st_r') &\defeq (\st_l \cdot \st_l', \st_r \cdot \st_r')\\
+	|(\st_l, \st_r)| &\defeq \begin{cases}
+		\bot &\If~|\st_l|=\bot\land |\st_r|=\bot\\
+		(|\st_l|, |\st_r|) &\Otherwise
+ 	\end{cases}
+\end{align*}
+
+We take advantage of the option state model $-^?$ and use that instead, thus allowing either sides of the product to be $\bot$. Crucially however, we exclude the $(\bot, \bot)$ state and ensure in the $\fn{wrap}$ helper that it never occurs (see \autoref{fig:product-rules-example}). This is important, because it means \emph{exclusivity} is carried: if for $(\st_l,\st_r)$ we have ${\isexowned~\st_l \land \isexowned~\st_r}$, then it also follows that $\isexowned~(\st_l, \st_r)$. If we hadn't excluded $(\bot, \bot)$, then it would always be the case that $(\st_l,\st_r)\cdot(\bot,\bot)$ holds, meaning that the state could never be exclusively owned. This is unpractical, as it would mean that disposing of a product is not frame preserving.
+
+\begin{figure}
+	\centering
+\begin{align*}
+	\text{Given }
+	\mathit{wrap}(x, y) = \begin{cases}
+		\bot &\If~x=\bot \land y=\bot\\
+		(x,y) &\Otherwise
+	 \end{cases} \text{ and }
+	 \mathit{unwrap}(s) = \begin{cases}
+ 		(\bot, \bot) &\If ~s=\bot\\
+		(x, y) &\Otherwise
+	 \end{cases}
+\end{align*}
+	\begin{mathpar}
+\inferrule[ProductLAction]{(\sst_l,\sst_r)=\mathit{unwrap}(\sst) \\ \ppexec{\alpha}{\sst_l,\sins}{o,\sst_l',\souts,\pc} \\ \sst' = \mathit{wrap}(\sst_l',\sst_r) \\ o \neq \Miss}{\ppexec{\code{L}\alpha}{\sst,\sins}{o,\sst',\souts,\pc}}
+\end{mathpar}
+	\caption{Example of action rules in \Product}
+	\label{fig:product-rules-example}
+\end{figure}
 
 \subsection{Freeable}
 
+The $\Freeable(\mmdl)$ state model transformer allows extending a state model with a \free{} action, that allows freeing a part of memory. The freed memory can then not be accessed, and attempting to use it raises a use-after-free error. This is similar to the \textsc{OneShot} RA of Iris, with the key difference that the \freedP{} predicate used to mark a resource as freed is \emph{not duplicable}. Iris defines $\textsc{OneShot}(X) \defeq \Ex(\{1\}) + \Ag(X)$ \cite{iris}, which is not UX-sound; in order for the switch of the side of a sum to be UX-sound, the resulting state (here, $\freed$) must be exclusively owned, which of course $\Ag$ never is. This is not a problem for Iris, that is only concerned with OX soundness, but because our goal is to make our state models both OX and UX sound for additional flexibility, we do make this change.
+
+To ensure frame preservation, the underlying state model must provide an additional function ${\isexowned\colon\St\rarr\bools}$, which equates to the property `exclusive' presented before. Because actions in the symbolic realm need to be sound with regards to the concrete realm, we then lift its definition to ${\isexowned\colon\Sst\rarr\LVal}$, making it return a symbolic value, that can be appended to the path condition.
+
+While not needed for the core and compositional engines, the bi-abductive engine requires that  misses may be fixed; $\Freeable(\mmdl)$ however cannot access directly the core predicates of \mmdl{} to provide fixes when freeing an empty state. As such, the state model must also provide a ${\code{fix\_owned}\colon\Sst^?\rarr\lvallist}$ function that returns possible fixes to make the given state exclusively owned. This also implies that for any state $\st$ of \mmdl{}, if it is not exclusively owned then there exists a bigger state $\st'$ such that $\st\preo\st' \land \isexowned~\st'$. This is not the case, for instance, for \Ag. As such, constructions such as $\Freeable(\Ag(X))$ are not sound.
+
+Similarly to Iris, we define the $\Freeable(\mmdl)$ state model by construction: $\Freeable(\mmdl) \defeq \mmdl + \Ex(\{\freed\})$, which allows all associated rules to be kept. For clarity, we rename the core predicate $\code{R}~\exP$ (defined by~$\Ex(\{\freed\})$) as $\freedP$. We also extend its actions with the $\free$ action.
+
+Because \Freeable{} is constructed via other state model transformers, we only need to describe the rules for \free{}, whcih are shown in  as seen in \autoref{fig:freeable-free-rules} -- the rest of the construction is already sound. This shows how simpler state models can be extended while alleviating the user from the burden of proving the soundness of the base construction.
+
+\begin{figure}
+	\centering
+	\begin{mathpar}
+\inferrule[FreeableActionFree]{}{\ppexec{\free}{l(\sst),[]}{\Ok,r(\ex\freed),[],[\isexowned~\sst]}}
+\and\inferrule[FreeableActionFreeErr]{}{\ppexec{\free}{l(\sst),[]}{\Miss,l(\sst),\code{fix\_owned}~\sst,[\neg\isexowned~\sst]}}
+\and\inferrule[FreeableActionFreeMiss]{}{\ppexec{\free}{\bot,[]}{\Miss,\bot,\code{fix\_owned}~\bot,[]}}
+\and\inferrule[FreeableActionDoubleFree]{}{\ppexec{\free}{r(\ex\freed),[]}{\Err,r(\ex\freed),[],[]}}
+\end{mathpar}
+	\caption{Symbolic action rule of \Freeable}
+	\label{fig:freeable-free-rules}
+\end{figure}
+
+Conveniently, use-after-free errors are already handled by the sum construction, thanks to the \textsc{SumLActionIncompat} rule which forbids actions from one side of the sum to be executed on the other side.
+
 \subsection{Partial Map}
 
-\subsection{Dynamic Partial Map}
+The partial map state model transformer $\PMap(I,\mmdl)$ is perhaps one of the most important state model transformers, as it allows having multiple state instances at different addresses and accessing them. It is constructed from a domain, $I\subseteq\Val$, and a state model for the codomain. For instance, the traditional separation logic heap can be modelled as $\PMap(\nats, \Ex(\Val))$. The C and the JavaScript memory models can also both be modelled using a $\PMap$, despite them being radically different. 
 
-\subsection{List}
+It defines one action, \alloc{}, and one core predicate, \domainset. It also \emph{lifts} all actions and predicates of the underlying model, adding to them an index argument or in-value. For instance, while for $\Ex(X)$ one has the core predicate $\corepred{\exP}{}{x}$, for $\PMap(\Ex(X))$ one would instead have predicate of the form $\corepred{\exP}{i}{x}$, which corresponds to the ``points to'' assertion $i\mapsto x$. We define it's RA as: \begin{breakalign*}
+	\PMap(I,\mmdl) &\defeq (I \finmap \mmdl.\Sigma) \times \pset(I)^?\\
+	(h,d)\cdot (h',d') &\defeq (h'', d'') \\
+	\text{where } h''&\defeq \lambda i.\begin{cases}
+		h(i)\cdot h'(i)&\If~i\in \dom(h)\cap\dom(h')\\
+		h(i) &\If~i\in \dom(h) \setminus \dom(h')\\
+		h'(i) &\If~i\in \dom(h') \setminus \dom(h)\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }d''&\defeq\begin{cases}
+		d&\If~d'=\bot\\
+		d'&\If~d=\bot\\
+		\text{undefined}&\Otherwise
+	\end{cases}\\
+	\text{and }& d'' = \bot \lor \dom(h'')\subseteq d''\\
+	|(h, d)| &\defeq \begin{cases}
+		\bot &\If~\dom(h')=\emptyset\\
+		(h', \bot) &\Otherwise
+	\end{cases}\\
+	\text{where }h'&\defeq \lambda i.\begin{cases}
+		|h(i)| &\If~ i\in\dom(h) \land |h(i)| \neq \bot\\
+		\text{undefined} &\Otherwise
+	\end{cases}
+\end{breakalign*}
 
-\subsection{General Map}
+An element of \PMap{} is of the form $(h, d)$, where $h$ are the mappings from locations to states, and $d$ is the \emph{domain set}, the set of indices that are known to exist. It is defined such that $\dom(h)\subseteq d$ always holds. The domain can also be $\bot$, in which case there is no knowledge on what addresses exist or don't. The aim of the domain set is to allow separating invalid accesses from misses: if $d\neq\bot$, then any access to $i\notin d$ leads to an $\Err$ outcome, however if $i\in d$ and the binding does not exist in the heap, then a $\Miss$ is raised.
 
-\section{Optimising the Partial Maps} \label{sec:theory-optim-pmap}
+As a consequence of this, $\PMap(I,\mmdl)$ has an additional requirement for $\mmdl$: any action execution on $\bot$ must lead to a $\Miss$. \begin{align*}
+	\ppexec{\alpha}{\bot,\ins}{o,\st',\outs,\pc} \implies o=\Miss
+\end{align*}
+
+This is needed for frame preservation; if this wasn't the case, one could run into a case where the action of a cell in the heap succeeds on an empty heap, but an empty domain set would be compatible with the state, despite its composition with the state leading to a different outcome (an \Err).
+
+This constraint also comes from the fact that \PMap{} can't automatically yield a \Miss{} when executing actions on missing cells, and must instead execute the action on $\bot$. Indeed, because $\PMap(I,\mmdl)$ can accept any underlying state model, it does not ``know'' what values are needed to fix the missing cell. Instead, it needs $\mmdl$ to raise a $\Miss$ that it can then lift with an index.
+
+As mentioned before, \PMap{} lifts actions and core predicates, adding to them an index. Getting the state associated to an index is not simple, and will in fact be the target of several optimisations in \cref{sec:theory-optim-pmap}. For now we consider the simplest form of symbolic matching: either the index is present in the heap, or it isn't -- if it isn't and the domain set is not $\bot$, we also know that it must in the domain set. This creates three rules one must consider. For instance, given a state $([\sym a\mapsto \sym x, \sym b \mapsto \sym y], \bot)$, when an action is executed with index $\sym c$, three branches are created: either $\sym a = \sym c$, or $\sym b = \sym c$, or $\sym c$ is not part of the current heap, giving us $\sym c\notin \{\sym a,\sym b\}$.
+
+Because most \execac, \consume{} and \produce{} rules of \PMap{} require retrieving states at a specific index, we introduce an abstraction over this, with the \code{get} and \code{set} functions. The former allows getting the state at an index \emph{with branching}; its signature is $\code{get}\colon \PMap(I,\mmdl)^? \rarr I \rarr \pset(I \times \St^? \times \Pc)$, as it returns the an index to modify exactly the returned state, the state itself, and a path condition corresponding to the branch. The $\code{set}$ function has signature $\code{set}\colon \PMap(I,\mmdl)^?\rarr I \rarr \St^? \rarr \PMap(I,\mmdl)^?$. Unlike for \code{get}, we don't allow branching when setting: because branching already happened when getting, and \code{get} returns the index to use to modify the state, we can use this new index and be guaranteed that it is sound. For instance for the above example, the three executions are ${\ppget{\sst,\sym c}{\sym a, \sst_a, [\sym c = \sym a]}}$, ${\ppget{\sst, \sym c}{\sym b, \sst_b, [\sym c = \sym b]}}$ and ${\ppget{\sst,\sym c}{\sym c, \bot, [\sym c\notin \{\sym a,\sym b\}]}}$. We present the rules for \code{get} in \autoref{fig:pmap-get-rules}.
+
+\begin{figure}
+	\centering
+	\begin{mathpar}
+\inferrule[PMapGetMatch]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i'\in\dom(\sym h) \\ \sst_i=\sym h(\sym i')}{\ppget{\sst, \sym i}{\sym i', \sst_i, [\sym i=\sym i']}}
+\and\inferrule[PMapGetAdd]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\notin\dom(\sym h) \\ \sym d\neq\bot}{\ppget{\sst, \sym i}{\sym i,\bot, [\sym i\notin\dom(\sym h) \land \sym i\in \sym d]}}
+\and\inferrule[PMapGetBotDomain]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\notin \dom(\sym h) \\ \sym d=\bot}{\ppget{\sst,\sym i}{\sym i,\bot,[\sym i\notin\dom(\sym h)]}}
+\end{mathpar}
+	\caption{Rules for \code{get} for \PMap}
+	\label{fig:pmap-get-rules}
+\end{figure}
+
+Another unseemingly complex aspect of \PMap{} is allocation, for which the rules are presented in \autoref{fig:pmap-alloc-rules}. To allow instantiating, the wrapped state model must provide an \code{instantiate} function defined as $\code{instantiate}\colon \Val \rarr \St$, such that given the arguments given to $\alloc$, it returns a newly instantiated state. An initial definition of \PMap{} had \alloc{} always succeed; for instance, a $\bot$ state could alloc, resulting in $([\sym i\mapsto \st_i], \bot)$, with $\st_i$ the instantiated state. This however does not satisfy \ref{eq:frame-sub}: the frame $(\emptyset, \{\})$, made of an empty heap and the empty domain set, is compatible with the state before the allocation, but is not compatible with the state after, since the domain of the heap $\{\sym i\}$ is not a subset of $\{\}$. We must thus enforce ownership of the domain set when allocating. This is odd: in allocation-based languages like C, one can always allocate a new cell, without needing to ``own'' anything, as the allocator is global. With this definition of \alloc{} however, one can't allocate without it, which can be problematic: for instance in a multi-threaded setting, two threads cannot own the domain set, since it is exclusively owned to allow modification.
+
+This is a weakness of this \PMap{} definition, as we require a more restrictive behaviour than what is usually admitted with allocation. This also has the unfortunate side effect that whenever a function needs to allocate, it must specify a \domainset{} core predicate in its pre and postcondition, which can become quite verbose and unpractical. Attempts have been made to preserve the domain set while allowing for more flexible allocation semantics, for instance by having the domain set be a duplicable resource that allows modification, by defining composition as set union. However these relaxations often had as a consequence that out of bounds accesses couldn't reliably be detected anymore, as indeed more heap cells with a larger domain set could always be composed to yield a succesful outcome. In fact allocation seems to be a topic that is in essence hard to tackle with separation logic; \cite{seplogic2,localreasoning} already mentioned some of these difficulties regarding freshness of the new index.
+
+\begin{figure}
+	\centering
+	\begin{mathpar}
+\inferrule[PMapAlloc]{\sym d\neq \bot \\ \sym i = \code{fresh}~I \\ \sst_i=\code{instantiate}(\sins) \\ \sym h' = \sym h[\sym i\leftarrow \sst_i] \\ \sym d' = \sym d\uplus \{\sym i\}}{\ppexec{\alloc}{(\sym h,\sym d), \sins}{\Ok, (\sym h',\sym d'), [\sym i], [\sym i=\sym i]}}
+\and\inferrule[PMapAllocMiss]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym d=\bot}{\ppexec{\alloc}{\sst,\sins}{\Miss,\sst,[\strv{domainset}],[]}}
+\end{mathpar}
+	\caption{Rules for \alloc{} for \PMap}
+	\label{fig:pmap-alloc-rules}
+\end{figure}
+
+A solution to the above problem is to simply get rid of the domain set, and define \PMap{} only as the mappings from indices to states. This works, however one loses the ability to detect out of bounds accesses entirely, as additional cells can always be composed with the state to yield a non-\Miss{} outcome. For our purposes however, we keep the definition using a domain set, as it is more powerful.
+
+\subsection{Partial Map Variations}
+
+The behaviour of \PMap{} is not always adapted for the state one wants to model. Here we describe in a shorter form some state models that function similarly to \PMap.
+
+\subsubsection{Dynamic Partial Map}
+
+The \emph{dynamic} partial map, $\DynPMap(I,\mmdl)$, allows dynamically allocating missing cells when they're accessed. It is used, for instance, when modelling objects in JavaScript. In JavaScript, accessing a property that hasn't been set simply yields a default value, \code{undefined}, and any property of an object can be set directly without needing to allocate it first. This can be easily achieved by modifying \PMap, such that any out of bounds accesses have the effect of instantiating the state at that location, storing it, and executing the action against it. In other words, instead of using the domain set to distinguish between \Err{} and \Miss, we use it to distinguish between \Ok{} and \Miss \cite{sacha-phd}.
+
+We also need to remove the \alloc{} action, since allocation has no reason to exist; the cell can be modified directly instead.
+
+\subsubsection{List}
+
+The list state model, $\List(\mmdl)$, allows storing a list of states up to a bound. Instead of having a domain set, we define it as having a bound $n$ such that all indices $i$ are in $[0;n($. It is useful when wanting to represent continuous blocks of memory of known size. We use it for the state model of WISL, which uses a simple block-offset memory model: each memory access requires an address of the block, and the offset within the block to read from.
+
+Because the bound can also be $\bot$, it serves the exact same purpose as the domain set in \PMap{}: distinguishing out of bounds from misses.
+
+\subsubsection{General Map}
+
+Due to the strong similarity between $\PMap$ and $\List$, it is tempting to define a more general sort of map state model, that allows replicating both behaviours. The general map $\GMap$ allows this; constructed as $\GMap(I,\mmdl,\mmdl_D)$, it receives the same domain set and codomain state model as before, but it also receives a \emph{discriminator} state model $\mmdl_D$, which represents the state which is capable of discriminating out of bounds accesses from missing accesses.
+
+The discriminator must come equipped with a $\code{is\_within}\colon \St_D \rarr I \rarr \bools$ function that given an index returns whether or not the state is within bounds. Here, the input discriminator state is never $\bot$: if the discriminator is not known then a \Miss{} must be issued, since composing a state with a non-$\bot$ discriminator can change the outcome. \code{is\_within} must also be lifted to the symbolic realm, resulting in $\code{is\_within}\colon \Sst_D\rarr I\rarr \pset(\LVal)$. 
+
+Defining \PMap{} and \List{} with a \GMap{} would require using the discriminator state models $\Ex(\pset(I))$ and $\Ex(\nats)$ respectively, with the following $\code{is\_within}$ definitions: \begin{align*}
+	\code{is\_within}_{\PMap}~d~i&\defeq i\in d\\
+	\code{is\_within}_{\List}~n~i&\defeq 0 \leq i \land i < n
+\end{align*}
+
+For the above two examples it is also needed to exclude the $\store$ actions defined by the discriminator (via \Ex), as modifying the domain set of a partial map or the bound of a list is not frame preserving. In general, it is unsound to modify the discriminator directly without also modifying the map: ``increasing'' it breaks \ref{eq:frame-add} (as states compatible with the new state aren't compatible with the old state), while ``decreasing'' it breaks \ref{eq:frame-sub} (for the inverse reason). Here increasing and decreasing refer to modifying the discriminator such that more or less indices are considered \emph{within} it.
+
+
+
 
 \subsection{Syntactic Checking}
 

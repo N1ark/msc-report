@@ -230,7 +230,7 @@ Given the sum $\mmdl_1 + \mmdl_2$ such that the actions and predicates of $\mmdl
 
 Let $\St_1$ and $\St_2$ be the carrier sets of the RAs of $\mmdl_1$ and $\mmdl_2$ respectively.
 \begin{align*}
-	\Product(\mmdl_1,\mmdl_2) \defeq \mmdl_1 \times \mmdl_2 &\defeq \St_1^? \times \St_2^? \backslash \{(\bot, \bot)\}\\
+	\Product(\mmdl_1,\mmdl_2) \defeq \mmdl_1 \times \mmdl_2 &\defeq \St_1^? \times \St_2^? \setminus \{(\bot, \bot)\}\\
 	(\st_l, \st_r) \cdot (\st_l', \st_r') &\defeq (\st_l \cdot \st_l', \st_r \cdot \st_r')\\
 	|(\st_l, \st_r)| &\defeq \begin{cases}
 		\bot &\If~|\st_l|=\bot\land |\st_r|=\bot\\
@@ -300,30 +300,30 @@ The symbolic interpretation and core predicate satisfiability are carried by con
 
 \subsection{Compositional Concrete Rules}
 
-We only define the additional action $\free$, the rest being carried by construction via the sum. The wrapped concrete state model $\mmdl$ must provide an ${\code{is\_exclusively\_owned}\colon\St\rarr\bools}$ function such that: \begin{align*}
-	\code{is\_exclusively\_owned}~\st \iff \nexists. \st'\ldotp \st\disj\st'
+We only define the additional action $\free$, the rest being carried by construction via the sum. The wrapped concrete state model $\mmdl$ must provide an ${\isexowned\colon\St\rarr\bools}$ function such that: \begin{align*}
+	\isexowned~\st \iff \nexists. \st'\ldotp \st\disj\st'
 \end{align*}
 
 It also must provide a $\code{fix\_owned}\colon \St\rarr\vallist$ giving values to fix the \Miss.
 
 \begin{mathparpagebreakable}
-\inferrule[CFreeableActionFree]{\code{is\_exclusively\_owned}~\st}{\ppexecc{\free}{l(\st),[]}{\Ok,r(\ex\freed),[]}}
-\and\inferrule[CFreeableActionFreeErr]{\neg\code{is\_exclusively\_owned}~\st}{\ppexecc{\free}{l(\st),[]}{\Miss,l(\st),\code{fix\_owned}~x}}
+\inferrule[CFreeableActionFree]{\isexowned~\st}{\ppexecc{\free}{l(\st),[]}{\Ok,r(\ex\freed),[]}}
+\and\inferrule[CFreeableActionFreeErr]{\neg\isexowned~\st}{\ppexecc{\free}{l(\st),[]}{\Miss,l(\st),\code{fix\_owned}~x}}
 \and\inferrule[CFreeableActionFreeMiss]{}{\ppexecc{\free}{\bot,[]}{\Miss,\bot,\code{fix\_owned}~\bot}}
 \and\inferrule[CFreeableActionDoubleFree]{}{\ppexec{\free}{r(\ex\freed),[]}{\Err,r(\ex\freed),[]}}
 \end{mathparpagebreakable}
 
 \subsection{Compositional Symbolic Rules}
 
-Similarly, we carry the symbolic rules for \execac, \consume, \produce{} and \fix{} by construction via the sum. The wrapped symbolic state model $\mmdl$ must provide an ${\code{is\_exclusively\_owned}\colon\Sst\rarr\LVal}$ function such that: \begin{align*}
-	\code{is\_exclusively\_owned}~\sst =\vtrue \iff (\forall \theta,s,\st\ldotp \theta,s,\st\models\sst \implies \nexists. \st'\ldotp \st\disj\st')
+Similarly, we carry the symbolic rules for \execac, \consume, \produce{} and \fix{} by construction via the sum. The wrapped symbolic state model $\mmdl$ must provide an ${\isexowned\colon\Sst\rarr\LVal}$ function such that: \begin{align*}
+	\isexowned~\sst =\vtrue \iff (\forall \theta,s,\st\ldotp \theta,s,\st\models\sst \implies \nexists. \st'\ldotp \st\disj\st')
 \end{align*}
 
 It also must provide a $\code{fix\_owned}\colon \Sst^?\rarr\lvallist$ giving values to fix the \Miss.
 
 \begin{mathparpagebreakable}
-\inferrule[FreeableActionFree]{}{\ppexec{\free}{l(\sst),[]}{\Ok,r(\ex\freed),[],[\code{is\_exclusively\_owned}~\sst]}}
-\and\inferrule[FreeableActionFreeErr]{}{\ppexec{\free}{l(\sst),[]}{\Miss,l(\sst),\code{fix\_owned}~\sst,[\neg\code{is\_exclusively\_owned}~\sst]}}
+\inferrule[FreeableActionFree]{}{\ppexec{\free}{l(\sst),[]}{\Ok,r(\ex\freed),[],[\isexowned~\sst]}}
+\and\inferrule[FreeableActionFreeErr]{}{\ppexec{\free}{l(\sst),[]}{\Miss,l(\sst),\code{fix\_owned}~\sst,[\neg\isexowned~\sst]}}
 \and\inferrule[FreeableActionFreeMiss]{}{\ppexec{\free}{\bot,[]}{\Miss,\bot,\code{fix\_owned}~\bot,[]}}
 \and\inferrule[FreeableActionDoubleFree]{}{\ppexec{\free}{r(\ex\freed),[]}{\Err,r(\ex\freed),[],[]}}
 \end{mathparpagebreakable}
@@ -337,8 +337,8 @@ It also must provide a $\code{fix\_owned}\colon \Sst^?\rarr\lvallist$ giving val
 	(h,d)\cdot (h',d') &\defeq (h'', d'') \\
 	\text{where } h''&\defeq \lambda i.\begin{cases}
 		h(i)\cdot h'(i)&\If~i\in \dom(h)\cap\dom(h')\\
-		h(i) &\If~i\in \dom(h) \backslash \dom(h')\\
-		h'(i) &\If~i\in \dom(h') \backslash \dom(h)\\
+		h(i) &\If~i\in \dom(h) \setminus \dom(h')\\
+		h'(i) &\If~i\in \dom(h') \setminus \dom(h)\\
 		\text{undefined}&\Otherwise
 	\end{cases}\\
 	\text{and }d''&\defeq\begin{cases}
