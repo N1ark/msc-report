@@ -1,4 +1,4 @@
-\section{Split Partial Map}
+\section{Split Partial Map} \label{proofs:splitpmap-soundness}
 
 For the split partial map, we define a new RA, \SplitPMap, which we only use for the symbolic representation; the concrete compositional RA is still that defined in \PMap. We re-use the definitions for action execution, \consume{} and \produce{}, as the only part of them that is modified is \code{get} and \code{set}. From this, we can thus re-use the soundness proofs for all of the axioms; the only part that needs to be proved again are the axioms for symbolic \code{get}, with regards to the concrete version that is taken from \PMap.
 
