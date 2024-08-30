@@ -1,17 +1,88 @@
 \chapter{Implementation}
 
-\section{State Model Library}
+We now present the implementation of the state models and state model transformers presented. In \cref{sec:state-model-lib}, we present the library which exposes these state models, some relevant implementation details, and notable differences with the theory. In \cref{sec:impl-instantiations}, we then present the instantiations of Gillian for three different target languages using this library.
+
+\section{State Model Library} \label{sec:state-model-lib}
+
+All of the presented state models have been implemented in OCaml 5.2 \cite{ocaml} for Gillian \cite{gillian0,gillian1,gillian2}, a CSE engine that is parametric on the state model. We first present the general interface for state models, and how it connects to the Gillian engine. We then look more in depth into the implementation of two state models: \Ex{} for its canonical simplicity, and \PMap{} for its complexity. Finally, we list some additional ``utility'' state models that were omitted in the previous chapter but that are frequently used when instantiating state models.
 
 \subsection{State Model Interface}
 
-\todobox{Move this on implementation of fixes}
+State models are built as standalone \emph{modules}, while state model transformers are \emph{functors}, that accept one or more state model modules, and return a new state model module. Gillian already provides an interface for state models, \code{MonadicSMemory}, whose name originates from its extensive use of the \code{Delayed} monad: a \emph{symbolic execution monad} that allows branching and SMT queries in a sugared syntax that is easy to read and use, as seen in \autoref{fig:example-delayed}. The signature of the monad, in OCaml syntax, is \code{'a Delayed.t = Pc.t -> ('a * Pc.t) list}: given a PC, we return a list of branches, containing the new value and an updated PC. We make extensive use of \emph{let bindings}\footnote{See \url{https://ocaml.org/manual/5.2/bindingops.html}}: \code{let* v = d in e} is the \code{bind} operator, passing the value \code{v} contained in the delayed element \code{d} to the expression \code{e}, which must result in another delayed value. \code{let+} is the \code{map} operator, which modifies the value without branching. For the code shown, we branch when validating the index, and then branch again when calling \code{S.produce}; we then update the entry with \code{ss'}, without branching.
 
-This approach is different from how Gillian handles it. There the function \fix{} returns \emph{pure} assertions (type information, pure formulae) and arbitrary values of type \code{fix\_t}, which can then be used with the $\code{apply\_fix}:\Sigma \rarr \code{fix\_t} \rarr \Sigma$ method of the monadic state. This means fixes can be arbitrary modifications to the state that don't necessarily equate to new assertions to add to the anti-frame.
+\begin{figure}
+\begin{lstlisting}
+let produce pred s args =
+  match (pred, args) with
+  | SubPred pred, idx :: args ->
+    let* ss = validate_index s idx in
+    let+ ss' = S.produce pred ss args in
+    update_entry s idx ss'
+\end{lstlisting}
+\caption{Example of usage of the \code{Delayed} monad}
+\label{fig:example-delayed}
+\end{figure}
 
-This is a source of unsoundness, as the engine may interpret these modifications as fixes despite them not reliably modifying the state. This can be seen in \cite{sacha-phd}, where not finding the binding in a PMap(X) returns a \code{MissingBinding} error. While being labelled as a miss, this error can actually not be fixed; PMap simply \emph{lifts} predicates with an additional in parameter for the index. An implementation of that version of PMap(X) could attempt to fix this state by add a binding to $X.0$ (PMaps were originally made for PCMs, which always have a 0 element), which would then eventually lead to another error once the action gets called on the empty state. On top of being under-performing (as several fixes would need to be generated for one action), this requires PMap(X) to allow empty states in the codomain, which means a PMap is never exclusively owned (as a state with a singleton map to $X.0$ can always be composed with it), which limits its usability; aside from not being modelable using RAs, since $\bot$ is not an element of X's carrier set. Finally, if the underlying state model doesn't provide any additional fixes, then the fix for \code{MissingBinding} cannot be added to the UX specification of a function: there is no assertion generatable from within PMap to represent this modification. As such, having \fix{} returns assertions without modifying any state directly ensures fixes are always soundly handled.
+The interface provided by Gillian is not satisfactory: it is quite complex, requiring the implementation of 26 different functions, whose purpose is at times unclear\footnote{This is due to the fact Gillian has been in development for several years, and as it grew some unused functions were never cleaned up.}. We thus created a simpler interface, \code{MyMonadicSMemory}, reducing the number of required functions and type definitions, and simplifying the definition of some functions (removing arguments when unneeded). Gillian also passes actions and core predicates as strings; while this is manageable for monolithic state models, this is unpractical. We instead require state models to define \code{action} and \code{pred} types, along with their \code{to\_string} and \code{from\_string} parsers, ensuring decoupling between parsing and execution. See \autoref{tab:monadicsmem-interface} for a side-by-side comparison of the interfaces.
 
-To finish this, we may note the solution to the above bug is to proceed executing the action on the underlying state model, giving it an empty state -- it will then raise the appropriate \Miss{}, which can be fixed, as it is aware of what core predicates are needed to create the required state. For instance, for PMap(Exc) a \code{load} action on a missing binding would be executed against $\bot$, which would return a \code{MissingValue} error. The PMap could then wrap the error with information about the index at which the error occurred, $\code{SubError}(i, \code{MissingValue})$. When getting the fix, PMap can then call Exc.\fix, which returns $\exists x\ldotp \corepred{points\_to}{}{x}$, and lift the fix by adding the index as an in-argument, resulting in the final fix $\exists x\ldotp\corepred{points\_to}{i}{x}$, which is a valid assertion and can be added to the UX specification for this execution.
+Because Gillian still requires the state model to satisfy \code{MonadicSMemory}, we provide a \code{Make} functor converting from our interface to Gillian's.
 
+\begin{table}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Gillian interface} & \textbf{Our interface}  & \textbf{Outcome}  \\ \hline \hline
+\code{apply\_fix}  &  & Removed  \\ \hline
+\code{clean\_up}  &  & Removed  \\ \hline
+\code{clear}  &  & Removed  \\ \hline
+\code{copy}  &  & Removed  \\ \hline
+\code{get\_failing\_constraint} &  & Removed  \\ \hline
+\code{get\_init\_data}  &  & Removed  \\ \hline
+\code{get\_print\_info}  &  & Removed  \\ \hline
+\code{is\_overlapping\_asrt}  &  & Removed  \\ \hline
+\code{mem\_constraints}  &  & Removed  \\ \hline
+\code{pp\_by\_need}  &  & Removed  \\ \hline
+\code{pp\_c\_fix}  &  & Removed  \\ \hline
+\code{split\_further}  &  & Removed  \\ \hline
+\code{sure\_is\_nonempty}  &  & Removed \\ \hline
+
+\code{alocs}  & \code{alocs}  &  \\ \hline
+\code{assertions}  & \code{assertions}  & Typed the core predicates  \\ \hline
+\code{can\_fix}  & \code{can\_fix}  &  \\ \hline
+\code{consume}  & \code{consume}  & Typed the core predicate  \\ \hline
+\code{execute\_action}  & \code{execute\_action}  & Typed the action  \\ \hline
+\code{get\_fixes}  & \code{get\_fixes}  & Simplified, use assertions \\ \hline
+\code{get\_recovery\_tactic}  & \code{get\_recovery\_tactic} & Simplified  \\ \hline
+\code{init}  & \code{empty}  & Renamed  \\ \hline
+\code{lvars}  & \code{lvars}  &  \\ \hline
+\code{pp}  & \code{pp}  &  \\ \hline
+\code{pp\_err}  & \code{pp\_err}  &  \\ \hline
+\code{produce}  & \code{produce}  & Typed core predicate  \\ \hline
+\code{substitution\_in\_place}  & \code{substitution\_in\_place} &  \\ \hline
+
+& \code{action\_from\_str}  & Added  \\ \hline
+& \code{action\_to\_str}  & Added  \\ \hline
+& \code{assertions\_others}  & Added  \\ \hline
+& \code{compose}  & Added  \\ \hline
+& \code{instantiate}  & Added  \\ \hline
+& \code{is\_concrete}  & Added  \\ \hline
+& \code{is\_empty}  & Added  \\ \hline
+& \code{is\_exclusively\_owned}  & Added  \\ \hline
+& \code{pred\_from\_str}  & Added  \\ \hline
+& \code{pred\_to\_str}  & Added  \\ \hline
+\end{tabular}
+\caption{Difference between Gillian's and our state model interface}
+\label{tab:monadicsmem-interface}
+\end{table}
+
+Most of the removals are possible because some default function can be used for all state models, under the assumption they behave a particular way; for instance, we remove the \code{copy} function, because we assume all state models only work on immutable code. Most of the additions are due to the modular nature of our state models, or to enforce a stronger typing of actions and predicates.
+
+A significant difference with the theory presented is that the \execac, \consume{} and \produce{} functions do not take as input states of type \code{t option} (to imitate $\Sst^?$), but instead \code{t}. While both options are possible, using the \code{option} monad proved to at times be somewhat unweildy (for the same reason it is unpractical to use $\fn{wrap}$ and $\fn{unwrap}$ in the rules) -- we instead rely on the \code{is\_empty} function when necessary. Note we also implement a \code{compose} function, despite it not being justified in the theory, because of substitutions.
+
+One of the most significant improvements of our interface is the re-work of fixes in the engine, to behave precisely like the definition of \fix{} in the theory. Gillian uses an intermediary \code{fix\_t} type, that is obtained from an error with \code{get\_fixes}, and must then be applied with \code{apply\_fix: t -> fix\_ t -> (t, err\_t) result Delayed.t}. Aside from being an unpractical system to use, generating a fix and then applying it separately, it \emph{introduces unsoundness into the bi-abductive engine}. Indeed, applying a fix modifies the state directly; there is no requirement for this fix to be describable in terms of assertions. This means that applying the same fix on the state and the anti-frame may give different results, that do not result in the appropriate change for the function's generated pre-condition.
+
+For instance in \cite{sacha-phd}, an example implementation of \PMap{} is given, where executing an action on an empty cell creates a \Miss{}, called \code{MissingBinding}. A naive implementation of \PMap{} for Gillian could resolve this fix by simply adding a binding in the heap at the corresponding index, that points to the empty substate. This however is not sound, as it \emph{cannot be expressed as an assertion}: it manipulates the representation of state, but no assertion exists that creates an empty binding, since \PMap{} doesn't define core predicates for bindings -- it only lifts the core predicates of the wrapped state model. This would thus result in a fix that doesn't change the anti-frame or the specification of the function, which is invalid.
+
+We fix this by enforcing \code{fix\_t} to be of type \code{MyAsrt.t}: strongly typed assertions. The implementation of \code{apply\_fix} then produces all the fixes into the state model. This change thus not only makes state models less prone to error, but also simplifies their code.
 
 \subsection{Exclusive}
 
@@ -19,7 +90,7 @@ To finish this, we may note the solution to the above bug is to proceed executin
 
 \subsection{Helper State Models}
 
-\section{Instantiations}
+\section{Instantiations} \label{sec:impl-instantiations}
 
 \subsection{WISL}
 
