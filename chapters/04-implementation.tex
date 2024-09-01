@@ -226,7 +226,7 @@ $\statemodel{Injector}(\mmdl, I)$ adds hooks into \consume, \produce{} and \exec
 
 We now look at how this library of state models can be used to instantiate Gillian. In particular we focus on instantiating Gillian to target languages (TLs) that have already been instantiated for it: WISL, JavaScript and C.
 
-To instantiate a language to Gillian, the developer must provide its state model, and a compiler from the TL to GIL (Gillian's Intermediate Language). Because this project focuses on constructing state models, it is thus natural that we picked languages for which the compiler already exists.
+To instantiate a language to Gillian, the developer must provide its state model, and a compiler from the TL to GIL. Because this project focuses on constructing state models, it is thus natural that we picked languages for which the compiler already exists.
 
 Before we delve into any language specific, we note that all forms of $\PMap(\Loc, \mmdl)$ implicitly make use of the abstract location optimisation described in \cref{sec:theory-optim-pmap}. This is because all of Gillian's instantiations also make use of it, and the goal of our instantiations is to have \emph{parity} with the reference implementation, rather than th have additional completeness. Indeed, while removing the unsoundness caused by ALocs is straightforward in our library, it causes a majority of tests fail, making any comparison with Gillian impossible.
 
