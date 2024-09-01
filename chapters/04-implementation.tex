@@ -28,6 +28,7 @@ The interface provided by Gillian is not satisfactory: it is quite complex, requ
 Because Gillian still requires the state model to satisfy \code{MonadicSMemory}, we provide a \code{Make} functor converting from our interface to Gillian's.
 
 \begin{table}
+\caption{Difference between Gillian's and our state model interface}
 \begin{tabular}{|l|l|l|}
 \hline
 \textbf{Gillian interface} & \textbf{Our interface}  & \textbf{Outcome}  \\ \hline \hline
@@ -70,7 +71,6 @@ Because Gillian still requires the state model to satisfy \code{MonadicSMemory},
 & \code{pred\_from\_str}  & Added  \\ \hline
 & \code{pred\_to\_str}  & Added  \\ \hline
 \end{tabular}
-\caption{Difference between Gillian's and our state model interface}
 \label{tab:monadicsmem-interface}
 \end{table}
 

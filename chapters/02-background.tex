@@ -1,6 +1,8 @@
 \chapter{Background}
 
-\section{Separation Logic}
+In this chapter we introduce some of the core ideas used throughout this document, while mentioning pre-existing work in the field. In \cref{sec:separationlogic} we introduce Separation Logic, its variations, and the idea of Separation Algebras; in \cref{sec:gillianverif} we introduce Gillian, a CSE engine; in \cref{sec:existing-tools} we mention other similar verification tools; finally, in \cref{sec:legal-requirements} we evoke the legal, social, ethical and professional impacts of this work.
+
+\section{Separation Logic} \label{sec:separationlogic}
 
 As the need to formally verify programs grew, methods needed to be built to provide a framework to do so. Hoare Logic \cite{hoarelogic} allows proving properties of programs, by describing them axiomatically. Every statement can be expressed as having a precondition -- the state before execution -- and a postcondition -- the state after \emph{successful} execution -- expressed as \SLtriple PSQ. For assignment for instance, one could have \SLtriple{\code{x}=x}{\code{x} := 0}{\code{x}=0}.
 
@@ -48,9 +50,9 @@ This approach is also taken in \cite{sepalgebra}, where separation algebras are 
 
 In \cite{statesoundness}, further improvements are done to the axiomatisation of separation algebras. Most notably, the property of cancellativity is removed, as it is too strong and unpractical for some cases, as shown previously. Furthermore, the idea of unit, or \emph{core}, is made explicit, with the definition of the total function $\hat-$, the core of a resource, which is its \emph{duplicable~part}.
 
-Finally, Iris \cite{iris} is a state of the art ``higher-order concurrent separation logic''. It places itself as a solution to the problem mentioned in \cite{next700seplogics}, and aims to provide a sound base logic that can be reused and extended to fit all needs. It defines \emph{resource algebras} (RAs), objects that are similar to separation algebras. Because Iris supports ``higher-order ghost state'', more sophisticated mechanisms are needed to model state, and as such the composition function $\cdot$ needs to be total. To rule out invalid compositions, a validity function $\irisval$ is instead used, which returns whether a given state is valid. The core function, written $|-|$, is made \emph{partial}, rather than total -- this, they argue, makes constructing state models from smaller components easier. This was confirmed when developing state models for Gillian, where having the core be a total function made some state models more complicated to make sound, as will be shown later.
+Finally, Iris \cite{iris1,iris2,iris3,iris} is a state of the art ``higher-order concurrent separation logic''. It places itself as a solution to the problem mentioned in \cite{next700seplogics}, and aims to provide a sound base logic that can be reused and extended to fit all needs. It defines \emph{resource algebras} (RAs), objects that are similar to separation algebras. Because Iris supports ``higher-order ghost state'', more sophisticated mechanisms are needed to model state, and as such the composition function $\cdot$ needs to be total. To rule out invalid compositions, a validity function $\irisval$ is instead used, which returns whether a given state is valid. The core function, written $|-|$, is made \emph{partial}, rather than total -- this, they argue, makes constructing state models from smaller components easier. This was confirmed when developing state models for Gillian, where having the core be a total function made some state models more complicated to make sound, as will be shown later.
 
-\section{Program Verification with Gillian}
+\section{Program Verification with Gillian} \label{sec:gillianverif}
 
 While having a logic to prove programs is a great step towards verifying codebases, doing it manually is tedious and time-consuming. Tools have been developed to automate this, such as \emph{Gillian} \cite{gillian0, gillian1, gillian2}. It is a \emph{compositional symbolic execution engine}, with the added property of being \emph{parametric on the memory model}. It allows reasoning about \emph{correctness and incorrectness}. We may now go over exactly what this means.
 
@@ -136,7 +138,7 @@ This allows one to instantiate Gillian to their preferred target language, and a
 
 Thanks to this and the aforementioned parametricity of the memory model, Gillian is therefore a unified CSE engine, that allows scalable verification of software in a unified setting, without requiring one to adapt to two different engines, which may be prohibitively time-consuming.
 
-\section{Existing Tools}
+\section{Existing Tools} \label{sec:existing-tools}
 
 A wide range of engines exist to verify the correctness of code, most targeted towards a specific language. This allows them to implement behaviour that is appropriate for that particular language.
 For instance, CBMC \cite{cbmc} is a bounded model checker, that allows for the verification of C programs, via whole program symbolic testing -- that is, it is not compositional, and instead symbolically executes a given codebase, and verifies that assertions hold on a generated formula. While clearly useful, as shown by its success, this solution doesn't scale particularly well; larger applications need to be split modularly to be verified, and manual stubbing is required to support testing parts of the code separately.
@@ -157,11 +159,12 @@ For instance Viper \cite{viper} is an infrastructure capable of program verifica
 
 One can still take genericity further, by also abstracting the state model the engine operates on. A tool that does this is coreStar \cite{corestar}, the CSE engine backing jStar with all the Java-related components removed and replaced. It does not target Java, but instead a generic intermediate language. Furthermore, instead of coming with predicates predefined, it requires user-defined predicates to be provided, which are then used throughout the proof. They are defined in a language specified by coreStar, and are thus however quite limited in expressivity. Still, this is to our knowledge the first example of a tool that allows some flexibility in the underlying logic theory.
 
-This is also what Gillian \cite{gillian0, gillian1, gillian2} does, a CSE engine parametric on the state model. It doesn't support any one language, but instead can target any language that provides a state model implementation in OCaml and a compiler to GIL, its intermediary language. Currently Gillian has been instantiated to the C language (via CompCert-C), JavaScript, and Rust \cite{gillianrust}. It is a generalisation of JaVerT, which only targeted JavaScript.
+This is also what Gillian \cite{gillian0, gillian1, gillian2, sacha-phd} does, a CSE engine parametric on the state model. It doesn't support any one language, but instead can target any language that provides a state model implementation in OCaml and a compiler to GIL, its intermediary language. Currently Gillian has been instantiated to the C language (via CompCert-C), JavaScript, and Rust \cite{gillianrust}. It is a generalisation of JaVerT, which only targeted JavaScript. Following Gillian, work has also been done on formalising a theoretical CSE engine, providing axioms an implementation must follow \cite{cse1,cse2} as well as an implementation in Rocq of the engine to prove its soundness.
 
 In \autoref{tab:verif-tools-comparison} we show a side-by-side comparison of the aforementioned tools.
 
 \begin{table}[h]
+\caption{Comparison of verification tools}
 \begin{tabular}{l|lccl}
 &&& \textbf{Parametric} &\\
 & \textbf{Target Language} & \textbf{Compositional} & \textbf{State Model} & \textbf{Mode} \\ \hline
@@ -180,11 +183,10 @@ Gillian  & IR (GIL)                  & \cmark & \cmark & WPST, OX, UX\\
 \multicolumn{5}{c}{\footnotesize{WPST = Whole Program Symbolic Testing.}}\\
 \multicolumn{5}{c}{\footnotesize{*Unmaintained}}
 \end{tabular}
-\caption{Comparison of verification tools}
 \label{tab:verif-tools-comparison}
 \end{table}
 
-\section{Legal, Social, Ethical and Professional Requirements}
+\section{Legal, Social, Ethical and Professional Requirements} \label{sec:legal-requirements}
 
 There aren't particular legal, social or ethical considerations associated with compositional symbolic execution. To the contrary, improving code verification and facilitating its use and adoption may result in positive outcomes in a wide range of fields where programs are critical. This includes, among others, medical, nuclear and spatial fields, where program failures can cause life loss, catastrophic environmental degradation, or significant economic loss. For instance, the infamous Therac-25 radiation therapy machine caused the death of four patients and the injury of two others between 1985 and 1987 due to an error when handling shared mutable state \cite{therac25}. This could have been detected and avoided if proper verification of the program had been done. 
 
