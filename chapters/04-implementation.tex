@@ -4,11 +4,11 @@ We now present the implementation of the state models and state model transforme
 
 \section{State Model Library} \label{sec:state-model-lib}
 
-All of the presented state models have been implemented in OCaml 5.2 \cite{ocaml} for Gillian \cite{gillian0,gillian1,gillian2}, a CSE engine that is parametric on the state model. We first present the general interface for state models, and how it connects to the Gillian engine. We then look more in depth into the implementation of two state models: \Ex{} for its canonical simplicity, and \PMap{} for its complexity. Finally, we list some additional ``utility'' state models that were omitted in the previous chapter but that are frequently used when instantiating state models.
+All of the presented state models have been implemented in OCaml 5.2 \cite{ocaml} for Gillian \cite{gillian0,gillian1,gillian2}, a CSE engine that is parametric on the state model. We first present the general interface for state models, and how it connects to the Gillian engine. We then look more in depth into the implementation of two state models: \Ex{} for its canonical simplicity, and \PMap{} for its complexity. Finally, we list some additional ``utility'' state models that were omitted in the previous chapter but that are frequently used when instantiating state~models.
 
 \subsection{State Model Interface}
 
-State models are built as standalone \emph{modules}, while state model transformers are \emph{functors}, that accept one or more state model modules, and return a new state model module. Gillian already provides an interface for state models, \code{MonadicSMemory}, whose name originates from its extensive use of the \code{Delayed} monad: a \emph{symbolic execution monad} that allows branching and SMT queries in a sugared syntax that is easy to read and use, as seen in \autoref{fig:example-delayed}. The signature of the monad, in OCaml syntax, is \code{'a Delayed.t = Pc.t -> ('a * Pc.t) list}: given a PC, we return a list of branches, containing the new value and an updated PC. We make extensive use of \emph{let bindings}\footnote{See \url{https://ocaml.org/manual/5.2/bindingops.html}}: \code{let* v = d in e} is the \code{bind} operator, passing the value \code{v} contained in the delayed element \code{d} to the expression \code{e}, which must result in another delayed value. \code{let+} is the \code{map} operator, which modifies the value without branching. For the code shown, we branch when validating the index, and then branch again when calling \code{S.produce}; we then update the entry with \code{ss'}, without branching.
+State models are built as standalone \emph{modules}, while state model transformers are \emph{functors}, that accept one or more state model modules, and return a new state model module. Gillian already provides an interface for state models, \code{MonadicSMemory}, whose name originates from its extensive use of the \code{Delayed} monad: a \emph{symbolic execution monad} that allows branching and SMT queries in a sugared syntax that is easy to read and use, as seen in \autoref{fig:example-delayed}. The signature of the monad, in OCaml syntax, is \code{'a Delayed.t = Pc.t -> ('a * Pc.t) list}: given a PC, we return a list of branches, containing the new value and an updated PC. We make extensive use of \emph{let bindings}:\footnote{See \url{https://ocaml.org/manual/5.2/bindingops.html}} \code{let* v = d in e} is the \code{bind} operator, passing the value \code{v} contained in the delayed element \code{d} to the expression \code{e}, which must result in another delayed value. \code{let+} is the \code{map} operator, which modifies the value without branching. For the code shown, we branch when validating the index, and then branch again when calling \code{S.produce}; we then update the entry with \code{ss'}, without branching.
 
 \begin{figure}
 \begin{lstlisting}
@@ -23,9 +23,7 @@ let produce pred s args =
 \label{fig:example-delayed}
 \end{figure}
 
-The interface provided by Gillian is not satisfactory: it is quite complex, requiring the implementation of 26 different functions, whose purpose is at times unclear\footnote{This is due to the fact Gillian has been in development for several years, and as it grew some unused functions were never cleaned up.}. We thus created a simpler interface, \code{MyMonadicSMemory}, reducing the number of required functions and type definitions, and simplifying the definition of some functions (removing arguments when unneeded). Gillian also passes actions and core predicates as strings; while this is manageable for monolithic state models, this is unpractical. We instead require state models to define \code{action} and \code{pred} types, along with their \code{to\_string} and \code{from\_string} parsers, ensuring decoupling between parsing and execution. See \autoref{tab:monadicsmem-interface} for a side-by-side comparison of the interfaces.
-
-Because Gillian still requires the state model to satisfy \code{MonadicSMemory}, we provide a \code{Make} functor converting from our interface to Gillian's.
+The interface provided by Gillian is not satisfactory: it is quite complex, requiring the implementation of 26 different functions whose purpose is at times unclear.\footnote{This is due to the fact Gillian has been in development for several years, and as it grew some unused functions were never cleaned up.} We thus create a simpler interface, \code{MyMonadicSMemory}, reducing the number of required functions and type definitions, and simplifying the definition of some functions (removing arguments when unneeded). Gillian also passes actions and core predicates as strings; while this is manageable for monolithic state models, this is unpractical. We instead require state models to define \code{action} and \code{pred} types, along with their \code{to\_string} and \code{from\_string} parsers, ensuring decoupling between parsing and execution. See \autoref{tab:monadicsmem-interface} for a side-by-side comparison of the interfaces. Because Gillian still requires the state model to satisfy \code{MonadicSMemory}, we provide a \code{Make} functor converting from our interface to Gillian's.
 
 \begin{table}
 \caption{Difference between Gillian's and our state model interface}
@@ -76,11 +74,11 @@ Because Gillian still requires the state model to satisfy \code{MonadicSMemory},
 
 Most of the removals are possible because some default function can be used for all state models, under the assumption they behave a particular way; for instance, we remove the \code{copy} function, because we assume all state models only work on immutable code. Most of the additions are due to the modular nature of our state models, or to enforce a stronger typing of actions and predicates.
 
-A significant difference with the theory presented is that the \execac, \consume{} and \produce{} functions do not take as input states of type \code{t option} (to imitate $\Sst^?$), but instead \code{t}. While both options are possible, using the \code{option} monad proved to at times be somewhat unweildy (for the same reason it is unpractical to use $\fn{wrap}$ and $\fn{unwrap}$ in the rules) -- we instead rely on the \code{is\_empty} function when necessary. Note we also implement a \code{compose} function, despite it not being justified in the theory, because of substitutions.
+A significant difference with the theory presented is that the \execac, \consume{} and \produce{} functions do not take as input states of type \code{t option} (to imitate $\Sst^?$), but instead \code{t}. While both options are possible, using the \code{option} monad proved to at times be somewhat unweildy (for the same reason it is unpractical to use $\fn{wrap}$ and $\fn{unwrap}$ in the rules) -- we instead rely on the \code{is\_empty} function when necessary. We also require a \code{compose} function, despite it not being justified in the theory, because of substitutions.
 
 One of the most significant improvements of our interface is the re-work of fixes in the engine, to behave precisely like the definition of \fix{} in the theory. Gillian uses an intermediary \code{fix\_t} type, that is obtained from an error with \code{get\_fixes}, and must then be applied with \code{apply\_fix: t -> fix\_ t -> (t, err\_t) result Delayed.t}. Aside from being an unpractical system to use, generating a fix and then applying it separately, it \emph{introduces unsoundness into the bi-abductive engine}. Indeed, applying a fix modifies the state directly; there is no requirement for this fix to be describable in terms of assertions. This means that applying the same fix on the state and the anti-frame may give different results, that do not result in the appropriate change for the function's generated pre-condition.
 
-For instance in \cite{sacha-phd}, an example implementation of \PMap{} is given, where executing an action on an empty cell creates a \Miss{}, called \code{MissingBinding}. A naive implementation of \PMap{} for Gillian could resolve this fix by simply adding a binding in the heap at the corresponding index, that points to the empty substate. This however is not sound, as it \emph{cannot be expressed as an assertion}: it manipulates the representation of state, but no assertion exists that creates an empty binding, since \PMap{} doesn't define core predicates for bindings -- it only lifts the core predicates of the wrapped state model. This would therefore result in a fix that doesn't change the anti-frame or the specification of the function, which is invalid.
+For instance in \cite{sacha-phd}, an example implementation of \PMap{} is given, where executing an action on an empty cell creates a \Miss{}, called \code{MissingBinding}. A naive implementation of \PMap{} for Gillian could resolve this fix by simply adding a binding that points to the empty substate in the heap at the corresponding index. This however is not sound, as it \emph{cannot be expressed as an assertion}: it manipulates the representation of state, but no assertion exists that creates an empty binding, since \PMap{} doesn't define core predicates for bindings -- it only lifts the core predicates of the wrapped state model. This would therefore result in a fix that doesn't change the anti-frame or the specification of the function, which is invalid.
 
 We fix this by enforcing \code{fix\_t} to be of type \code{MyAsrt.t}: strongly typed assertions. The implementation of \code{apply\_fix} then produces all the fixes into the state model. This change thus not only makes state models less prone to error, but also simplifies their code.
 
@@ -112,7 +110,7 @@ let produce core_pred s insouts =
   | Ex, Some _, _ -> Delayed.vanish ()
   | _ -> failwith "Invalid Ex produce"
 \end{lstlisting}
-Again, this is straightforward; a simple pattern matching suffices. \code{DR.ok} stands for \mbox{\code{Delayed.return (Ok -)}}, returning the input in a \code{Result} monad, wrapped in a \code{Delayed} monad. The outcome is thus \Ok{} -- for \Err{}, \LFail{} and \Miss{} outcomes, we use \code{DR.error}; the state model then provides a \code{can\_fix} function that given an error returns whether it is fixable, signifying it's a \Miss. Experiments were done to create an \code{Outcome} monad, with variants \code{Ok | Miss | Err | LFail}, as a replacement for the \code{Result} monad with \code{Ok | Err}. While this allowed getting rid of the \code{can\_fix} function, it was unpractical to use, as it was purely ``aesthetic''; the engine still needed to parse everything back to a \code{Result}. Furthermomre, this made lifting errors quite tedious: instead of simply defining a \code{SubError of S.err\_t} variant to errors and lifting the errors of the underlying state model through it, one had to handle all three error cases, creating a lot of boilerplate for little to no added value.
+Again, this is straightforward; a simple pattern matching suffices. \code{DR.ok} stands for \mbox{\code{Delayed.return (Ok -)}}, returning the input in a \code{Result} monad, wrapped in a \code{Delayed} monad. The outcome is thus \Ok{} -- for \Err{}, \LFail{} and \Miss{} outcomes, we use \code{DR.error}; the state model then provides a \code{can\_fix} function that given an error returns whether it is fixable, signifying it's a \Miss. Experiments were done to create an \code{Outcome} monad, with variants \code{Ok | Miss | Err | LFail}, as a replacement for the \code{Result} monad with \code{Ok | Err}. While this allowed getting rid of the \code{can\_fix} function, it was unpractical to use, as it was purely ``aesthetic''; the engine still needed to parse everything back to a \code{Result}. Furthermomre, this made lifting errors quite tedious: instead of simply defining a variant \code{SubError of S.err\_t} for the error type and lifting the errors of the underlying state model through it, one had to handle all three error cases, creating a lot of boilerplate code for little to no added value.
 
 Finally here we mention some of the additional functions that the state model must implement: \begin{lstlisting}
 let empty () = None
@@ -129,13 +127,13 @@ let can_fix MissingState = true
 let get_fixes MissingState =
   [ [ MyAsrt.CorePred (Ex, [], [ LVar (Generators.fresh_svar ()) ]) ] ]
 \end{lstlisting}
-These functions are, in order: the constructor for the empty ($\bot$) state, a function tell if the state is $\bot$, the \isexowned{} presented before, the \code{instantiate} function required by \PMap, a function to return all the core predicates associated with a state, the function to tell apart \Err{} and \Miss{}, and the \fix{} function presented in \cref{chap:theory}. For \fix, we note that specifying the existential for the fix $\exists\sym x\ldotp \corepred{\exP}{}{\sym x}$ is not needed, as all unbound logical variables in Gillian are existentially quantified by default.
+These functions are, in order: the constructor for the empty ($\bot$) state, a function to tell if the state is $\bot$, the \isexowned{} presented before, the \code{instantiate} function required by \PMap, a function to return all the core predicates associated with a state, the function to tell apart \Err{} and \LFail{} from \Miss{}, and the \fix{} function presented in \cref{chap:theory}. For \fix, we note that specifying the existential for the fix $\exists\sym x\ldotp \corepred{\exP}{}{\sym x}$ is not needed, as all unbound logical variables in Gillian are existentially quantified by default.
 
 This is -- skipping the irrelevant functions -- all of the code for a simple state model in Gillian, using our interface \code{MyMonadicSMemory}. The entire code is 77 lines long, with the biggest function taking 9 lines. This shows that for simple state models, our interface allows for just as simple implementations.
 
 \subsection{Partial Map}
 
-We now present some details of the $\PMap(I,\mmdl)$ implementation. It is a functor, receiving a \code{PMapIndex} module and a \code{MyMonadicSMemory} module, corresponding to the $I$ and $\mmdl$ arguments of the constructor. Both \PMap{} and \DynPMap{} are implemented as one state model; what enables the ``dynamic'' behaviour is the value \code{mode : Static | Dynamic} that is contained in the input index. The only difference in behaviour is enabling the \alloc{} action in static mode, and catching any \code{NotAllocated} errors and replacing them with an implicit allocation in dynamic mode. Aside from this, \code{PMapIndex} has an \code{is\_valid\_index}, which returns the ``actual'' index associated with an input index. This is where the abstract location optimisations plays a role: for the \code{LocationIndex} module, it is: \begin{lstlisting}
+We now present some details of the $\PMap(I,\mmdl)$ implementation. It is a functor, receiving a \code{PMapIndex} module and a \code{MyMonadicSMemory} module, corresponding to the $I$ and $\mmdl$ arguments of the constructor. Both \PMap{} and \DynPMap{} are implemented as one state model; what enables the ``dynamic'' behaviour is the value \code{mode : Static | Dynamic} that is contained in the input index. The only difference in behaviour this causes is enabling the \alloc{} action in static mode, and catching any \code{NotAllocated} errors and replacing them with an implicit allocation in dynamic mode. Aside from this, \code{PMapIndex} has an \code{is\_valid\_index}, which returns the ``actual'' index associated with an input index. This is where the abstract location optimisations plays a role: for the \code{LocationIndex} module, it is: \begin{lstlisting}
 module LocationIndex : PMapIndex = struct
   let mode = Static
 
@@ -157,7 +155,7 @@ end
 \end{lstlisting}
 We see here how \code{Delayed.resolve\_loc}, named \code{to\_aloc} in \cref{sec:theory-optim-pmap}, may not find a result, in which case we generate a new fresh abstract location to assign to the expression, by extending the PC: ``\code{\textasciitilde{}learned: [ (loc' \#== e) ]}'' appends the expression $\code{loc'} = \code{e}$ to it, with \code{\#==} signifying the symbolic equality.
 
-This is only one part of the implementation for what was called \code{get} in the theory. The rest of it is two functions:\footnote{Note we omit some optimisations for clarity.} \begin{lstlisting}
+This is only one part of the implementation for what was called \code{get} in the theory. The rest of it is two functions:\footnote{We omit some optimisations for clarity.} \begin{lstlisting}
 let validate_index (h, d) idx =
   let* idx' = I.is_valid_index idx in
   match idx' with
@@ -171,7 +169,7 @@ let validate_index (h, d) idx =
           if%sat Formula.SetMem (idx', d) then DR.ok (idx', S.empty ())
           else DR.error (NotAllocated idx'))
 \end{lstlisting}
-This is the function in \PMap{} responsible for retrieving the substate associated to an index; it calls \code{ExpMap.sym\_find\_opt}, which symbolically tries to match an index against all entries of the map, and if that finds no result it either returns an empty substate $\bot$ with \code{S.empty ()}, or raises an error if a bound exists and $\sym i'\notin \sym d$. Here \code{if\%sat} is sugared syntax to allow branch according to a symbolic formula, using \code{Delayed}. If both the formula and its negation can be true then the value it returns evaluates to two branches, extended with the formula or its negation in the PC.
+This is the function in \PMap{} responsible for retrieving the substate associated to an index; it calls \code{ExpMap.sym\_find\_opt}, which symbolically tries to match an index against all entries of the map, and if that finds no result it either returns an empty substate $\bot$ with \code{S.empty~()}, or raises an error if a bound exists and $\sym i'\notin \sym d$. Here \code{if\%sat} is sugared syntax to allow branching according to a symbolic formula, using \code{Delayed}. If both the formula and its negation can be true then the value it returns evaluates to two branches, extended with the formula or its negation in the PC.
 \begin{lstlisting}
 module ExpMap = struct
   include Map.Make (Expr)
@@ -189,11 +187,9 @@ module ExpMap = struct
         find_match (bindings m)
 end
 \end{lstlisting}
-This last function is the symbolic matching function, which checks for every index in the map if $\SAT(\sym i = \sym i')$, creating a branch for every possible match. It also does \emph{syntactic matching}, as seen at the start of the function: it first attempts to find the matching key directly, using \code{Map.find\_opt}, and only if that fails does it proceed to match with every key.
+This last function is the symbolic matching function, which checks if $\SAT(\sym i = \sym i')$ for every index $\sym i'$ in the map, and creates a branch for every possible match. It also does \emph{syntactic matching}, as seen at the start of the function: it first attempts to find the matching key directly, using \code{Map.find\_opt}, and only if that fails does it proceed to match with every key.
 
-The \code{Delayed} monad and the associated syntactic sugar, initially described in \cite{sacha-phd}, allow us to write branching-heavy code with ease, abstracting the details of the PC away from us.
-
-We finally take a brief look at the implementation of \code{produce}, to show how a state model transformer accesses the wrapped state model via the interface we defined: \begin{lstlisting}
+The \code{Delayed} monad and the associated syntactic sugar, initially described in \cite{sacha-phd}, allow us to write branching-heavy code with ease, abstracting the details of the PC away from us. We finally take a brief look at the implementation of \produce, to show how a state model transformer accesses the wrapped state model via the interface we defined: \begin{lstlisting}
 let produce pred s args =
   match (pred, args) with
   | SubPred pred, idx :: args ->
@@ -206,7 +202,7 @@ let produce pred s args =
       | h, None -> Delayed.return (h, Some d'))
   | _ -> failwith "Invalid PMap produce"
 \end{lstlisting}
-Here again, and even for a transformer as complex as $\PMap(I,\mmdl)$, the code is short and minimal. For the case of a core predicate from $\mmdl$ (\code{SubPred pred}), we get the substate associated with the index (\code{let*?} gets the value associated with a \code{Result} and vanishes if it's an error), we produce the predicate onto the substate, and the update the entry. For the domain set, we simply add it to the state, vanishing if a domain set is already present as it is exclusively owned.
+Here again, and even for a transformer as complex as $\PMap(I,\mmdl)$, the code is short and minimal. For the case of a core predicate from $\mmdl$ (\code{SubPred pred}), we get the substate associated with the index (\code{let*?} gets the value associated with a \code{Result} and vanishes if it's an error), we produce the predicate onto the substate, and then update the entry. For the domain set, we simply add it to the state, vanishing if a domain set is already present as it is exclusively owned.
 
 The entire \PMap{} code is 343 lines of code -- a sizeable amount, but still rather short given its complexity.
 
@@ -228,11 +224,11 @@ We now look at how this library of state models can be used to instantiate Gilli
 
 To instantiate a language to Gillian, the developer must provide its state model, and a compiler from the TL to GIL. Because this project focuses on constructing state models, it is thus natural that we picked languages for which the compiler already exists.
 
-Before we delve into any language specific, we note that all forms of $\PMap(\Loc, \mmdl)$ implicitly make use of the abstract location optimisation described in \cref{sec:theory-optim-pmap}. This is because all of Gillian's instantiations also make use of it, and the goal of our instantiations is to have \emph{parity} with the reference implementation, rather than th have additional completeness. Indeed, while removing the unsoundness caused by ALocs is straightforward in our library, it causes a majority of tests fail, making any comparison with Gillian impossible.
+We note that all forms of $\PMap(\Loc, \mmdl)$ implicitly make use of the abstract location optimisation described in \cref{sec:theory-optim-pmap}. This is because all of Gillian's instantiations also make use of it, and the goal of our instantiations is to have \emph{parity} with the reference implementation, rather than to have additional completeness. Indeed, while removing the unsoundness caused by ALocs is straightforward in our library, it causes a majority of tests to fail, making any comparison with Gillian impossible.
 
 \subsection{WISL}
 
-WISL (WhIle language for Separation Logic) is an imperative toy language used to teach students the principles of software verification. Its state model is a simple block-offset memory. Its state model is thus: \begin{align*}
+WISL (WhIle language for Separation Logic) is an imperative toy language used to teach students the principles of software verification. It uses a simple block-offset memory: \begin{align*}
  	\PMap(\Loc, \Freeable(\List(\Ex(\Val))))
 \end{align*}
 
@@ -265,20 +261,20 @@ module WISLMonadicSMemory = Mapper (WISLSubst) (BaseMemory)
 \end{lstlisting}
 This is \underline{all} the code needed for the instantiation of WISL to match exactly Gillian's original monolithic instantiation.
 
-A consequence of our modular approach to state models is functor-heavy code, with many intermediary modules to allow for further constructions. This can be a bit unweidly if not organised properly, which explains why here we take many intermediary steps, instead of writing down one large and confusing functor application.\footnote{It is often not possible to write the whole state model as a single functor application anyways, due to constraints in OCaml abount naming modules -- see \url{https://github.com/ocaml/ocaml/issues/6917\#issuecomment-626586129}.}
+A consequence of our modular approach to state models is functor-heavy code, with many intermediary modules to allow for further constructions. This can be a bit unweidly if not organised properly, which explains why here we take some intermediary steps, instead of writing down one large and confusing functor application.\footnote{It is often not possible to write the whole state model as a single functor application anyways, due to constraints in OCaml abount naming modules -- see \url{https://github.com/ocaml/ocaml/issues/6917\#issuecomment-626586129}.}
 
-We now describe, module by module, how the instantiation of WISL is done. We first override the \Ex{} state model, to modify its default value on instantiation (recall we defined it as instantiating to \code{undefined} in \cref{subsec:ex-impl}), as WISL requires instantiation to \code{null}. We then create the intermediary module \code{BaseMemory}, equivalent to $\PMap(\Loc,\Freeable(\List(\Ex)))$,\footnote{The \List{} state model transformer is called \code{MList} to avoid shadowing OCaml's \code{List} module.} which corresponds to the bulk of the state model. We finish by applying the substitutions needed to match the target instantiation, via the \code{Mapper} module, and voilà! Thanks to our library, what used to be about 800 lines of code is now 25 lines. Again, we point out that our instantiation is also easier to verify the soundness of, as all modules are independent and don't require understanding how the other state model transformers work.
+We now describe, module by module, how the instantiation of WISL is done. We first override the \Ex{} state model, to modify its default value on instantiation, as WISL requires instantiation to \code{null} and the base implementation of \Ex{} initialises it to \code{undefined} instead. We then create the intermediary module \code{BaseMemory}, equivalent to $\PMap(\Loc,\Freeable(\List(\Ex)))$,\footnote{The \List{} state model transformer is called \code{MList} to avoid shadowing OCaml's \code{List} module.} which corresponds to the bulk of the state model. We finish by applying the substitutions needed to match the target instantiation, via the \code{Mapper} module, and voilà! Thanks to our library, what used to be about 800 lines of code is now 25 lines. We point out that our instantiation is also easier to verify the soundness of, as all modules are independent and don't require understanding how the other state model transformers work.
 
 \subsection{JavaScript}
 
-Gillian originated from JaVerT \cite{javert1,javert2}, which eventually became Gillian-JS, a JavaScript instantiation for Gillian, which target's ECMAScript 5.1 \cite{ecmascript}. Its state model is: \begin{align*}
+Gillian originated from JaVerT \cite{javert1,javert2}, which eventually became Gillian-JS, a JavaScript instantiation for Gillian, which targets ECMAScript 5.1 \cite{ecmascript}. Its state model is: \begin{align*}
 	\PMap(\Loc, \DynPMap(\Str, \Ex(\Val)) \times \Ag(\Loc))
 \end{align*}
-Where $\DynPMap(\Str, \Ex(\Val))$ represents objects, and $\Ag(\Loc)$ is the location of the object's metadata, which itself is also an object. An object's metadata is immutable, and thus shareable, explaining the choice of an agreement.
+Here $\DynPMap(\Str, \Ex(\Val))$ represents objects, and $\Ag(\Loc)$ is the location of the object's metadata, which itself is also an object. An object's metadata is immutable, and thus shareable, explaining the choice of an agreement.
 
 Its implementation with our library is more involved than for WISL; indeed, Gillian-JS doesn't quite line up with the actions and predicates we defined for our state models. These differences mostly stem from different design, meaning most of the work required to fix them is juggling values to fit the right shape.
 
-For instance, in Gillian-JS the \domainset{} predicate has one in-value, the domain set, and no out. In our definitions however, the same predicate has no in, and one out, the domain set. To this end, we override \consume{} for \domainset{}, and vanish when the given in doesn't match the out.
+For instance in Gillian-JS the \domainset{} predicate has one in-value, the domain set, and no out. In our definitions however, the same predicate has no in, and one out, the domain set. To this end, we override \consume{} for \domainset{}, and vanish when the given in doesn't match the out.
 \begin{lstlisting}
 module MoveInToOut (S : States.MyMonadicSMemory.S) :
   States.MyMonadicSMemory.S with type t = S.t = struct
@@ -287,12 +283,11 @@ module MoveInToOut (S : States.MyMonadicSMemory.S) :
   let consume pred s ins =
     match (pred_to_str pred, ins) with
     | "domainset", [ out ] -> (
-        let open Delayed_result.Syntax in
         let** s', outs = S.consume pred s [] in
         match outs with
         | [ out' ] ->
-            if%ent Formula.Infix.(out #== out') then Delayed_result.ok (s', [])
-            else failwith "Mismatch in domainset consumption."
+            if%sat out #== out' then Delayed_result.ok (s', [])
+            else Delayed.vanish ()
         | _ -> Delayed_result.ok (s', outs))
     | _ -> consume pred s ins
 end
@@ -344,15 +339,15 @@ Gillian-C \cite{gillian0} targets a subset of C, via the CompCert-C verified com
 	\PMap(\Loc, \Freeable(\BlockTree)) \times \CGEnv
 \end{align*}
 
-The first custom state model used is the \BlockTree{} component, which represents chunk of memory as a binary tree, where each node has a range, a value, and zero or to children. Discussing the behaviour of this state model is out of the scope of this report, and is described in more detail in \cite{sacha-phd}.
+The first custom state model used is the \BlockTree{} component, which represents chunk of memorys as a binary tree, where each node has a range, a value, and zero or two children. Discussing the behaviour of this state model is out of the scope of this report, and is described in more detail in \cite{sacha-phd}.
 
-The second custom state model is \CGEnv{}, the C global env. Gillian-C handles function pointers and global variables by constructing an ``initial data'' when parsing the input code, and then passing this data to the state model on instantiation. While this behaviour was hard-coded in Gillian-C, we generalise it, considering simply that the state is a product of the memory and the global environment.
+The second custom state model is \CGEnv{}, the C global environment. Gillian-C handles function pointers and global variables by constructing an ``initial data'' when parsing the input code, and then passing this data to the state model on instantiation. While this behaviour was hard-coded in Gillian-C, we generalise it, considering simply that the state is a product of the memory and the global environment.
 
 For the implementation of \BlockTree{} and \CGEnv, the code from Gillian-C was reused and adapted where necessary to our interface. A particular improvement that was done to it is that in Gillian-C the notion of \Freeable{} and of \BlockTree{} were coupled, meaning any action executed on the \BlockTree{} had to first check if the memory had been freed before proceeding. Decoupling this behaviour was straightforward, and allowed for simpler code in \BlockTree.
 
-The bulk of the new code needed for the C instantiation is used on implementing a new action, that was previously hardcoded in the Gillian-C state model: \code{move}. This action allows copying some memory from a source into a target location, merging the \BlockTree{}s when appropriate. It is quite inelegant to implement, as it cannot rely on the abstraction provided by state models, since it needs to ``cross layers'' between the state models: it operates on two different indices of the \PMap, but applies a merge operation that only exists for \BlockTree. It seems that for such ``crossing'' actions, our modular state model approach is not sufficient; one instead needs to implement these actions for a specific instantiation.
+The bulk of the new code needed for the C instantiation lies in implementing a new action, that was previously hardcoded in the Gillian-C state model: \code{move}. This action allows copying some memory from a source into a target location, merging the \BlockTree{}s when appropriate. It is quite inelegant to implement, as it cannot rely on the abstraction provided by state models, since it needs to ``cross layers'' between the state models: it operates on two different indices of the \PMap, but applies a merge operation that only exists for \BlockTree. It seems that for such \emph{crossing actions}, our modular state model approach is not sufficient; one instead needs to implement these actions for a specific instantiation, making the proof work much more intricate.
 
-Omitting this addition, that is done via the \statemodel{ActionAdd} transformer, the rest of the state model is straightforward to instantiate: \begin{lstlisting}
+Omitting this addition done via \statemodel{ActionAdd}, the rest of the state model is straightforward to instantiate: \begin{lstlisting}
 module BaseMemory = PMap (LocationIndex) (Freeable (BlockTree))
 
 module Wrap (S : C_PMapType) =
@@ -368,7 +363,7 @@ module CMonadicSMemory = Wrap (BaseMemory)
 \end{lstlisting}
 Here \code{ExtendMemory} is the functor responsible for adding the \code{move} action to the state model. We make use of the \code{Wrap} functor to avoid code duplication when building the state model with different optimisations of \PMap{}. The module defined on lines 5-8 specifies the suffixes used to distinguish actions and core predicates from the left and right side of the product.
 
-The instantiation of C with our library is a good example of mixing modular state models with specialised state models; one can still make use of this library while implementing a perhaps more performant or more complex state model for some of the construction.
+The instantiation of C with our library is a good example of mixing modular, general use state models with specialised state models; one can still make use of this library while implementing a perhaps more performant or more complex state model for some of the construction.
 
 
 
