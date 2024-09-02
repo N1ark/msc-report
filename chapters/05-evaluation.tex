@@ -1,15 +1,162 @@
 \chapter{Evaluation}
 
-\section{Usability of Theory}
+In this chapter we evaluate the work produced in this document. In \cref{sec:usability-library} we evaluate the usability of the theory developed; in \cref{sec:usability-library} we assess the ease of use of the developed library; in \cref{sec:comparison-gillian} we compare the performance of the developed instantiations with their monolithic equivalent in Gillian; finally in \cref{sec:perf-pmap} we evaluate the performance improvement of the various \PMap{} optimisations. 
 
-\section{Usability of Library}
+\section{Theory Usability} \label{sec:usability-theory}
 
-\section{Comparison with Gillian}
+The theory we have presented contrasts with previous work for CSE engines in its use of resource algebras rather than partially commutative monoids or separation algebras. This allows us to easily prove the soundness of the presented constructions. 
+
+Still, some aspects of the theory can be at times somewhat unpractical to work with. Representing the empty memory $\bot$ as an element outside of an RA's carrier avoids common mistakes, but comes with the cost of requiring more ceremony when writing the rules for a state model transformers: in particular, we frequently need to define $\fn{wrap}$ and $\fn{unwrap}$ auxiliary functions to allow seamlessly handling the case where the state is $\bot$, which can clutter the rules. We note however that this additional care would also be needed with the PCM approach, though it would not be forced by the framework. The tradeoff here is therefore between a more restrictive notation that avoids some errors, or a more flexible notation that can be error-prone.
+
+The RA constructions presented are relatively primitive; in particular we only focus on simpler forms of ghost state, without exploring more advanced concepts that may make sense in a logic but not in an engine. The presented state models are sufficient to represent JavaScript, but fall short when attempting to model C, requiring specialised state models. For low-level languages where precision is required, it seems like one still needs to create a tailored state model. Other examples of this come to mind: for Gillian-Rust, the state model still needs to define the \statemodel{RustHeap}, \statemodel{Lft}, \statemodel{Pcy} and \statemodel{Obs} state models \cite{gillianrust,sacha-phd}.\footnote{These state models have not yet been implemented in our library, though they exist as a monolithic construction as part of Gillian-Rust.} While some of these are partly derived from other state models (\statemodel{RustHeap} uses \PMap, \statemodel{Lft} uses \PMap{} and \Frac{}), significant effort is needed to represent concepts such as liftetimes, prophecies or observations. While the presented state models all have a use, it seems unavoidable for one to need to define some additional state models when targetting real-world languages. The fact these \emph{sur mesure} state models still use the generic constructions we defined show their versatilty, and that they are still capable of alleviating at least part of the construction of a complex state model.
+
+\section{Library Usability} \label{sec:usability-library}
+
+The developed library exposes a total of 14 state models, including utility state models and optimised versions. These are all easy to use and combine when little additional functionality is required, for instance with WISL. However, as soon as fine grained modifications are needed, the constructions can become complex, as they require extensive use of OCaml functors, which often cause hard to understand compiler errors. The effort needed is still much lesser than what would be needed when creating the state model from scratch, as most behaviour is already available.
+
+The key improvement our approach has over defining entire state models from scratch is \emph{verifiability}. Because all state models are relatively small (less than 400 lines) and isolated, ensuring a specific construction is sound is \emp{much easier} than verifying an entire state model is sound. Modifications to constructions are also relatively easy to verify, as they usually only impact a specific action or predicate, meaning one onle needs to re-verify the soundness of the modified element. This is a major improvement on monolithic approaches, as verifying tightly coupled code spanning thousands of lines is no easy task.
+
+\section{Comparison with Gillian Instantiations} \label{sec:comparison-gillian}
+
+We now measure the performance of the instantiations created using our library against the performance of the original monolithic Gillian state models.
+
+The evaluation is focused on testing the performance of state models across all modes supported by Gillian: Whole Program Symbolic Testing (WPST), OX Verification and UX Bi-Abduction. The files tested are either small programs used to test the engine, or larger verification targets extracted from real world code. Furthermore, when possible, the tests are also run with different optimisations of $\PMap$: $\ALocPMap$ and $\SplitPMap$.
+
+All test logs were verified to ensure full parity between all versions: the instantiations built using state model transformers yield the same results as the original instantiations. All passing tests pass, and all failing tests fail for the same reasons. All tests were run on a 2020 MacBook Pro, with an M1 processor and 8GB of memory.
+
+This evaluation is split among the three different stacks originally supported by Gillian: WISL, JavaScript and C. A more in-depth presentation of the instantiations is done in \cref{sec:impl-instantiations}. We note that all Gillian instantiations make use of the abstract location optimisation internally, which as shown in \cref{sec:theory-optim-pmap} has some unsoundness issues. Therefore, to ensure our instantiations have the same results as the reference implementation, we evaluate our transformer constructions using the ALoc optimisation where relevant.
 
 \subsection{WISL}
 
+The WISL state model is $\PMap(\Loc, \Freeable(\List(\Ex(\Val))))$. The Gillian-WISL takes advantae 
+
 \subsection{JavaScript}
+
+The JavaScript state model is $\PMap(\Loc, \DynPMap(\Str, \Ex(\Val)) \times \Ag(\Loc))$. Gillian-JS comes with some optimisations built-in, to improve performance. Firstly, it splits the first level $\PMap$ entries between concrete and symbolic \emph{values} (not keys!), avoiding substitutions in the concrete part. Secondly, it uses the abstract location mechanism described in \cref{sec:theory-optim-pmap}. Finally, it uses the OCaml \code{Hashtbl} module, a mutable data structure, rather than the immutable \code{Map} module; this avoids creating copies of the map on modification. All of these optimisations are important, as the state in JavaScript code tends to be significantly large, with the first $\PMap$ regularly reaching 200 to 600 entries when running real-world code: the highest recorded map size reaches 1179 entries for the \code{set3.gil} file.
+
+To test all combinations of optimisations available via our library, we get the following four transformer stacks:
+\begin{align}
+\tag{TR}           & \ALocPMap(\Loc, \DynPMap(\Str, \Ex(\Val)) \times \Ag(\Loc)) \\
+\tag{TR-ALoc}      & \ALocPMap^\Str(\DynPMap(\Str, \Ex(\Val)) \times \Ag(\Loc)) \\
+\tag{TR-Split}     & \ALocPMap(\Loc, \SplitDynPMap(\Str, \Ex(\Val)) \times \Ag(\Loc)) \\
+\tag{TR-ALocSplit} & \ALocPMap^\Str(\SplitDynPMap(\Str, \Ex(\Val)) \times \Ag(\Loc))
+ \end{align}
+
+The last version, TR-ALocSplit, is the closest in terms of applied optimisations to what Gillian-JS does. The biggest difference is the use of \code{Hashtbl}, as all transformers use immutable data structures. 
+
+This benchmark is split into three parts: WPST, verification, and Buckets-JS\footnote{See \url{https://www.npmjs.com/package/buckets-js}.} (in WPST mode), which are made up of respectively 21, 6, and 78 files. All tests were then run 30 times, for each state transformer stack and for Gillian-JS (labelled ``base''). The results can be seen in \autoref{fig:js-perf-bars}. The first insight this give us is that transformers seem to, on the whole, outperform the monolithic Gillian-JS, with an improvement ranging from 1.8 to 7.1\%. Another observation is that while both optimisations (ALoc with string indices and Split) seem to improve performance on the base instantiation, this improvement is dependent on what is the mode of execution, with ALoc being faster for verification, and Split being faster for WPST and Buckets (which is also WPST). This makes sense, as the split optimisation is only useful if there is a significant amount of concrete entries in the map, which there ought to be in whole program symbolic testing. We also note that the combination of the ALoc and Split optimisations seems to \emph{decrease performance} compared to when used separately or not at all. This would indicate that the cost of both optimisations (abstract location translating from strings, and checking for concreteness, respectively) outweighs the benefits.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=10cm]{figures/js-perf-bars.png}
+	\caption{Average of the relative difference in execution time for different test suites, per transformer stack}
+	\label{fig:js-perf-bars}
+\end{figure}
+
+The initial conclusion we can reach from this is that transformer stacks are  more performant than the monolithic alternative. One could, of course, imagine that a hyper-optimised monolith could be made with optimisations specific to the state model, which would then out-perform the more generic transformers. However, in practice, the size of such monoliths makes these optimisations hard to apply, as code becomes complex quickly and makes changes harder. In contrast, transformers are very simple to optimise, as they maintain a more generic structure.
+
+Another hypothesis this experiment seems to confirm is that the improvement given by optimisations is highly dependent on the context in which the engine is used, as simply switching between OX and WPST may mean one optimisation would be better than the other. Transformers thus allow users to tailor the optimisations they use in their stack according to what code is verified and how, by empirically measuring the performance of different alternatives (which are trivial to construct).
+
+We may also take a closer look at how this time is spent within the engine. This is done by measuring the time before and after the entry point of each exposed method of the memory model and summing their difference. By looking at the average time per function call in the Buckets test suite (see \autoref{fig:js-avgtime-buckets}), we see that most memory actions (prefixed with ``ea/'', shorthand for \execac) are faster than in the base instantiation. Furthermore, copying is orders of magnitude faster with transformers, since no work needs to be done thanks to the use of immutable data structures.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{figures/js-avgtime-buckets.png}
+	\caption{Average time spent per 1000 function calls in the Buckets test suite}
+	\label{fig:js-avgtime-buckets}
+\end{figure}
+
+Looking at the average total duration for an execution of the test suite (see \autoref{fig:js-timespent-buckets}) however, we note that the time taken by copying the state is minimal, as seen by the size of the ``other'' category. Instead, most time is spent during the \load{} (\code{GetCell}) action, which is called 11400 times (more than twice as many times as \store{}). The most notable improvement from the transformer construction is the reduction of the time spent getting a cell, reducing total time spent by 43\% (from 28.55 to 16.18ms). Because \load{} dominates the amount of action calls (see \autoref{fig:js-callcount-buckets}), this is sufficient to make up for the performance loss in \store{} and ``\code{GetMetadata}'' (\load{} on the right side of the product).
+
+\begin{figure}
+	\centering
+	\includegraphics[width=10cm]{figures/js-timespent-buckets.png}
+	\caption{Average total time spent per function in an execution of the Buckets test suite}
+	\label{fig:js-timespent-buckets}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=8cm]{figures/js-callcount-buckets.png}
+	\caption{Share of function calls for one execution of the Buckets test suite}
+	\label{fig:js-callcount-buckets}
+\end{figure}
+
+If, instead of focusing on WPST with the Buckets code we focus on verification, the picture painted is significantly different. Indeed, while in WPST the memory model is only used for memory actions (as only the core engine is used), verification exercises the memory model quite differently, notably with \produce{} and \consume{}.
+
+Most notably, this shows us that one of the leading differences in total time between different transformer instantiations is substitutions: TR and TR-Split spend more than twice as much time during substitutions than TR-ALoc and TR-ALocSplit. This can be explained by the fact that with the ALoc optimisation, substitutions for the keys (abstract location names) can be filtered, meaning that if there is no substitution concerning abstract locations, we can simply map the values of the map without worrying about key conflicts. Without this, substitutions need to be applied to both the key and the value, and then all resulting keys need to be compared (an expensive process) to compose clashing entries. 
+
+While this hasn't been measured, it is possible that the reason why Gillian-JS spends so little time in substitutions is because it uses mutable structures, allowing modifications to be done in-place, rather than creating new copies.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=10cm]{figures/js-timespent-verif.png}
+	\caption{Share of grouped function calls for for one execution of the verification test suite}
+	\label{fig:js-timespent-verif}
+\end{figure}
+
+Substitutions aside, we note how significantly less time is spent in \execac{} and \consume{} calls compared to the base state model; about 58\% and 55\% respectively. Again, this seems to indicate that simpler transformers tend to be more efficient than large monoliths. We have not been able to pintpoint specific reasons for this. An hypotheses is that Gillian-JS overcomplicates its actions; for instance, the implementation of \code{GetCell} is over 100 lines long and is surprisingly intricate.
+
+Finally, we may compare development effort between the two state models. While not a perfect measure of complexity, lines of code (LOCs) are used to compare the amount of code needed to instantiate each state model to get equivalent results. We only measure the lines of code in implementation files (\code{.ml}), ignoring interface files (\code{.mli}) and whitespace. The results are shown in \autoref{fig:js-loc-count}. Here, we note that the amount of tailored code needed for each instantiation (in yellow) is minimal compared to Gillian-JS: only 246 LOCs. Most of the LOCs are in the state model library, which is shared and can be reused for different state models; a user of the engine does not need to worry about them.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=10cm]{figures/js-loc-count.png}
+	\caption{Number of lines of code per JS instantiation}
+	\label{fig:js-loc-count}
+\end{figure}
 
 \subsection{C}
 
-\section{Partial Map Performance}
+The Gillian-C state model allows verifying code compiled via CompCert-C. It can be defined as $\PMap(\Loc,\Freeable(\BlockTree)) \times \CGEnv$. To verify that the improvements from the optimised $\PMap$ versions are carried between instantiations, we also provide several C instantiations. Again we note Gillian-C already makes use of the ALoc optimisation, so in an effort to preserve parity we do not compare with instantiations that do not use it. Here $\PMap_{\text{ALocSplit}}$ represents a \PMap{} with both the ALoc and the split optimisations.
+\begin{align}
+\tag{TR}       & \ALocPMap(\Freeable(\BlockTree)) \times \CGEnv \\
+\tag{TR-ALoc}  & \ALocPMap^\Str(\Freeable(\BlockTree)) \times \CGEnv \\
+\tag{TR-Split} & \PMap_{\text{ALocSplit}}(\Freeable(\BlockTree)) \times \CGEnv
+\end{align}
+
+This benchmark is split into five parts: WPST, verification, bi-abduction, \mbox{Collections-C}\footnote{See \url{https://github.com/srdja/Collections-C}.} (in WPST mode) and AWS (in verification mode, for the AWS Encryption SDK\footnote{See \url{https://github.com/aws/aws-encryption-sdk-c}.}), each made up of respectively 8, 6, 7, 159, and 10 files. All tests were run 50 times, except the AWS test suite that was executed 10 times\footnote{This is because verifying the AWS code takes \emph{significantly} longer than the rest, due to its size.}.
+
+The general results can be seen in \autoref{fig:c-perf-bars}. Here again, we note a significant performance improvement compared to the monolithic Gillian-C, in particular for the AWS and bi-abduction suites. As for the optimisations, we get inconsistent results: they seem to slightly improve performance for all modes but for AWS. 
+
+\begin{figure}
+	\centering
+	\includegraphics[width=10cm]{figures/c-perf-bars.png}
+	\caption{Average of the relative difference in execution time for different test suites, per transformer stack}
+	\label{fig:c-perf-bars}
+\end{figure}
+
+We may now look into the detailed rundown of the time spent; we will focus on Collections-C WPST and the AWS encryption SDK verification, as these correspond to real-world code usage.
+
+For Collections-C, when looking at the time spent in each function for each instantiation (see \autoref{fig:c-timespent-collectionsc}), the main takeaway is that the two most common actions, $\code{mem\_store}$ and $\code{mem\_load}$, are both faster than the original version; about 20\% and 25\% respectively. This is a crucial improvement, considering more than 75\% of memory actions in Collections-C is a load or a store.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=10cm]{figures/c-timespent-collectionsc.png}
+	\caption{Average total time spent per function in an execution of the Collections-C test suite}
+	\label{fig:c-timespent-collectionsc}
+\end{figure}
+
+The story is however wildly different for AWS code, which uses verification rather than WPST. Here, memory actions only represent a fraction of the total time spent, which is instead dominated by \consume, as seen in \autoref{fig:c-timespent-aws}. Here we note slight improvements in time for most categories, again seeming to indicate that the more generic approach is generally more performant, though the exact reason as to why is still unclear.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=10cm]{figures/c-timespent-aws.png}
+	\caption{Average total time spent per function in an execution of the AWS header encryption SDK test suite}
+	\label{fig:c-timespent-aws}
+\end{figure}
+
+The charts for TR, TR-ALoc and TR-Split are extremely similar, for both Collections-C and AWS code; we can thus hardly make a hypothesis as to which optimisation is better suited. This is in part due to the fact these optimisations excel in larger maps, as was the case for JavaScript. In C, maps are instead rather small; for Collections-C, the map size tends to fluctuate between 15 and 35 elements, with the maximum recorder reaching 52 elements. For AWS, its size is between 10 and 20 elements, maxing at 20. This in particular explains why the optimisations are at times detrimental for the AWS test suite: because the maps are always small, the cost of both optimisations regularly outweighs their improvement.
+
+We now compare the complexity of instantiations, using LOCs, delving into more details on the cause of each line count metric. In particular, we see that the majority of the state model is the same; the modified part representing $\BlockTree$ and $\CGEnv$, which are lightly modified to fit into the transformers setup, while the untouched part represents the internal modules used by the C instantiations (for instance, to encode permissions, or memory chunks). Finally, the removed part of the code is trivially replaced with constructions, using $\PMap$ and $\Freeable$. Some tailored code is also required, to ensure the construction matches the interface of Gillian-C. This again shows that even for more complex state models that require a significant amount of custom code, using our state model library reduces the amount of code required exclusively for that instantiation, while providing performance gains for free.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=10cm]{figures/c-loc-count.png}
+	\caption{Number of lines of code per C instantiation}
+	\label{fig:c-loc-count}
+\end{figure}
+
+
+\section{Partial Map Performance} \label{sec:perf-pmap}
+
