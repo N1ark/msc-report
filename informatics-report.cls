@@ -51,14 +51,12 @@
 			\end{flushright}
 			\vspace*{2.2in}
 			{\huge \bf{\@title}}\\*
-			\vspace*{0.4in}
-			\Large{Background \& Progress Report}\\*
-			\vspace*{1.2in}
+			\vspace*{3in}
 			\large{Author: \@author\\*
 			       Supervisor: \@supervisor}\\*
 			\vspace*{0.2in}
 			{\@date}\\*
-			\vspace*{2in}
+			\vspace*{1.5in}
 			{Submitted in partial fulfilment of the requirements for the MSc Degree in Computing (Software Engineering)}
 		}
 	\end{center}
