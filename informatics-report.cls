@@ -6,7 +6,7 @@
 \ProvidesClass{informatics-report}[2012/10/07 Informatics Final Year Project Report Class]
 
 \usepackage{graphicx}
-\usepackage[left=1.4in, right=1.4in, top=0.8in, bottom=1.0in]{geometry}
+\usepackage[left=2.5cm, right=2.5cm, top=2cm, bottom=2.5cm]{geometry}
 \usepackage{layout}
 \usepackage{url}
 \usepackage{verbatim}
