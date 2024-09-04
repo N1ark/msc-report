@@ -140,7 +140,7 @@ Finally, we may compare development effort between the two state models. While n
 
 \subsection{C}
 
-The Gillian-C state model allows verifying code compiled via CompCert-C. It can be defined as $\PMap(\Loc,\Freeable(\BlockTree)) \times \CGEnv$. To verify that the improvements from the optimised $\PMap$ versions are carried between instantiations, we also provide several C instantiations. Again we note Gillian-C already makes use of the ALoc optimisation, so in an effort to preserve parity we do not compare with instantiations that do not use it. 
+Gillian-C allows verifying a subset of the C language, via the CompCert-C verified compiler. Its state model can be defined as ${\PMap(\Loc,\Freeable(\BlockTree)) \times \CGEnv}$. To verify that the improvements from the optimised $\PMap$ versions are carried between instantiations, we also provide several C instantiations. Again we note Gillian-C already makes use of the ALoc optimisation, so in an effort to preserve parity we do not compare with instantiations that do not use it. 
 \begin{align}
 \tag{TR}       & \ALocPMap(\Freeable(\BlockTree)) \times \CGEnv \\
 \tag{TR-ALoc}  & \ALocPMap^\Str(\Freeable(\BlockTree)) \times \CGEnv \\

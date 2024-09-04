@@ -1,0 +1,7 @@
+Compositional symbolic execution is a technique allowing for the scalable verification of code, using separation logic. A particularly rich branch of separation logic is abstract separation logic, that allows reasoning about an abstract state. Iris is a state of the art theory in the field, that introduces the notion of resource algebras, that enable the construction of sound complex state from simple elements.
+
+Gillian is a compositional symbolic execution engine that has the unique property of being parametric on the state model, allowing verification of any language for which a state model can be defined.
+
+While some preliminary work exists to adapt the notion of state model constructions to Gillian, it uses partially commutative monoids, a form of state representation that frequently causes soundness issues. In this project we thus show how resource algebras can be used to replace monoids in this setting, while providing easier to prove soundness.
+
+In this work we adapt a abstract CSE engine to use state models backed by resource algebras. We then define a range of different resource algebras that can be used to construct complex state models, which allow for the verification of real-world languages. We implement these for the Gillian CSE engine, and show that the instantiations built with them are both simpler and more performant than the original Gillian instantiations.

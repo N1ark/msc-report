@@ -31,13 +31,8 @@
 
 \def\date#1{\gdef\@date{#1}}
 \def\supervisor#1{\gdef\@supervisor{#1}}
-%\def\abstractFile#1{\gdef\@abstractFile{#1}}
 %\def\wordCount#1{\gdef\@wordCount{#1}}
 
-%Acknowledgements
-\newif\ifacknowledgements@
-\acknowledgements@false
-\def\ackFile#1{\gdef\@ackFile{#1}\acknowledgements@true}
 
 \def\createFrontMatter{
 
@@ -63,25 +58,23 @@
 	\restoregeometry
 	
 	%Abstract
-%	\begin{abstract}
-%    	     \setlength{\parindent}{0.3in}
-%   	     \input{ \@abstractFile} \relax
-%	\end{abstract}
+	\begin{abstract}
+    	     \setlength{\parindent}{0.3in}
+   	     \input{frontmatter/abstract.tex} \relax
+	\end{abstract}
 
 	%Acknowledgements
-  	\ifacknowledgements@{
-    	     \clearpage
-    	     \thispagestyle{empty}
-   	     \vspace*{1.4in}
-    	          \begin{center}
-      	              {\textbf{Acknowledgements}} \\*
-    	         \end{center}
-    	         \begin{quotation}
-		\begin{flushleft}
-     	               \input{\@ackFile}
-		\end{flushleft}
-                    \end{quotation}
-          }\fi	
+%	\clearpage
+%	\thispagestyle{empty}
+%	\vspace*{1.4in}
+%	\begin{center}
+%		{\textbf{Acknowledgements}} \\*
+%	\end{center}
+%	\begin{quotation}
+%		\begin{flushleft}
+%			\input{frontmatter/acknowledgments.tex}
+%		\end{flushleft}
+%	\end{quotation}
 
 \setcounter{page}{0}	
 }
