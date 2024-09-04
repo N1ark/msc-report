@@ -1,9 +1,41 @@
 \chapter{Introduction}
 
-As software becomes part of critical element, it needs to be verified formally to ensure it does not fault. To support such verification in a scalable fashion, \emph{separation logic} \cite{seplogic1, seplogic2} was created, permitting compositional proofs on the behaviour of programs. Research has also been done in the field of separation algebra, to provide an abstraction over the state modelled within separation logic, to improve modularity and reduce the effort needed for proofs.
+\section{Motivation}
 
-Thanks to separation logic, compositional verification via specifications has been automated, and allows automatic checking of properties via compositional symbolic execution (CSE). A wide range of tools exist, usually enabling the verification of a specific language they are tailored for. Gillian \cite{gillian0, gillian1, gillian2} is a CSE engine that is different, in that it is not made for one specific language but is instead \emph{parametric on the state model}, allowing for it to be used to verify different language, like C, JavaScript or Rust. 
+As software becomes increasingly central to critical infrastructure, the need to formally prove its correctness increases. A framework that enables scalable program verification is \emph{separation logic} \cite{seplogic1,seplogic2}, from which \emp{abstract} separation logic followed, allowing one to reason about properties of the memory independently of its actual representation \cite{higherorderseplogic,abstractseplogic}. An oustanding logic in this field is Iris \cite{iris}, which proved itself to be more than capable of enabling reasoning for a wide range of applications. These logics have however been limited to manual pen and paper proofs, or inaccessible mechanisations with Rocq.
 
-Gillian has now been in development for several years, and the research landscape surrounding it has evolved in parallel, with for instance new techniques for state modelling and the creation of incorrectness separation logic. 
+In parallel, symbolic execution tools have been developed to allow for the verification of programs automatically, with however poor scalability \cite{pathexplo}. \emph{Compositional symbolic execution} (CSE) uses advances made in separation logic to allow for the verification of code by fragments, improving drastically scalability and allowing for adoption in Continuous Integration pipelines \cite{pulse}.
 
-In this report we will present Aether, a CSE engine that follows the steps of Gillian and that is both parametric in the state model and in the language, while being closely related to the theory underpinning it. It's goal is to serve as a simple, efficient and complete engine that supports multiple analysis methods such as OX verification and UX true bug finding, and that is easily extendable for different uses.
+A particular CSE engine is Gillian \cite{gillian0}; it has the unique property of being \emph{parametric on the memory model}, allowing it to be re-used to verify any language, so long as the memory model is provided by the developer. In \cite{sacha-phd}, the idea of \emph{constructing} memory models was introduced, using partially commutative monoids. Gillian is a perfect match for this, as it is inherently compatible with any constructable memory model. The original definitions were however at times incomplete, or suffered from unsoundness due to their use of partially commutative monoid, the classical representation of memory in abstract separation~logic.
+
+\section{Objectives}
+
+Given the great potential in facilitating state model creation by construction, we plan on better developing the theory surrounding it, borrowing the notion of \emph{resource algebras} from Iris. To this end, we will also see what changes need to be done to a theoretical CSE engine, first described in \cite{cse1,cse2}, to take advantage of these resource algebras. 
+
+In particular, the main objectives of this project are: \begin{itemize}
+	\item \textbf{RQ1}: what are the improvements provided by the use of resource algebras, compared to partially commutative monoids, when used for state models? What changes are needed to our state model definitions to take advantage of resource algebras?
+	\item \textbf{RQ2}: how do we define state models and state model transformers to ensure they are provably sound, both when used in overapproximate and underapproximate reasoning? Can the optimisations made when implementing the state models be lifted back to the theory and proven to be sound?
+	\item \textbf{RQ3}: are state model transformers a viable approach performance-wise? How do instantiations of Gillian using state model transformers perform when compared with pre-existing instantiations? Do the defined optimisations bring actual improvements to performance?
+\end{itemize}
+
+\section{Contributions}
+
+The main contribution of this project is the adoption of resource algebras for the construction of state models that are compatible with CSE engines. 
+
+We define at the theory level 7 different state models, as well as 3 optimised versions of the partial map state model transformer. All of these are proven to be sound.
+
+We then implement these state models along with additional ones in OCaml, creating a state model library for Gillian. We have then, using this library, instantiated Gillian to allow for the verification of code written in WISL, JavaScript and C. These instantiations have full parity with the pre-existing instantiations of Gillian, providing the same verification results with a fraction of the code needed for the instantiation.
+
+Finally, we measure in great detail the performance of the instantiations and optimisations described, comparing them to performance in Gillian, and showing areas for improvement.
+
+\section{Outline}
+
+In \autoref{chap:background} we introduce the necessary theoretical background needed for the project; we go over separation logic and its variations, with incorrectness separation logic and abstract separation logic. In particular we retrace the history of abstract separation logic and its evolution, leading to the creation of Iris. We then describe Gillian, a compositional symbolic execution engine parametric on the memory model. We describe existing tools that enable symbolic execution and their differences. Finally, we briefly cover additional requirements relevant to this research area.
+
+In \autoref{chap:theory} we motivate the transition from partially commutative monoids to resoure algebras. We then go through the changes brought to our abstract CSE engines to accomodate the change, and define a wide range of state models. We also cover optimisations at the theoretical level for partial map transformer.
+
+In \autoref{chap:implementation} we describe the implementation of these state models as a library, and how our theoretical constructs interface with the pre-existing definitions of Gillian. We also cover how a developer may use this library to in turn instantiate Gillian to the desired state model.
+
+In \autoref{chap:evaluation} we evaluate the work done so far, discussing first the usability of the theory and of the library. We then compare the performance of our instantiations with the reference Gillian instantiations. We also briefly observe the performance improvements offered by our partial map optimisations.
+
+In \autoref{chap:conclusion} we conclude this report, retracing the work done, and outlining the key achievements, the relevant limitations, and give different directions to build upon what is defined here, for future work.

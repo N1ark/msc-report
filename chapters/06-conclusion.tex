@@ -1,3 +1,27 @@
-\chapter{Conclusion}
+\chapter{Conclusion} \label{chap:conclusion}
+
+\section{Achievements}
+
+Throughout this project we adapted and developed a theory to construct state models, as well as developed a range of different state models to allow for the construction of complex state from easy to understand and modify building blocks. To this end, we introduced the concept of \emph{partial resource algebras}, an adaptation of the resource algebras presented in Iris \cite{iris}. We adapted the notion of state models introduced for the Gillian CSE engine \cite{sacha-phd,cse2,gillan0} to use these partial resource algebras, and re-defined the axioms these state models must satisfy. We then introduced a range of different state models and state model transformers, taking inspiration from work done in \cite{iris,sacha-phd}; \emph{these state models are proven to be OX and UX sound}. These state models and state model transformers can be combined to build more complex state models, allowing real-world memory models to be recreated with ease. These can then be used either when doing manual proofs or in a parametric CSE engine such as Gillian, enabling whole program symbolic testing, verification and true bug finding with bi-abduction. We also demonstrated how to optimise a state model at the theory level, to offer performance improvements in the implementation while preserving soundness. 
+
+All presented state models, along with some additional ``utility'' state models, have been implemented in OCaml, allowing them to be used with Gillian, providing a library of \emph{14 different modules and functors}. These modules are small and independent, easing the process of verification and optimisation.
+
+ We have then used this library to instantiate Gillian to three different languages: WISL, JavaScript and C. We measured the difference in performance with preexisting monolithic instantiations of Gillian, showing a considerable performance improvement for JavaScript and particularly C, while greatly reducing the amount of code needed for the instantiations. Finally, we also evaluated the performance offered by the optimisations of the partial map we defined theoretically, showing mixed results.
+
+\section{Limitations}
+
+The presented state models are quite simple in their construction; in particular more ambitious resource algebras such as what Iris calls ``higher-order ghost state'' \cite{iris} have not been replicated. Overall a lot of the logic used is still embedded in Gillian, rather than defined externally via state models and core predicates. More research would be needed to see how more deeply Iris-enabled reasoning can be embedded in Gillian's logic.
+
+The partial map state model transformer, \PMap, only supports allocation in a non-concurrent setting. While not a limitation for our use case, since Gillian does not support concurrency, it is a flaw of the theory; more advanced state models could be developed to support parallel allocation while still providing guarantees of OX and UX soundness and allow distinguishing out of bounds from missing errors. This could be done, for instance, via an authoritative resource algebra \cite{iris}.
+
+Finally, instantiating Gillian using the developed state model library is still a convoluted process at times, requiring functor-heavy code, which is hard to write and understand. The developed interface for state models is also not ideal, requiring a significant amount of functions to be defined; ideally only the core \execac, \consume, \produce{} and \fix{} functions should be needed, the rest being optional.
 
 \section{Future Work}
+
+The created instantiations are satisfiable, offering full parity with the monolithic instantiations, as well as performance improvements for JavaScript and C. Future work could attempt to further improve performance, with more agressive optimisations or attempting to tie in the state models with lower level code. 
+
+Improving developer experience would also be desirable, simplifying further the implementation of new state models. An idea that comes to mind is the use of OCaml's \code{ppxlib} library\footnote{See \url{https://github.com/ocaml-ppx/ppxlib}.} to do meta-programming and simplify some tedious requirements of the state model interface. A general rework of the Gillian engine would also be of interest, to better integrate with our state model interface.
+
+In the future we may also want to expand on the presented concepts, with new state models to allow for higher-order logic or temporal logic. User-defined predicates and bi-abduction, two components of Gillian, can also be formulated via state model transformers \cite{sacha-phd}; formalising them and implementing them could help lighten the core engine, while facilitating the adoption of these features in new CSE engines. 
+
+Finally, we showed the system of abstract locations Gillian uses extensively is currently unsound; finding a sound justification to its use, for instance taking inspiration from nominal logic, would be crucial to reinforce Gillian's claims of soundness.
