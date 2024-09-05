@@ -111,7 +111,7 @@ let produce core_pred s insouts =
   | Ex, Some _, _ -> Delayed.vanish ()
   | _ -> failwith "Invalid Ex produce"
 \end{lstlisting}
-Again, this is straightforward; a simple pattern matching suffices. \code{DR.ok} stands for \mbox{\code{Delayed.return (Ok -)}}, returning the input in a \code{Result} monad, wrapped in a \code{Delayed} monad. The outcome is thus \Ok{} -- for \Err{}, \LFail{} and \Miss{} outcomes, we use \code{DR.error}; the state model then provides a \code{can\_fix} function that given an error returns whether it is fixable, signifying it's a \Miss. Experiments were done to create an \code{Outcome} monad, with variants \code{Ok | Miss | Err | LFail}, as a replacement for the \code{Result} monad with \code{Ok | Err}. While this allowed getting rid of the \code{can\_fix} function, it was unpractical to use, as it was purely ``aesthetic''; the engine still needed to parse everything back to a \code{Result}. Furthermomre, this made lifting errors quite tedious: instead of simply defining a variant \code{SubError of S.err\_t} for the error type and lifting the errors of the underlying state model through it, one had to handle all three error cases, creating a lot of boilerplate code for little to no added value.
+Again, this is straightforward; a simple pattern matching suffices. \code{DR.ok} stands for \mbox{\code{Delayed.return (Ok -)}}, returning the input in a \code{Result} monad, wrapped in a \code{Delayed} monad. The outcome is thus \Ok{} -- for \Err{}, \LFail{} and \Miss{} outcomes, we use \code{DR.error}; the state model then provides a \code{can\_fix} function that given an error returns whether it is fixable, signifying it's a \Miss. Experiments were done to create an \code{Outcome} monad, with variants \code{Ok | Miss | Err | LFail}, as a replacement for the \code{Result} monad with \code{Ok | Err}. While this allowed getting rid of the \code{can\_fix} function, it was unpractical to use, as it was purely ``aesthetic''; the engine still needed to parse everything back to a \code{Result}. Furthermore, this made lifting errors quite tedious: instead of simply defining a variant \code{SubError of S.err\_t} for the error type and lifting the errors of the underlying state model through it, one had to handle all three error cases, creating a lot of boilerplate code for little to no added value.
 
 Finally here we mention some of the additional functions that the state model must implement: \begin{lstlisting}
 let empty () = None
@@ -141,7 +141,7 @@ module LocationIndex : PMapIndex = struct
   let make_fresh () =
     let loc = ALoc.alloc () in
     Expr.loc_from_loc_name loc
-    
+
   let is_valid_index = function
     | (Expr.Lit (Loc _) | Expr.ALoc _) as l -> Delayed.return (Some l)
     | e when not (Expr.is_concrete e) -> (
@@ -174,7 +174,7 @@ This is the function in \PMap{} responsible for retrieving the substate associat
 \begin{lstlisting}
 module ExpMap = struct
   include Map.Make (Expr)
-  
+
   let sym_find_opt k m =
     match find_opt k m with
     | Some v -> Delayed.return (Some (k, v))
@@ -262,7 +262,7 @@ module WISLMonadicSMemory = Mapper (WISLSubst) (BaseMemory)
 \end{lstlisting}
 This is \underline{all} the code needed for the instantiation of WISL to match exactly Gillian's original monolithic instantiation.
 
-A consequence of our modular approach to state models is functor-heavy code, with many intermediary modules to allow for further constructions. This can be a bit unweidly if not organised properly, which explains why here we take some intermediary steps, instead of writing down one large and confusing functor application.\footnote{It is often not possible to write the whole state model as a single functor application anyways, due to constraints in OCaml abount naming modules -- see \url{https://github.com/ocaml/ocaml/issues/6917\#issuecomment-626586129}.}
+A consequence of our modular approach to state models is functor-heavy code, with many intermediary modules to allow for further constructions. This can be a bit unwieldy if not organised properly, which explains why here we take some intermediary steps, instead of writing down one large and confusing functor application.\footnote{It is often not possible to write the whole state model as a single functor application anyway, due to constraints in OCaml about naming modules -- see \url{https://github.com/ocaml/ocaml/issues/6917\#issuecomment-626586129}.}
 
 We now describe, module by module, how the instantiation of WISL is done. We first override the \Ex{} state model, to modify its default value on instantiation, as WISL requires instantiation to \code{null} and the base implementation of \Ex{} initialises it to \code{undefined} instead. We then create the intermediary module \code{BaseMemory}, equivalent to $\PMap(\Loc,\Freeable(\List(\Ex)))$,\footnote{The \List{} state model transformer is called \code{MList} to avoid shadowing OCaml's \code{List} module.} which corresponds to the bulk of the state model. We finish by applying the substitutions needed to match the target instantiation, via the \code{Mapper} module, and voilà! Thanks to our library, what used to be about 800 lines of code is now 25 lines. We point out that our instantiation is also easier to verify the soundness of, as all modules are independent and don't require understanding how the other state model transformers work.
 
@@ -340,7 +340,7 @@ Gillian-C \cite{gillian0} targets a subset of C, via the CompCert-C verified com
 	\PMap(\Loc, \Freeable(\BlockTree)) \times \CGEnv
 \end{align*}
 
-The first custom state model used is the \BlockTree{} component, which represents chunk of memorys as a binary tree, where each node has a range, a value, and zero or two children. Discussing the behaviour of this state model is out of the scope of this report, and is described in more detail in \cite{sacha-phd}.
+The first custom state model used is the \BlockTree{} component, which represents chunks of memory as a binary tree, where each node has a range, a value, and zero or two children. Discussing the behaviour of this state model is out of the scope of this report, and is described in more detail in \cite{sacha-phd}.
 
 The second custom state model is \CGEnv{}, the C global environment. Gillian-C handles function pointers and global variables by constructing an ``initial data'' when parsing the input code, and then passing this data to the state model on instantiation. While this behaviour was hard-coded in Gillian-C, we generalise it, considering simply that the state is a product of the memory and the global environment.
 

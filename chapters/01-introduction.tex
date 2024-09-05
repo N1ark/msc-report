@@ -2,7 +2,7 @@
 
 \section{Motivation}
 
-As software becomes increasingly central to critical infrastructure, the need to formally prove its correctness increases. A framework that enables scalable program verification is \emph{separation logic} \cite{seplogic1,seplogic2}, from which \emp{abstract} separation logic followed, allowing one to reason about properties of the memory independently of its actual representation \cite{higherorderseplogic,abstractseplogic}. An oustanding logic in this field is Iris \cite{iris}, which proved itself to be more than capable of enabling reasoning for a wide range of applications. These logics have however been limited to manual pen and paper proofs, or inaccessible mechanisations with Rocq.
+As software becomes increasingly central to critical infrastructure, the need to formally prove its correctness increases. A framework that enables scalable program verification is \emph{separation logic} \cite{seplogic1,seplogic2}, from which \emp{abstract} separation logic followed, allowing one to reason about properties of the memory independently of its actual representation \cite{higherorderseplogic,abstractseplogic}. An outstanding logic in this field is Iris \cite{iris}, which proved itself to be more than capable of enabling reasoning for a wide range of applications. These logics have however been limited to manual pen and paper proofs, or inaccessible mechanisations with Rocq.
 
 In parallel, symbolic execution tools have been developed to allow for the verification of programs automatically, with however poor scalability \cite{pathexplo}. \emph{Compositional symbolic execution} (CSE) uses advances made in separation logic to allow for the verification of code by fragments, improving drastically scalability and allowing for adoption in Continuous Integration pipelines \cite{pulse}.
 
@@ -14,7 +14,7 @@ Given the great potential in facilitating state model creation by construction, 
 
 In particular, the main objectives of this project are: \begin{itemize}
 	\item \textbf{RQ1}: what are the improvements provided by the use of resource algebras, compared to partial commutative monoids, when used for state models? What changes are needed to our state model definitions to take advantage of resource algebras?
-	\item \textbf{RQ2}: how do we define state models and state model transformers to ensure they are provably sound, both when used in overapproximate and underapproximate reasoning? Can the optimisations made when implementing the state models be lifted back to the theory and proven to be sound?
+	\item \textbf{RQ2}: how do we define state models and state model transformers to ensure they are provably sound, both when used in over-approximate and under-approximate reasoning? Can the optimisations made when implementing the state models be lifted back to the theory and proven to be sound?
 	\item \textbf{RQ3}: are state model transformers a viable approach performance-wise? How do instantiations of Gillian using state model transformers perform when compared with pre-existing instantiations? Do the defined optimisations bring actual improvements to performance?
 \end{itemize}
 
@@ -32,7 +32,7 @@ Finally, we measure in great detail the performance of the instantiations and op
 
 In \autoref{chap:background} we introduce the necessary theoretical background needed for the project; we go over separation logic and its variations, with incorrectness separation logic and abstract separation logic. In particular we retrace the history of abstract separation logic and its evolution, leading to the creation of Iris. We then describe Gillian, a compositional symbolic execution engine parametric on the memory model. We describe existing tools that enable symbolic execution and their differences. Finally, we briefly cover additional requirements relevant to this research area.
 
-In \autoref{chap:theory} we motivate the transition from partial commutative monoids to resoure algebras. We then go through the changes brought to our abstract CSE engines to accomodate the change, and define a wide range of state models. We also cover optimisations at the theoretical level for partial map transformer.
+In \autoref{chap:theory} we motivate the transition from partial commutative monoids to resource algebras. We then go through the changes brought to our abstract CSE engines to accommodate the change, and define a wide range of state models. We also cover optimisations at the theoretical level for partial map transformer.
 
 In \autoref{chap:implementation} we describe the implementation of these state models as a library, and how our theoretical constructs interface with the pre-existing definitions of Gillian. We also cover how a developer may use this library to in turn instantiate Gillian to the desired state model.
 
