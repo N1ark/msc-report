@@ -35,12 +35,11 @@
 
 
 \def\createFrontMatter{
-
 	%Title Page
             \thispagestyle{empty}
 	\newgeometry{top=0.8in}
 	\begin{center}
-		{\large
+		{\large\doublespacing
 			\begin{flushright}
 			      \includegraphics[scale=0.4]{FrontMatter/logo.png}\\*
 			\end{flushright}

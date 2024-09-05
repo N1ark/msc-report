@@ -83,6 +83,19 @@ If the engine aims to verify the function, it will start with an empty state and
 
 The same also applies with more complex functions. For the case of function calls using function specifications, the inverse is done: when calling a function its precondition is consumed, and its postcondition is produced, effectively \emph{framing off} the corresponding state, and then framing back on the post condition.
 
+\subsubsection{The Linear Heap State Model}
+
+To exemplify how a state model works, let's consider the traditional linear heap. We use a definition similar to what is shown in \cite{isl}: the two spatial assertions are the cell $a\mapsto x$, and the freed resource $a\freedpt$, meaning the cell at $a$ was freed. We also need four memory-related commands: \load, \store, \alloc{} and \free{}. Our concrete state is a mapping from integers to values or to a special $\varnothing$ value representing a freed state. The symbolic state is then the same, but lifting addresses and values to the symbolic realm. As such, our state model $\mmdl_\statemodel{LinHeap}$ thus defines: \begin{compactitem}
+ \item The concrete PCM $\St$, of which the carrier set is $\nats\part \Val \uplus \{\varnothing\}$ -- composition is the disjoint union, and the $0$ is the empty map.
+ \item The symbolic states $\Sst = \LVal \part \LVal \uplus\{\varnothing\}$.
+ \item The actions $\actions=\{\load,\store,\alloc,\free\}$.
+ \item The core predicates $\preds=\{\pointsto, \freedP\}$; we can then write \corepred{\pointsto}{a}{x} and \corepred{\freedP}{a}{} for $a\mapsto x$ and $a\freedpt$ respectively.
+ \end{compactitem}
+ 
+ The definition of \execac{} is straightforward, modifying the state accordingly. \consume{} of \pointsto{} and \freedP{} suceeds and removes the binding appropriately when the mapped-to value is in \LVal{} or is $\varnothing$ respectively. \produce{} does the opposite, adding the binding to the address and vanishing (resulting in no branches) if the binding clashes.
+ 
+ Finally we define the satisfiability relations: $\models$ is defined with the evaluation of the addresses and values of the symbolic state. We then define $\modelsp$ as ${[a\mapsto x]\modelsp \corepred{\pointsto}{a}{x}}$ and ${[a\mapsto\varnothing]\modelsp\corepred{\freedP}{a}{}}$.
+
 \subsection{Where it goes wrong}
 
 While PCMs are an obvious and straightforward choice for representing state ownership, they come with certain drawbacks. Firstly, PCMs can be overly restrictive; in particular, the presence of a unit $0$ is restrictive, as it makes construction of sums impossible: for that, one needs to allow for multiple units in the object. In \cite{sepalgebra}, it is shown that where a PCM fulfills $\exists u\ldotp \forall x\ldotp x\cdot u = x$, one can allow for more units by simply swapping the existentials: $\forall x\ldotp \exists u\ldotp x \cdot u = x$. This rule is further relaxed in Iris \cite{iris}, where it is shown that not having a unit at all can also be useful, in particular when one wants to construct \emph{Resource Algebras} (RAs) from simpler elements. Finaly, and as noted in \cite{iris}, PCMs are ``not enough'' for certain applications, such as when wanting to support higher-order logic.
@@ -91,9 +104,9 @@ In \cite{sacha-phd}, the concept of RA constructions from \cite{iris} is brought
 
 \subsubsection{Unsoundness in Freeable}
 
-The first example is with $\Freeable_\PCM(\mmdl)$. This state model \emph{transformer} is given a state model $\mmdl$, and extends it with the capacity to free state, via the \free{} action. It also adds a \freedP{} predicate, to represent freed memory.
+The first example is with $\Freeable_\PCM(\mmdl)$. This state model \emph{transformer} is given a state model $\mmdl$, and extends it with the capacity to free state, via the \free{} action. It also adds a \freedP{} predicate, to represent freed memory. 
 
-Now consider the simple state model $\Freeable_\PCM(\Ex_\PCM(\nats))$. Here $\Ex_\PCM(X)$ is the exclusive state model, that represents exclusive ownership of a value of type $X$\footnote{Note we write $\Ex_\PCM(X)$ and $\Freeable_\PCM(\mmdl)$ -- the $\Ex_\PCM$ state model accepts a set, $X$, whereas $\Freeable_\PCM$ accepts a state model, $\mmdl$.}. Ownership is indicated via the $\exP$ core predicate: \corepred{\exP}{}{x} means the state currently has the value $x$ -- this state model will be further defined later, and is only used here for the example. For now, we define the PCM version of $\Ex_\PCM(X)$~as:
+Now consider the simple state model $\Freeable_\PCM(\Ex_\PCM(\Val))$. This repsents exactly the pointed-to state in our previous linear heap example. Here $\Ex_\PCM(X)$ is the exclusive state model, that represents exclusive ownership of a value of type $X$.\footnote{Note we write $\Ex_\PCM(X)$ and $\Freeable_\PCM(\mmdl)$ -- the $\Ex_\PCM$ state model accepts a set, $X$, whereas $\Freeable_\PCM$ accepts a state model, $\mmdl$.} Going back to our linear heap, the pointed to cell is also exclusively owned; one cannot have two different values at the same address, we either have it all, or don't have it. Ownership is indicated via the $\exP$ core predicate: \corepred{\exP}{}{x} means the state currently has the value $x$ -- this state model will be further defined later, and is only used here for the example. For now, we define the PCM version of $\Ex_\PCM(X)$~as:
 \begin{align*}
 	\Ex_\PCM(X) &\defeq \ex{x\colon X} ~|~ 0
 \end{align*}
@@ -103,9 +116,9 @@ The notation $\ex{x\colon X}$ is equivalent to $\{ \ex{x} : \forall x\in X \}$. 
 	\Freeable_\PCM(\mmdl) &\defeq \text{sub}(\st\colon \St) ~|~ \freed ~|~ 0
 \end{align*}
 
-We then again define composition as $0 \cdot \st=\st \cdot 0=\st$, and $\text{sub}(\st) \cdot \text{sub}(\st')=\text{sub}(\st\cdot \st')$, which forms a valid PCM.\footnote{All other compositions are undefined.} $\Freeable_\PCM$ exposes a core predicate \freedP, as well as the core predicates of the underlying memory model; similarly, \consume{} and \produce{} are lifted. While we omit the full details of the state model, we note that producing \freedP{} only succeeds when in state $0$ (since a state can't be both freed and something else), producing something other that \freedP{} calls the \produce{} function of the underlying state model $\mmdl$, and stores the resulting state $\st$ as $\text{sub}(\st)$. Similarly, consuming a predicate of $\mmdl$ while in state $\text{sub}(\st)$ calls \consume{} on that predicate with $\st$, and then wraps the result $\st'$ back into $\text{sub}(\st')$.
+We then again define composition as $0 \cdot \st=\st \cdot 0=\st$, and $\text{sub}(\st) \cdot \text{sub}(\st')=\text{sub}(\st\cdot \st')$, which forms a valid PCM.\footnote{All unspecified compositions are considered undefined.} $\Freeable_\PCM$ exposes a core predicate \freedP, as well as the core predicates of the underlying memory model; similarly, \consume{} and \produce{} are lifted. While we omit the full details of the state model, we note that producing \freedP{} only succeeds when in state $0$ (since a state can't be both freed and something else), producing something other that \freedP{} calls the \produce{} function of the underlying state model $\mmdl$, and stores the resulting state $\st$ as $\text{sub}(\st)$. Similarly, consuming a predicate of $\mmdl$ while in state $\text{sub}(\st)$ calls \consume{} on that predicate with $\st$, and then wraps the result $\st'$ back into~$\text{sub}(\st')$.
 
-To show the unsoundness of this definition, consider calling the \code{dispose} function:
+Going back to our state model $\Freeable_\PCM(\Ex_\PCM(\Val))$, it thus exposes two predicates, $\exP$ and $\freedP$. Its set of states is $\{\text{sub}(x) : x \in \Val \uplus \{ 0 \} \} \uplus \{ \freed, 0 \}$. To show the unsoundness of our definition, consider calling the \code{dispose} function:
 \begin{align*}
 	\ESLtriple
 		{\corepred{\exP}{}{\sym x}}
@@ -113,7 +126,7 @@ To show the unsoundness of this definition, consider calling the \code{dispose} 
 		{\corepred{\freedP}{}{}}
 \end{align*}
 
-Assume we're in the state $\text{sub}(\ex{1})$. To call \code{dispose} by its specification, we first need to consume its precondition: we consume \corepred{\exP}{}{\sym x} from the state. To do this, $\Freeable_\PCM$ calls the \consume{} function of $\Ex_\PCM(\nats)$, with the state $\ex{1}$, which returns $0$. $\Freeable_\PCM$ then wraps this state back, resulting in $\text{sub}(0)$. We then produce the post-condition of \code{dispose}, thus producing \corepred{\freedP}{}{} into $\text{sub}(0)$. This however is not valid, according to the rules outlined earlier! Indeed the state can't both be freed and something else. Of course, $\text{sub}(0)$ represents an empty state, but that means that the \consume{} and \produce{} rules of $\Freeable_\PCM$ must take this into account -- a simple implementation could miss it, resulting in such errors.
+Assume we're in the state $\text{sub}(\ex{1})$. To call \code{dispose} by its specification, we first need to consume its precondition: we consume \corepred{\exP}{}{\sym x} from the state. To do this, $\Freeable_\PCM$ calls the \consume{} function of $\Ex_\PCM(\Val)$, with the state $\ex{1}$, which returns $0$. $\Freeable_\PCM$ then wraps this state back, resulting in $\text{sub}(0)$. We then produce the post-condition of \code{dispose}, thus producing \corepred{\freedP}{}{} into $\text{sub}(0)$. This however is not valid, according to the rules outlined earlier! Indeed the state can't both be freed and something else. Of course, $\text{sub}(0)$ represents an empty state, but that means that the \consume{} and \produce{} rules of $\Freeable_\PCM$ must take this into account -- a simple implementation could miss it, resulting in such errors.
 
 This difficulty is in fact caused by the existence of both $0$ and $\text{sub}(0)$ as two distinct states, despite them being the same semantically: empty. To fix this, one must either make $\text{sub}(0)$ invalid, defining it as $\text{sub}(x\colon \St \setminus \{0\})$, or instead remove the definition of $0$ and instead use $\text{sub}(0)$ as the unit of $\Freeable_\PCM$. Either cases require one to be quite careful around the unit, as forgetting about it may lead to unwanted~errors.
 
@@ -129,7 +142,9 @@ The proof that the above properties must hold can be found in \cref{ap:sum-sound
 
 \subsubsection{Unsoundness in PMap}
 
-Finally, we consider how PCMs can cause unsoundness in the partial map state model transformer, $\PMap(I, \mmdl)$. It allows mappings from a domain $I$ to a codomain state from~$\mmdl$. For this example we consider the state model construction $\PMap_\PCM(\nats, \Ex_\PCM(\nats))$, and we define the PCM of $\PMap_\PCM$ as: \begin{align*}
+Finally, we consider how PCMs can cause unsoundness in the partial map state model transformer, $\PMap(I, \mmdl)$. It allows mappings from a domain $I$ to a codomain state from~$\mmdl$. To represent the linear heap we presented earlier, one could have $\PMap_\PCM(\nats, \Freeable(\Ex(\Val)))$. 
+
+For this example we consider the state model construction $\PMap_\PCM(\nats, \Ex_\PCM(\nats))$, and we define the PCM of $\PMap_\PCM$ as: \begin{align*}
 	\PMap_\PCM(I, \mmdl) &\defeq (I \finmap \St) \times \pset(I)^?
 \end{align*}
 
@@ -534,11 +549,7 @@ The agreement state model $\Ag(X)$ is the counterpart to the exclusively owned s
 	\label{fig:ag-rules-example}
 \end{figure}
 
-See \autoref{fig:ag-rules-example} for an extract of its rules. Its duplicative nature can be seen in the rules \ruleref{AgConsOk} and \ruleref{AgProdEq}: consuming the predicate doesn't turn it into $\bot$ but leaves it untouched, while producing into an already present state suceeds as long as the predicate's out and the state are equal, as seen in the path condition: $[\sym x = \sym x']$.
-
-An observation that can be made from this is that for consumption to be sound, the resulting state can never be \emph{anything less than the input's core}. \note{Otherwise function call by specification is not frame preserving, I think? (At least with \Ag.) But this isn't defined as an axiom or anything, so I'm not sure what to do with it. It doesn't follow from any axiom, and I haven't proved it for any state model (though I'm sure it holds). Is it OK to just leave it here as it is still an insight, without building upon it?} \begin{align*}
-	\ppcons{\sst,\sins}{\Ok,\sst',\souts,\pc} \land \theta,s,\st\models\sst \land \theta,s,\st'\models\sst' \implies |\st| \preo \st'
-\end{align*}
+See \autoref{fig:ag-rules-example} for an extract of its rules. Its duplicative nature can be seen in the rules \ruleref{AgConsOk} and \ruleref{AgProdEq}: consuming the predicate doesn't turn it into $\bot$ but leaves it untouched, while producing into an already present state suceeds as long as the predicate's out and the state are equal, as seen in the path condition: $[\sym x = \sym x']$. An observation that can be made from this is that it is always sound for consumption of a state to result in \emph{at least} the input's core; as this knowledge is duplicable, it can always be kept anyways.
 
 Unline \Ex, \Ag{} is \emph{not cancellative}: in other words, $a\cdot b = a\cdot c \nRightarrow b=c$, since for instance $\ag{x} \cdot \bot=\ag{x}\cdot\ag{x}$, but $\bot\neq\ag{x}$. Cancellativity is a property that was initially thought to be required for separation algebras \cite{abstractseplogic,sepalgebra}, but that has since been dropped~\cite{statesoundness,iris}.
 
@@ -638,7 +649,7 @@ The rules of the \Sum{} state model are otherwise straightforward, lifting \exec
 	\label{fig:sum-miss-example}
 \end{figure}
 
-This example is interesting in that it also shows the constraint imposed by the fact $\bot\notin\Sst$: it is often needed to define auxiliary $\fn{unwrap}$ and $\fn{wrap}$ functions, that get the state out a value if it is not $\bot$, and returns $\bot$ otherwise. In other words, $\fn{unwrap}\colon\Sst_1^?\part\Sst_2^?$ and $\fn{wrap}\colon\Sst_2^?\rarr\Sst_1^?$. While these are straightforward to define and use, they can clutter rules a bit, in favour of not needing to handle $\bot$ and non-$\bot$ cases separately.
+This example is interesting in that it also shows the constraint imposed by the fact $\bot\notin\Sst$: it is often needed to define auxiliary $\fn{unwrap}$ and $\fn{wrap}$ functions, that get the state out a value if it is not $\bot$, and returns $\bot$ otherwise. In other words, $\fn{unwrap}\colon\Sst_1^?\part\Sst_2^?$ and $\fn{wrap}\colon\Sst_2^?\rarr\Sst_1^?$.\footnote{Note how $\fn{unwrap}$ is a partial function; for instance in the case of a sum, attempting to unwrap a state from the left side into the right side is undefined.} While these are straightforward to define and use, they can clutter rules a bit, in favour of not needing to handle $\bot$ and non-$\bot$ cases separately.
 
 \subsection{Product}
 
@@ -922,7 +933,7 @@ We now present the optimisation of \PMap{} using abstract locations: $\ALocPMap(
 	\ALocPMap(\mmdl) &\defeq \Str \finmap \mmdl.\Sigma \times \pset(\LVal)^?
 \end{align*}
 
-To take advantage of matching, the definition of \code{get} is modified, adding an argument $m\in\{\code{MATCH},\code{NO\_MATCH}\}$. Two rules, in their matching and non-matching form, are shown in \autoref{fig:alocpmap-get-rules}. The only difference between the two is the inclusion in the path condition of ${\sym i\notin\{\aloc{a''}:a''\in \dom(\sym h)\}}$, such that the branch is only valid if we're \emph{sure} that the address is not already in the heap. This cannot be included when matching is disabled, because it is too strong a condition: when not matching we already do not attempt to match the abstract location to any of the other indices, so if it results that we skipped a correct branch then the action would vanish (result in no branches), which is not OX sound.
+To take advantage of matching, the definition of \code{get} is modified, adding an argument for the matching mode, $m\in\{\code{MATCH},\code{NO\_MATCH}\}$. Two rules, in their matching and non-matching form, are shown in \autoref{fig:alocpmap-get-rules}. The only difference between the two is the inclusion in the path condition of ${\sym i\notin\{\aloc{a''}:a''\in \dom(\sym h)\}}$, such that the branch is only valid if we're \emph{sure} that the address is not already in the heap. This cannot be included when matching is disabled, because it is too strong a condition: when not matching we already do not attempt to match the abstract location to any of the other indices, so if it results that we skipped a correct branch then the action would vanish (result in no branches), which is not OX sound.
 
 \begin{figure}
 	\centering
@@ -942,7 +953,7 @@ To take advantage of matching, the definition of \code{get} is modified, adding 
 	\label{fig:alocpmap-get-rules}
 \end{figure}
 
-This optimisation is particularly powerful in the case where a value that is not known to be equal to any already present location is accessed: for a heap of size $n$, \PMap{} would branch $n+1$ times, whereas \ALocPMap{} does not branch (if not matching), from the rule \ruleref{ALocPMapNoMatchNew}. However, this is also too strong an optimisation. Consider the state model $\PMap(\Loc, \PMap(\Str, \Ex(\Val)))$: the state maps locations to objects, which are string-value mappings\footnote{This is very similar to the JavaScript state model.}. It exposes predicates of the form $\corepred{\exP}{a,n}{x}$, where $a$ is the address in the heap, $n$ is the name of the attribute, and $x$ its value. Now consider the following precondition: \begin{align*}
+This optimisation is particularly powerful in the case where a value that is not known to be equal to any already present location is accessed: for a heap of size $n$, \PMap{} would branch $n+1$ times, whereas \ALocPMap{} does not branch (if not matching), from the rule \ruleref{ALocPMapNoMatchNew}. However, this is also too strong an optimisation. Consider the state model $\PMap(\Loc, \PMap(\Str, \Ex(\Val)))$: the state maps locations to objects, which are string-value mappings.\footnote{This is very similar to the JavaScript state model.} It exposes predicates of the form $\corepred{\exP}{a,n}{x}$, where $a$ is the address in the heap, $n$ is the name of the attribute, and $x$ its value. Now consider the following precondition: \begin{align*}
 		\corepred{\exP}{\sym a_1, \strv{val}}{\sym x} * \corepred{\exP}{\sym a_2, \strv{len}}{\sym n}
 \end{align*}
 
