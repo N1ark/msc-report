@@ -20,7 +20,7 @@ Abstract separation logic historically has mostly used Partially Commutative Mon
 	\label{fig:pcm-properties}
 \end{figure}
 
-When bringing this concept to a Compositional Symbolic Execution (CSE) engine, the PCM must be endowed with a set of actions $\actions$, of core predicates $\preds$, and functions that allow modifying it; in particular, an \execac{} function that reflects program commands that modify the state, a \produce{} function to add an assertion to the state, a \consume{} function to remove an assertion from the state, and a \fix{} function to provide fixes for missing errors in bi-abduction. In \cite{cse1,cse2,sacha-phd}, the notion of state model is thus introduced, to represent a PCM equipped with these attributes, which can be seen in \autoref{fig:state-model-elements}. A state model is denoted $\mmdl$.\footnote{In our definition, the path condition and the variable store are \emph{not} part of the state model. These are handled by the engine ``on top'' of the state model.}
+When bringing this concept to a Compositional Symbolic Execution (CSE) engine, the PCM must be endowed with a set of actions $\actions$, of core predicates $\preds$, and functions that allow modifying it; in particular, an \execac{} function that reflects program commands that modify the state, a \produce{} function to add an assertion to the state, a \consume{} function to remove an assertion from the state, and a \fix{} function to provide fixes for missing errors in bi-abduction. In \cite{cse1,cse2,sacha-phd}, the notion of state model is thus introduced, to represent a PCM equipped with these attributes, which can be seen in \autoref{fig:state-model-elements}. A state model is denoted $\mmdl$. Note also that the state model does not include a variable store, or the path condition; these are handled separately by the engine.
 
 \begin{figure}\centering
 \setlength{\fboxsep}{0.3cm}
@@ -32,8 +32,8 @@ When bringing this concept to a Compositional Symbolic Execution (CSE) engine, t
 \item $\preds$: Set of core predicates.
 \end{compactitem} \vspace{0.3cm}
 \textbf{Functions:} \begin{compactitem}
-\item \execac: execute an action with arguments, returns a value.
-\item \produce: add a core predicate assertion into the state, returns the new state.
+\item \execac: executes an action with arguments, returns a value.
+\item \produce: adds a core predicate assertion into the state, returns the new state.
 \item \consume: removes a core predicate assertion from the state, returns the new state and the outs of the assertion.
 \item \fix: returns the assertions needed to fix the given missing error.
 \end{compactitem}\vspace{0.3cm}
