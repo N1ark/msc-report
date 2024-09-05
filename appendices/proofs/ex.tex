@@ -2,7 +2,7 @@
 
 \begin{proof}
 
-\pfprop{OX Soudness}
+\pfprop{OX soundness}
 
 \pfassume \begin{hypvlist}
 \hypvitem{conex} $\theta,s,\st\models\sst \land \ppexecc{\alpha}{\st,\ins}{o,\st',\outs} \land \expeval{\sins}=\ins$
@@ -25,7 +25,7 @@ The proof is analogous for both actions, so we only consider the case where $\al
 \end{hypvlist}
 Combining \hyp{evals}, \hyp{symact} and \hyp{models}, we get our goal \goal{symex}.
 
-\pfprop{UX Soudness}
+\pfprop{UX soundness}
 
 \pfassume \begin{hypvlist}
 \hypvitem{symex} $
@@ -83,7 +83,7 @@ From \hyp{botframe} and composition rules we know $\st\cdot\st_f=\ex{x}\cdot\bot
 \end{hypvlist}
 From \hyp{framebot} we get $\st'\cdot\st_f=\st'\cdot\bot=\st'$, and from \hyp{act} our goal \goal{frameadd} follows.
 
-\pfprop{Consume soundness}
+\pfprop{Consume UX soundness}
 
 \pfassume \begin{hypvlist}
 \hypvitem{consok} \ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc}
@@ -101,7 +101,7 @@ From \hyp{framebot} we get $\st'\cdot\st_f=\st'\cdot\bot=\st'$, and from \hyp{ac
 \end{hypvlist}
 Combining \hyp{stex}, \hyp{stdex} and \hyp{predmdl} gives our goal \goal{conssound}.
 
-\pfprop{Consume completeness}
+\pfprop{Consume OX soundness}
 
 \pfassume \begin{hypvlist}
 \hypvitem{consok} $\ppcons{\sst,\delta,\sins}{\Ok,\sst_f,\souts,\pc}$
@@ -121,7 +121,7 @@ Combining \hyp{stex}, \hyp{stdex} and \hyp{predmdl} gives our goal \goal{conssou
 \hypvitem{sat} From \hyp{consok}, $\pc=[]$ thus $\SAT(\pc)$. Together with \hyp{rest} and \hyp{models}, this gives our goal \goal{conscomp}.
 \end{hypvlist}
 
-\pfprop{Consume: OX sound}
+\pfprop{Consume OX no path drops}
 
 \pfassume \begin{hypvlist}
 \hypvitem{allok} $\forall o, \sst_f,\souts,\pc \ldotp \ppcons{\OX,\sst,\delta,\sins}{o, \sst_f, \souts, \pc}\Rarr o_c = \Ok$

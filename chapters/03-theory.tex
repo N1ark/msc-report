@@ -37,7 +37,7 @@ When bringing this concept to a Compositional Symbolic Execution (CSE) engine, t
 \item \consume: removes a core predicate assertion from the state, returns the new state and the outs of the assertion.
 \item \fix: returns the assertions needed to fix the given missing error.
 \end{compactitem}\vspace{0.3cm}
-\textbf{Theoretical Properties:} \note{Is `properties' the right word?}
+\textbf{Theoretical Properties:}
 \begin{compactitem}
 \item $\models$: symbolic interpretation relation.
 \item $\modelsp$: core predicate satisfiability relation.
@@ -91,9 +91,9 @@ To exemplify how a state model works, let's consider the traditional linear heap
  \item The actions $\actions=\{\load,\store,\alloc,\free\}$.
  \item The core predicates $\preds=\{\pointsto, \freedP\}$; we can then write \corepred{\pointsto}{a}{x} and \corepred{\freedP}{a}{} for $a\mapsto x$ and $a\freedpt$ respectively.
  \end{compactitem}
- 
+
  The definition of \execac{} is straightforward, modifying the state accordingly. \consume{} of \pointsto{} and \freedP{} suceeds and removes the binding appropriately when the mapped-to value is in \LVal{} or is $\varnothing$ respectively. \produce{} does the opposite, adding the binding to the address and vanishing (resulting in no branches) if the binding clashes.
- 
+
  Finally we define the satisfiability relations: $\models$ is defined with the evaluation of the addresses and values of the symbolic state. We then define $\modelsp$ as ${[a\mapsto x]\modelsp \corepred{\pointsto}{a}{x}}$ and ${[a\mapsto\varnothing]\modelsp\corepred{\freedP}{a}{}}$.
 
 \subsection{Where it goes wrong}
@@ -104,7 +104,7 @@ In \cite{sacha-phd}, the concept of RA constructions from \cite{iris} is brought
 
 \subsubsection{Unsoundness in Freeable}
 
-The first example is with $\Freeable_\PCM(\mmdl)$. This state model \emph{transformer} is given a state model $\mmdl$, and extends it with the capacity to free state, via the \free{} action. It also adds a \freedP{} predicate, to represent freed memory. 
+The first example is with $\Freeable_\PCM(\mmdl)$. This state model \emph{transformer} is given a state model $\mmdl$, and extends it with the capacity to free state, via the \free{} action. It also adds a \freedP{} predicate, to represent freed memory.
 
 Now consider the simple state model $\Freeable_\PCM(\Ex_\PCM(\Val))$. This repsents exactly the pointed-to state in our previous linear heap example. Here $\Ex_\PCM(X)$ is the exclusive state model, that represents exclusive ownership of a value of type $X$.\footnote{Note we write $\Ex_\PCM(X)$ and $\Freeable_\PCM(\mmdl)$ -- the $\Ex_\PCM$ state model accepts a set, $X$, whereas $\Freeable_\PCM$ accepts a state model, $\mmdl$.} Going back to our linear heap, the pointed to cell is also exclusively owned; one cannot have two different values at the same address, we either have it all, or don't have it. Ownership is indicated via the $\exP$ core predicate: \corepred{\exP}{}{x} means the state currently has the value $x$ -- this state model will be further defined later, and is only used here for the example. For now, we define the PCM version of $\Ex_\PCM(X)$~as:
 \begin{align*}
@@ -142,7 +142,7 @@ The proof that the above properties must hold can be found in \cref{ap:sum-sound
 
 \subsubsection{Unsoundness in PMap}
 
-Finally, we consider how PCMs can cause unsoundness in the partial map state model transformer, $\PMap(I, \mmdl)$. It allows mappings from a domain $I$ to a codomain state from~$\mmdl$. To represent the linear heap we presented earlier, one could have $\PMap_\PCM(\nats, \Freeable(\Ex(\Val)))$. 
+Finally, we consider how PCMs can cause unsoundness in the partial map state model transformer, $\PMap(I, \mmdl)$. It allows mappings from a domain $I$ to a codomain state from~$\mmdl$. To represent the linear heap we presented earlier, one could have $\PMap_\PCM(\nats, \Freeable(\Ex(\Val)))$.
 
 For this example we consider the state model construction $\PMap_\PCM(\nats, \Ex_\PCM(\nats))$, and we define the PCM of $\PMap_\PCM$ as: \begin{align*}
 	\PMap_\PCM(I, \mmdl) &\defeq (I \finmap \St) \times \pset(I)^?
