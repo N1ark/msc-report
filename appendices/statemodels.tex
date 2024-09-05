@@ -527,7 +527,7 @@ Predicate satisfiability is defined with regards to the concrete compositional s
 
 Here we use the matching mode $m\in\{\code{MATCH}, \code{NO\_MATCH}\}$.
 
-\begin{align*}
+\begin{breakalign*}
 	\text{Given }
 	\fn{wrap}(\sym h, \sym d) &\defeq \begin{cases}
 		\bot &\If~\dom(\sym h)=\emptyset \land \sym d=\bot\\
@@ -541,7 +541,7 @@ Here we use the matching mode $m\in\{\code{MATCH}, \code{NO\_MATCH}\}$.
 		\vtrue &\If~\sym d =\bot\\
 		\sym i\in \sym d&\Otherwise
 	\end{cases}
-\end{align*}
+\end{breakalign*}
 \begin{mathparpagebreakable}
 \inferrule[ALocPMapGetMatch]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a \neq \bot \\ a\in\dom(\sym h) \\ \sst_i=\sym h(a)}{\ppget{\sst, \sym i, m}{\aloc{a}, \sst_i, []}}
 \and\inferrule[ALocPMapGetNoMatchNotFound]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a \neq \bot \\ a\notin\dom(\sym h)}{\ppget{\sst, \sym i, \code{NO\_MATCH}}{\aloc{a}, \bot, [\sym i\in^? \sym d]}}

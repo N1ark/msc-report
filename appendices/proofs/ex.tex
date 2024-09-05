@@ -1,44 +1,5 @@
 \section{Exclusive} \label{proofs:ex-soundness}
 
-\subsection{Resource Algebra}
-
-\begin{align*}
- 	\Ex(X) &\defeq	\ex{x: X}\\
- 	|\ex{x}| &\defeq \bot\\
- 	\ex{x_1} \cdot \ex{x_2}&~\text{is always undefined}
- \end{align*}
- 
-We define the actions of the state model as $\actions=\{\load, \store\}$, and the predicates $\Delta=\{\exP\}$. We define predicate satisfiability and symbolic interpretation as:
-
-\begin{mathpar}
-\inferrule[ExPredSat]{\st=\ex{x}}{\st\modelsp\corepred{\exP}{[]}{[x]}}	
-\and\inferrule[ExSymInterpretation]{\expeval{\sym x}=x}{\theta,s,\ex{x}\models\ex{\sym x}}
-\end{mathpar}
-
-\subsection{Compositional Concrete Rules}
-
-\begin{mathparpagebreakable}
-\inferrule[CExLoadOk]{}{\ppexecc{\load}{\ex{x},[]}{\Ok,\ex{x},[x]}}
-\and\inferrule[CExLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss, \bot,[]}}
-\and\inferrule[CExStoreOk]{}{\ppexec{\store}{\ex{x}, [x']}{\Ok, \ex{x'}, []}}
-\and\inferrule[CExStoreMiss]{}{\ppexec{\store}{\bot,[x']}{\Miss,\bot,[]}}
-\end{mathparpagebreakable}
-
-\subsection{Compositional Symbolic Rules}
-
-\begin{mathparpagebreakable}
-\inferrule[ExLoadOk]{}{\ppexec{\load}{\ex{\sym x},[]}{\Ok,\ex{\sym x},[\sym x],[]}}
-\and\inferrule[ExLoadMiss]{}{\ppexec{\load}{\bot,[]}{\Miss, \bot, [], []}}
-\and\inferrule[ExStoreOk]{}{\ppexec{\store}{\ex{\sym x}, [\sym x']}{\Ok, \ex{\sym x'}, [], []}}
-\and\inferrule[ExStoreMiss]{}{\ppexec{\store}{\bot,[\sym x']}{\Miss,\bot,[],[]}}
-\and\inferrule[ExConsOk]{}{\ppcons{\ex{\sym x}, \exP, []}{\Ok, \bot, [\sym x], []}}
-\and\inferrule[ExConsMiss]{}{\ppcons{\bot,\exP, []}{\Miss, \bot, [], []}}
-\and\inferrule[ExProd]{}{\ppprod{\bot,\exP, [], [\sym x]}{\ex{\sym x}, []}}
-\and\inferrule[ExFix]{}{\fix ~[] = [\{ \exists \sym x\ldotp \corepred{\exP}{}{\sym x} \}]}
-\end{mathparpagebreakable}
-
-\subsection{Soundness Proofs}
-
 \begin{proof}
 
 \pfprop{OX Soudness}
@@ -55,11 +16,11 @@ The proof is analogous for both actions, so we only consider the case where $\al
 
 \begin{hypvlist}
 \hypvitem{isex} From our hypothesis, $\st=\ex{x}$ and $\sst=\ex{\sym x}$
-\hypvitem{actres} From the definition of concrete actions \textsc{CExLoadOk}, we get $\ins=[]$, $o=\Ok$, $\st'=\st$, $\outs=[x]$.
+\hypvitem{actres} From the definition of concrete actions \ruleref{CExLoadOk}, we get $\ins=[]$, $o=\Ok$, $\st'=\st$, $\outs=[x]$.
 \hypvitem{sins} From the definition of $\models$ we also have $\expeval{\sym x}=x$
 \hypvitem{pcinsouts} We can pick $\souts$, $\pc$ and $\theta'$ such that $\souts=[\sym x]$, $\pc = []$ and $\theta'=\theta$.
 \hypvitem{evals} From \hyp{pcinsouts}, we get $\expeval{\souts}=\outs$, as well as $\SAT(\pc)$
-\hypvitem{symact} From \textsc{ExLoadOk} and \hyp{pcinsouts}, we have $\ppexec{\load}{\sst,\sins}{\Ok, \sst', \souts, \pc}$ with $\sst'=\sst$.
+\hypvitem{symact} From \ruleref{ExLoadOk} and \hyp{pcinsouts}, we have $\ppexec{\load}{\sst,\sins}{\Ok, \sst', \souts, \pc}$ with $\sst'=\sst$.
 \hypvitem{models} Finally, from \hyp{actres} and \hyp{symact}, we have $\st'=\st$ and $\sst'=\sst$, thus from \hyp{conex} it follows that $\theta,s,\st'\models\sst'$.
 \end{hypvlist}
 Combining \hyp{evals}, \hyp{symact} and \hyp{models}, we get our goal \goal{symex}.
@@ -80,10 +41,10 @@ $
 
 We again only consider the case where $\alpha=\load$ and $\st'=\ex{x}$, $\sst'=\ex{\sym x}$ -- the other three cases are analogous.
 \begin{hypvlist}
-\hypvitem{vals} From \textsc{ExLoadOk}, we get $\sst=\sst'=\ex{\sym x}$, $\sins=[]$, $o=\Ok$, $\souts=[\sym x]$, $\pc=[]$, with $s=[x\mapsto \sym x]$
+\hypvitem{vals} From \ruleref{ExLoadOk}, we get $\sst=\sst'=\ex{\sym x}$, $\sins=[]$, $o=\Ok$, $\souts=[\sym x]$, $\pc=[]$, with $s=[x\mapsto \sym x]$
 \hypvitem{insouts} From \hyp{vals} and \hyp{symex} we have $\ins=[]$ and $\outs=[x]$
 \hypvitem{stisex} We can pick $\st=\st'=\ex{x}$, which from \hyp{symex} and \hyp{vals} give us $\theta,s,\st\models\sst$
-\hypvitem{actex} From \textsc{CExLoadOk}, \hyp{insouts} and \hyp{stisex}, we have $\ppexecc{\load}{\st,\ins}{\Ok,\st',\outs}$.
+\hypvitem{actex} From \ruleref{CExLoadOk}, \hyp{insouts} and \hyp{stisex}, we have $\ppexecc{\load}{\st,\ins}{\Ok,\st',\outs}$.
 \end{hypvlist}
 Combinding \hyp{stisex} and \hyp{actex} gives our goal \goal{conex}.
 

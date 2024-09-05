@@ -1,61 +1,6 @@
 \section{Abstract Location Partial Map} \label{proofs:alocpmap-soundness}
 
-For the abstract location partial map, we define a new set of states, \ALocPMap, which we only use for the symbolic representation; the concrete compositional RA is still that defined in \PMap. 
-
-For the $\PMap$ with syntactic matching and $\SplitPMap$ we considered compatiblity with any ``regular'' $\PMap$ that has the same domain $I$. Here however, because $\ALocPMap$ enforces the domain be abstract locations (as strings), we must consider compatiblity with regards to $\PMap(\Loc, \mmdl)$ only.
-
-Concrete locations (or just locations) are values of the form $\loc{a}$, where $a$ is the name of the location -- it always holds that given two locations $\loc{a}$ and $\loc{b}$, $\loc{a}=\loc{b} \iff a=b$. They are uninterpreted values, and do not allow any operations; as such, they can be used as sorts of pointers, where they represent address in a map, to the difference that they do not allow pointer arithmetics.
-
-Abstract locations are \emph{symbolic} values of the form $\aloc{a}$, where $a$ is the name of the abstract location. Unlike with concrete locations, their name does not uniquely identify them: we may have a substitution $\theta$ such that for $\aloc{a}$ and $\aloc{b}$ with $a\neq b$, we have $\expeval{\aloc{a}} = \expeval{\aloc{b}}$.
-
-We also introduce the function $\code{to\_aloc}$, that returns the name of an abstract location associated with a symbolic value if it exists and is found, and $\bot$ otherwise. This is a best effort function, that may not find an abstract location that exists. \begin{align*}
-	\code{to\_aloc}~i = a \implies \exists a\ldotp \expeval{i}=\expeval{\aloc{a}}
-\end{align*}
-
-\subsection{Resource Algebra}
-
-\begin{breakalign*}
-	\ALocPMap(\mmdl) &\defeq \Str \finmap \mmdl.\Sigma \times \pset(\LVal)^?
-\end{breakalign*}
-
-\begin{mathpar}
-\inferrule[ALocPMapSymInterpretation]{\forall a\in\dom(\sym h)\ldotp \expeval{\aloc{a}}=i \land i\in\dom(h) \land \theta,s,h(i) \models \sym h(a) \\ \expeval{\{ \aloc{a} : a\in \dom(\sym h)\}}=\dom(h) \\ \expeval{\sym d}=d}{\theta,s,(h,d)\models (\sym h, \sym d)}
-\end{mathpar}
-
-\subsection{\code{get} and \code{set} rules}
-
-We now present the rules for this state model; in particular, we again only need to concern ourselves with the \code{get} and \code{set} internal methods. We also extend \code{get} to receive a mode ${M= \{\code{MATCH},\code{NO\_MATCH}\}}$; it is \code{MATCH} in \consume{} and \produce, and \code{NO\_MATCH} during action execution. The rules for \execac, \consume{} and \produce{} are omitted as they are analogous to those in \PMap, to the exception that \code{get} receives a matching mode. To simplify the rules, we also add the notation $\in^?$, that checks for membership in a possibly $\bot$ set, in which case the result is $\vtrue$.
-
-\begin{align*}
-	\text{Given }
-	\fn{wrap}(\sym h, \sym d) &\defeq \begin{cases}
-		\bot &\If~\dom(\sym h)=\emptyset \land \sym d=\bot\\
-		(\sym h,\sym d)&\Otherwise
-	\end{cases}\\
-	\fn{unwrap}(\sst) & \defeq \begin{cases}
-		([], \bot) &\If~\sst=\bot\\
-		(\sym h, \sym d) &\If~\sst=(\sym h,\sym d)
-	\end{cases}\\
-	a \in^? \sym d &\defeq \begin{cases}
-		\vtrue &\If~\sym d =\bot\\
-		a\in \sym d&\Otherwise
-	\end{cases}
-\end{align*}
-\begin{mathparpagebreakable}
-\inferrule[ALocPMapGetMatch]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a \neq \bot \\ a\in\dom(\sym h) \\ \sst_i=\sym h(a)}{\ppget{\sst, \sym i, m}{\aloc{a}, \sst_i, []}}
-\and\inferrule[ALocPMapGetNoMatchNotFound]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a \neq \bot \\ a\notin\dom(\sym h)}{\ppget{\sst, \sym i, \code{NO\_MATCH}}{\aloc{a}, \bot, [\sym i\in^? \sym d]}}
-\and\inferrule[ALocPMapGetNoMatchNew]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a = \bot \\ a'=\code{fresh\_aloc ()}}{\ppget{\sst, \sym i, \code{NO\_MATCH}}{\aloc{a'}, \bot, [\sym i=\aloc{a'} \land \sym i \in^? \sym d]}}
-\and\inferrule[ALocPMapGetMatchNotFound]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a \neq \bot \\ a\notin\dom(\sym h)}{\ppget{\sst, \sym i, \code{MATCH}}{\aloc{a}, \bot, [\sym i \notin \{\aloc{a'}:a'\in \dom(\sym h)\} \land \sym i\in^? \sym d]}}
-\and\inferrule[ALocPMapGetMatchNew]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a = \bot \\ a'=\code{fresh\_aloc ()}}{\ppget{\sst, \sym i, \code{MATCH}}{\aloc{a'}, \bot, [\sym i=\aloc{a'} \land \sym i\notin\{\aloc{a''}:a''\in \dom(\sym h)\} \land \sym i \in^? \sym d]}}
-\and\inferrule[ALocPMapMatching]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a \neq\bot \\ a\notin \dom(\sym h) \\ a'\in\dom(\sym h) \\ \sst_i=\sym h(a')}{\ppget{\sst, \sym i,\code{MATCH}}{\aloc{a'},\sst_i,[\aloc{a}=\aloc{a'}]}}
-\and\inferrule[ALocPMapMatchingBot]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a=\bot \\ a'\in\dom(\sym h) \\ \sst_i=\sym h(a')}{\ppget{\sst, \sym i,\code{MATCH}}{\aloc{a'},\sst_i,[\sym i=\aloc{a'}]}}
-\and\inferrule[ALocPMapSetSome]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a\neq\bot \\ \sst_i\neq\bot \\ \sym h'=\sym h[a\leftarrow \sst_i] \\ \sst'=\fn{wrap}(\sym h', \sym d)}{\ppset{\sst,\sym i,\sst_i}{\sst'}}
-\and\inferrule[ALocPMapSetNone]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ a = \code{to\_aloc}~\sym i \\ a\neq\bot \\ \sst_i=\bot \\ \sym h'=\sym h[a\not\leftarrow] \\ \sst'=\fn{wrap}(\sym h',\sym d)}{\ppset{\sst,\sym i,\sst_i}{\sst'}}
-\end{mathparpagebreakable}
-
-\subsection{Soundness Proofs}
-
-Because we extend the signature of get with a matching mode, we proceed with the proofs for \code{get} and \code{set} by doing no assumption on the value of the mode $m$. Interestingly, we will see that \emph{we cannot prove OX soundness} with $m=\code{NO\_MATCH}$, as it only holds for $m=\code{MATCH}$. This is central to the difference in behaviour between $\PMap(\Loc, \mmdl)$ and $\ALocPMap(\mmdl)$.
+Because we extend the signature of get with a matching mode, we proceed with the proofs for \code{get} and \code{set} by doing no assumption on the value of the mode $m$. Interestingly, we will see that \emph{we cannot prove OX and UX soundness} with $m=\code{NO\_MATCH}$, as it only holds for $m=\code{MATCH}$. This is central to the difference in behaviour between $\PMap(\Loc, \mmdl)$ and $\ALocPMap(\mmdl)$.
 
 \begin{proof}
 
@@ -70,33 +15,33 @@ Because we extend the signature of get with a matching mode, we proceed with the
 
 We proceed by proving the property holds for all rules of the concrete \code{get}, resulting in three cases.
 
-\pfcase{\textsc{CPMapGetMatch}}
+\pfcase{\ruleref{CPMapGetMatch}}
 
 \begin{hypvlist}
 \hypvitem{rule1} Assume $(h,d)=\fn{unwrap}(\st) \land i\in\dom(h) \land \st_{i}=h(i)$.
 \hypvitem{exsym1} It follows from \hyp{getcon} and the definition of $\models$ that $\sst=(\sym h, \sym d)$ such that $\exists \sym i'\ldotp \sym i' = \aloc{a'} \land a' \in \dom(\sym h)$, $\expeval{\sym i'}=i$ and $\theta,s,\st_i\models \sym h(a')$.
 \hypvitem{split1} From here, multiple cases are possible: either $\code{to\_aloc}~\sym i=a'$, or $\code{to\_aloc}~\sym i=a$ such that $a\neq a'\land \expeval{\aloc a}=\expeval{\aloc{a'}}$, or $\code{to\_aloc}~\sym i=\bot$. Indeed, \code{to\_aloc} is a best effort function, that may not find a match despite there being one; it can also be that $\sym i$ is a fresh symbolic variable, such that in the current path condition nothing binds it to $\aloc{a}$.
-\hypvitem{caseeq} In the first case, $\code{to\_aloc}~\sym i=a'$ we can apply \textsc{ALocPMapGetMatch}, giving us our goal \goal{getsym}.
-\hypvitem{caseeqdiff} In the second case, $\code{to\_aloc}~\sym i=a\land a\neq a'\land \expeval{\aloc{a}}=\expeval{\aloc{a'}}$, we may apply \textsc{ALocPMapMatching}, \emph{but only when $m=\code{MATCH}$}. This gives our goal \goal{getsym}. {\color{red}Otherwise, when $m=\code{NO\_MATCH}$, the only rule that suits is \textsc{ALocPMapGetNoMatchNotFound}, which gives us $\sst_i=\bot$, from which it follows that $\theta,s,\st_i\not\models\sst_i$.}
-\hypvitem{casebot} In the last case, $\code{to\_aloc}~\sym i=\bot$. Again, if $m=\code{MATCH}$, we can apply \textsc{ALocPMapMatchingBot} and get our goal \goal{getsym}; {\color{red}otherwise, the only applicable rule is \textsc{ALocPMapGetNoMatchNew}, which invalidates our goal, as $\theta,s,\st_i\not\models\sst_i$.}
+\hypvitem{caseeq} In the first case, $\code{to\_aloc}~\sym i=a'$ we can apply \ruleref{ALocPMapGetMatch}, giving us our goal \goal{getsym}.
+\hypvitem{caseeqdiff} In the second case, $\code{to\_aloc}~\sym i=a\land a\neq a'\land \expeval{\aloc{a}}=\expeval{\aloc{a'}}$, we may apply \ruleref{ALocPMapMatching}, \emph{but only when $m=\code{MATCH}$}. This gives our goal \goal{getsym}. {\color{red}Otherwise, when $m=\code{NO\_MATCH}$, the only rule that suits is \ruleref{ALocPMapGetNoMatchNotFound}, which gives us $\sst_i=\bot$, from which it follows that $\theta,s,\st_i\not\models\sst_i$.}
+\hypvitem{casebot} In the last case, $\code{to\_aloc}~\sym i=\bot$. Again, if $m=\code{MATCH}$, we can apply \ruleref{ALocPMapMatchingBot} and get our goal \goal{getsym}; {\color{red}otherwise, the only applicable rule is \ruleref{ALocPMapGetNoMatchNew}, which invalidates our goal, as $\theta,s,\st_i\not\models\sst_i$.}
 \end{hypvlist}
 
-\pfcase{\textsc{CPMapGetAdd}}
+\pfcase{\ruleref{CPMapGetAdd}}
 
 \begin{hypvlist}
 \hypvitem{rule2} Assume $(h,d)=\fn{unwrap}(\st) \land i\notin\dom(h) \land d\neq\bot \land i\in d$.
-\hypvitem{apply2} From \hyp{rule3}, \hyp{getcon} and \textsc{CPMapGetAdd}, we have $\st_i=\bot$.
+\hypvitem{apply2} From \hyp{rule3}, \hyp{getcon} and \ruleref{CPMapGetAdd}, we have $\st_i=\bot$.
 \hypvitem{exsym2} It follows from \hyp{getcon} and the definition of $\models$ that $\sst=(\sym h, \sym d)$ such that $\sym i=\aloc{a'} \land \sym i \in \sym d$ and $a'\notin \dom(\sym h)$.
 \hypvitem{split2} We again get three possible cases, depending on $\code{to\_aloc}$: either $\code{to\_aloc}~\sym i=a'$, or $\code{to\_aloc}~\sym i=a$ such that $a\neq a'\land \expeval{\aloc a}=\expeval{\aloc{a'}}$, or $\code{to\_aloc}~\sym i=\bot$.
-\hypvitem{toaloc2} In the two first cases, from the definition of $\models$ and \code{to\_aloc}, it still holds from \hyp{exsym2} that $a'\notin \sym h$ and $a\notin \sym h$, respectively. Depending on the mode $m$, we thus apply \textsc{ALocPMapGetNoMatchNotFound} or \textsc{ALocPMapGetMatchNotFound}, giving us $\sst_i=\bot$ and $\pc=[\sym i\in^? \sym d]$ or $\pc=[\sym i \notin \{\aloc{a'}:a'\in \dom(\sym h)\} \land \sym i\in^? \sym d]$, which from \hyp{exsym2} we know $\SAT(\pc)$ in both cases, giving our goal \goal{getsym}.
-\hypvitem{tobot2} In the last case, we have $\code{to\_aloc}~\sym i=\bot$, we thus apply \textsc{ALocPMapGetNoMatchNew} or \textsc{ALocPMapGetMatchNew} depending on $m$, giving us $a'=\code{fresh\_aloc ()}$, $\sst_i=\bot$, $\sym i'=\aloc{a'}$ and $\pc=[\sym i=\aloc{a'} \land \sym i\in^? \sym d]$ or $[\sym i=\aloc{a'} \land \sym i\notin\{\aloc{a''}:a''\in \dom(\sym h)\} \land \sym i \in^? \sym d]$. From \hyp{apply2} and \ref{eq:empty-mem}, we have $\theta,s,\st_i\models\sst_i$. Because $a'$ is a fresh abstract location, it's equality to one term can always be satisfied; and from \hyp{exsym2} we know $\sym i\in^?\sym d$ holds -- thus $\SAT(\pc)$, completing our goal \goal{getsym}.
+\hypvitem{toaloc2} In the two first cases, from the definition of $\models$ and \code{to\_aloc}, it still holds from \hyp{exsym2} that $a'\notin \sym h$ and $a\notin \sym h$, respectively. Depending on the mode $m$, we thus apply \ruleref{ALocPMapGetNoMatchNotFound} or \ruleref{ALocPMapGetMatchNotFound}, giving us $\sst_i=\bot$ and $\pc=[\sym i\in^? \sym d]$ or $\pc=[\sym i \notin \{\aloc{a'}:a'\in \dom(\sym h)\} \land \sym i\in^? \sym d]$, which from \hyp{exsym2} we know $\SAT(\pc)$ in both cases, giving our goal \goal{getsym}.
+\hypvitem{tobot2} In the last case, we have $\code{to\_aloc}~\sym i=\bot$, we thus apply either \ruleref{ALocPMapGetNoMatchNew} or \ruleref{ALocPMapGetMatchNew} depending on $m$, giving us $a'=\code{fresh\_aloc ()}$, $\sst_i=\bot$, $\sym i'=\aloc{a'}$ and $\pc=[\sym i=\aloc{a'} \land \sym i\in^? \sym d]$ or $[\sym i=\aloc{a'} \land \sym i\notin\{\aloc{a''}:a''\in \dom(\sym h)\} \land \sym i \in^? \sym d]$. From \hyp{apply2} and \ref{eq:empty-mem}, we have $\theta,s,\st_i\models\sst_i$. Because $a'$ is a fresh abstract location, it's equality to one term can always be satisfied; and from \hyp{exsym2} we know $\sym i\in^?\sym d$ holds -- thus $\SAT(\pc)$, completing our goal \goal{getsym}.
 \end{hypvlist}
 
-\pfcase{\textsc{CPMapGetBotDomain}}
+\pfcase{\ruleref{CPMapGetBotDomain}}
 
 \begin{hypvlist}
 \hypvitem{rule3} Assume $(h,d)=\fn{unwrap}(\st) \land i\notin\dom(h) \land d=\bot$.
-\hypvitem{apply3} From \hyp{rule3}, \hyp{getcon} and \textsc{CPMapGetBotDomain}, we have $\st_i=\bot$.
+\hypvitem{apply3} From \hyp{rule3}, \hyp{getcon} and \ruleref{CPMapGetBotDomain}, we have $\st_i=\bot$.
 \hypvitem{exsym3} It follows from \hyp{getcon} and the definition of $\models$ that $\sst=(\sym h, \bot)$ such that $\sym i\notin \dom(\sym h)$.
 \hypvitem{branch3} The remainder of the proof is analogous to the above; three cases are possible depending on the result of $\code{to\_aloc}~\sym i$ -- in all three cases, we can apply one of the four \textsc{[...]NotFound} and \textsc{[...]New} rules, such that $\sst_i=\bot$, $\expeval{\sym i'}=i$ and $\SAT(\pc)$, giving our goal \goal{getsym}.
 \end{hypvlist}
@@ -113,75 +58,75 @@ We proceed by proving the property holds for all rules of the concrete \code{get
 
 We proceed by proving the property holds for all rules of the symbolic \code{get}, resulting in five cases.
 
-\pfcase{\textsc{ALocPMapGetMatch}}
+\pfcase{\ruleref{ALocPMapGetMatch}}
 
 \begin{hypvlist}
 \hypvitem{rule1} Assume $(\sym h,\sym d)=\fn{unwrap}(\sst) \land a = \code{to\_aloc}~\sym i \land a \neq \bot \land a\in\dom(\sym h) \land \sst_i=\sym h(a)$
-\hypvitem{apply1} From \hyp{rule1}, \hyp{getsym} and \textsc{ALocPMapGetMatch}, we have $\pc=[]$
+\hypvitem{apply1} From \hyp{rule1}, \hyp{getsym} and \ruleref{ALocPMapGetMatch}, we have $\pc=[]$
 \hypvitem{notbot} From \hyp{rule1}, we have $\sst\neq\bot$, thus from \hyp{models} we have $\st=(h, d)$
 \hypvitem{evalheap} From \hyp{models}, \hyp{rule1} and the definition of $\models$, we have $i\in h$ such that $\st_i=h(i)$ and ${\theta,s,\st_i\models\sst_i}$
-\hypvitem{applycget} From \hyp{evalheap} we can apply \textsc{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
+\hypvitem{applycget} From \hyp{evalheap} we can apply \ruleref{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
 \end{hypvlist}
 
-\pfcase{\textsc{ALocPMapGetNoMatchNotFound}}
+\pfcase{\ruleref{ALocPMapGetNoMatchNotFound}}
 
 \begin{hypvlist}
 \hypvitem{rule2} Assume $(\sym h,\sym d)=\fn{unwrap}(\sst) \land a = \code{to\_aloc}~\sym i \land a \neq \bot \land a\notin\dom(\sym h) \land m=\code{NO\_MATCH}$
-\hypvitem{apply2} From \hyp{rule2}, \hyp{getsym} and \textsc{ALocPMapGetNoMatchNotFound}, we have $\sst_i=\bot$ and ${\pc=[\aloc{a} \in^? \sym d]}$%
+\hypvitem{apply2} From \hyp{rule2}, \hyp{getsym} and \ruleref{ALocPMapGetNoMatchNotFound}, we have $\sst_i=\bot$ and ${\pc=[\aloc{a} \in^? \sym d]}$%
 \hypvitem{notbot2} Let $(h,d)=\fn{unwrap}(\st)$.
 \hypvitem{pctrue2} From \hyp{getsym} $\SAT(\pc)$, thus from \hyp{apply2}, either $d\neq\bot\land i\in d$, or $d=\bot$.
 \hypvitem{twocases2} From this, we get two cases: either $i\in \dom(h)$, or $i\notin \dom(h)$.
-\hypvitem{notinh2} If $i\notin h$, we can apply either \textsc{CPMapGetAdd} or \textsc{CPMapGetBotDomain} depending on $d$, in both cases giving us \ppgetc{\st,i}{\bot}. Together with \ref{eq:empty-mem}, this completes our goal.
-\hypvitem{inh2} {\color{red}However, if $i\in \dom(h)$, we can only apply \textsc{CPMapGetMatch}, which however gives us \ppgetc{\st,i}{\st_i} where $\st_i\neq\bot$ -- this however \emph{is not compatible with $\sst_i$}.}
+\hypvitem{notinh2} If $i\notin h$, we can apply either \ruleref{CPMapGetAdd} or \ruleref{CPMapGetBotDomain} depending on $d$, in both cases giving us \ppgetc{\st,i}{\bot}. Together with \ref{eq:empty-mem}, this completes our goal.
+\hypvitem{inh2} {\color{red}However, if $i\in \dom(h)$, we can only apply \ruleref{CPMapGetMatch}, which however gives us \ppgetc{\st,i}{\st_i} where $\st_i\neq\bot$ -- this however \emph{is not compatible with $\sst_i$}.}
 \end{hypvlist}
 
-\pfcase{\textsc{ALocPMapGetNoMatchNew}}
+\pfcase{\ruleref{ALocPMapGetNoMatchNew}}
 
 \begin{hypvlist}
 \hypvitem{rule3} Assume $(\sym h,\sym d)=\fn{unwrap}(\sst) \land a = \code{to\_aloc}~\sym i \land a = \bot \land a'=\code{fresh\_aloc ()} \land m=\code{NO\_MATCH}$
-\hypvitem{apply3} From \hyp{rule3}, \hyp{getsym} and \textsc{ALocPMapGetNoMatchNew}, we have $\sym i'=\aloc{a'}$, $\sst_i=\bot$ and ${\pc=[\sym i=\aloc{a'}\land \sym i\in^?\sym d]}$
+\hypvitem{apply3} From \hyp{rule3}, \hyp{getsym} and \ruleref{ALocPMapGetNoMatchNew}, we have $\sym i'=\aloc{a'}$, $\sst_i=\bot$ and $\\{\pc=[\sym i=\aloc{a'}\land \sym i\in^?\sym d]}$
 \hypvitem{botdom} Let $(h,d)=\fn{unwrap}(\st)$.%
 \hypvitem{twocases} From here, we get two cases: either $i\in \dom(h)$, or $i\notin \dom(h)$ -- as indeed it may be the case that $\expeval{\sym i}=i$, but that due to the nature of $\code{to\_aloc}$, $a\notin \sym h$.
-\hypvitem{notinh} If $i\notin h$, we can apply either \textsc{CPMapGetAdd} or \textsc{CPMapGetBotDomain} depending on $d$, in either cases giving us \ppgetc{\st,i}{\bot}. Together with \ref{eq:empty-mem}, this completes our goal.
-\hypvitem{inh}{\color{red}However, if $i\in \dom(h)$, we can only apply \textsc{CPMapGetMatch}, which however gives us \ppgetc{\st,i}{\st_i} where $\st_i\neq\bot$ -- this however \emph{is not compatible with $\sst_i$}.}
+\hypvitem{notinh} If $i\notin h$, we can apply either \ruleref{CPMapGetAdd} or \ruleref{CPMapGetBotDomain} depending on $d$, in either cases giving us \ppgetc{\st,i}{\bot}. Together with \ref{eq:empty-mem}, this completes our goal.
+\hypvitem{inh}{\color{red}However, if $i\in \dom(h)$, we can only apply \ruleref{CPMapGetMatch}, which however gives us \ppgetc{\st,i}{\st_i} where $\st_i\neq\bot$ -- this however \emph{is not compatible with $\sst_i$}.}
 \end{hypvlist}
 
-\pfcase{\textsc{ALocPMapGetMatchNotFound}}
+\pfcase{\ruleref{ALocPMapGetMatchNotFound}}
 
 \begin{hypvlist}
 \hypvitem{rule2} Assume $(\sym h,\sym d)=\fn{unwrap}(\sst) \land a = \code{to\_aloc}~\sym i \land a \neq \bot \land a\notin\dom(\sym h) \land m=\code{MATCH}$
-\hypvitem{apply2} From \hyp{rule2}, \hyp{getsym} and \textsc{ALocPMapGetNoMatchNotFound}, we have $\sst_i=\bot$ and ${\pc=[\sym i \notin \{\aloc{a'}:a'\in \dom(\sym h)\} \land \sym i \in^? \sym d]}$%
+\hypvitem{apply2} From \hyp{rule2}, \hyp{getsym} and \ruleref{ALocPMapGetNoMatchNotFound}, we have $\sst_i=\bot$ and $\\{\pc=[\sym i \notin \{\aloc{a'}:a'\in \dom(\sym h)\} \land \sym i \in^? \sym d]}$%
 \hypvitem{notbot2} Let $(h,d)=\fn{unwrap}(\st)$.
 \hypvitem{pctrue2} From \hyp{getsym} $\SAT(\pc)$, thus from \hyp{apply2}, either $d\neq\bot\land i\in d$, or $d=\bot$. We also have, crucially, that $i\notin \dom(h)$.
-\hypvitem{notinh2} We can thus apply either \textsc{CPMapGetAdd} or \textsc{CPMapGetBotDomain} depending on $d$, in both cases giving us \ppgetc{\st,i}{\bot}. Together with \ref{eq:empty-mem}, this completes our goal.
+\hypvitem{notinh2} We can thus apply either \ruleref{CPMapGetAdd} or \ruleref{CPMapGetBotDomain} depending on $d$, in both cases giving us \ppgetc{\st,i}{\bot}. Together with \ref{eq:empty-mem}, this completes our goal.
 \end{hypvlist}
 
-\pfcase{\textsc{ALocPMapGetMatchNew}}
+\pfcase{\ruleref{ALocPMapGetMatchNew}}
 
 \begin{hypvlist}
 \hypvitem{rule3} Assume $(\sym h,\sym d)=\fn{unwrap}(\sst) \land a = \code{to\_aloc}~\sym i \land a = \bot \land a'=\code{fresh\_aloc ()} \land m=\code{MATCH}$
 \hypvitem{botdom} Let $(h,d)=\fn{unwrap}(\st)$.%
-\hypvitem{apply3} From \hyp{rule3}, \hyp{getsym} and \textsc{ALocPMapGetNoMatchNew}, we have $\sym i'=\aloc{a'}$, $\sst_i=\bot$ and ${\pc=[\sym i=\aloc{a'} \land \sym i\notin\{\aloc{a''}:a''\in \dom(\sym h)\} \land \sym i \in^? \sym d]}$%
+\hypvitem{apply3} From \hyp{rule3}, \hyp{getsym} and \ruleref{ALocPMapGetNoMatchNew}, we have $\sym i'=\aloc{a'}$, $\sst_i=\bot$ and $\\{\pc=[\sym i=\aloc{a'} \land \sym i\notin\{\aloc{a''}:a''\in \dom(\sym h)\} \land \sym i \in^? \sym d]}$%
 \hypvitem{pctrue3} From \hyp{getsym} $\SAT(\pc)$, thus from \hyp{apply3}, either $d\neq\bot\land i\in d$, or $d=\bot$. We also have, crucially, that $\expeval{\aloc{a'}}=i$, and thus $i\notin \dom(h)$.
-\hypvitem{notinh} From \hyp{pctrue3}, we can apply either \textsc{CPMapGetAdd} or \textsc{CPMapGetBotDomain} depending on $d$, in either cases giving us \ppgetc{\st,i}{\bot}. Together with \ref{eq:empty-mem}, this completes our goal.
+\hypvitem{notinh} From \hyp{pctrue3}, we can apply either \ruleref{CPMapGetAdd} or \ruleref{CPMapGetBotDomain} depending on $d$, in either cases giving us \ppgetc{\st,i}{\bot}. Together with \ref{eq:empty-mem}, this completes our goal.
 \end{hypvlist}
 
-\pfcase{\textsc{ALocPMapMatching}}
+\pfcase{\ruleref{ALocPMapMatching}}
 
 \begin{hypvlist}
 \hypvitem{rule4} Assume $(\sym h,\sym d)=\fn{unwrap}(\sst) \land a = \code{to\_aloc}~\sym i \land a \neq\bot \land a\notin \dom(\sym h) \land {a'\in\dom(\sym h)} \land \sst_i=\sym h(a')$
-\hypvitem{apply4} From \hyp{rule4}, \hyp{getsym} and \textsc{ALocPMapMatching}, we have $\sym i'=\aloc{a'}$, $\sst_i=\sym h(a')$, ${\pc=[\aloc{a}=\aloc{a'}]}$ and $m=\code{MATCH}$.
+\hypvitem{apply4} From \hyp{rule4}, \hyp{getsym} and \ruleref{ALocPMapMatching}, we have $\sym i'=\aloc{a'}$, $\sst_i=\sym h(a')$, ${\pc=[\aloc{a}=\aloc{a'}]}$ and $m=\code{MATCH}$.
 \hypvitem{evalheap4} From \hyp{models}, \hyp{rule4} and the definition of $\models$, we have $i\in h$ such that $\st_i=h(i)$ and ${\theta,s,\st_i\models\sst_i}$
-\hypvitem{applycget} From \hyp{evalheap4} we can apply \textsc{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
+\hypvitem{applycget} From \hyp{evalheap4} we can apply \ruleref{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
 \end{hypvlist}
 
-\pfcase{\textsc{ALocPMapMatchingBot}}
+\pfcase{\ruleref{ALocPMapMatchingBot}}
 
 \begin{hypvlist}
 \hypvitem{rule5} Assume $(\sym h,\sym d)=\fn{unwrap}(\sst) \land a = \code{to\_aloc}~\sym i \land a=\bot \land a'\in\dom(\sym h) \land \sst_i=\sym h(a')$%
-\hypvitem{apply5} From \hyp{rule5}, \hyp{getsym} and \textsc{ALocPMapMatchingBot}, we have $\sym i'=\aloc{a'}$, $\sst_i=\sym h(a')$, ${\pc=[\sym i=\aloc{a'}]}$ and $m=\code{MATCH}$.
+\hypvitem{apply5} From \hyp{rule5}, \hyp{getsym} and \ruleref{ALocPMapMatchingBot}, we have $\sym i'=\aloc{a'}$, $\sst_i=\sym h(a')$, ${\pc=[\sym i=\aloc{a'}]}$ and $m=\code{MATCH}$.
 \hypvitem{evalheap5} From \hyp{models}, \hyp{rule5} and the definition of $\models$, we have $i\in h$ such that $\st_i=h(i)$ and ${\theta,s,\st_i\models\sst_i}$
-\hypvitem{applycget} From \hyp{evalheap5} we can apply \textsc{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
+\hypvitem{applycget} From \hyp{evalheap5} we can apply \ruleref{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
 \end{hypvlist}
 
 \end{proof}

@@ -91,14 +91,15 @@
 \newcommand{\isexowned}[0]{\code{is\_exclusively\_owned}}
 
 % Sep logic
-\newcommand{\SLtriple}[3]{\ensuremath{\left\{#1\right\}#2\left\{#3\right\}}}
-\newcommand{\ISLtriple}[3]{\ensuremath{\left[#1\right]#2\left[#3\right]}}
-\newcommand{\ESLtriple}[3]{\ensuremath{\left<\mkern-5mu\left<#1\right>\mkern-5mu\right>#2\left<\mkern-5mu\left<#3\right>\mkern-5mu\right>}}
+\newcommand{\SLtriple}[3]{\ensuremath{\left\{#1\right\}\code{#2}\left\{#3\right\}}}
+\newcommand{\ISLtriple}[3]{\ensuremath{\left[#1\right]\code{#2}\left[#3\right]}}
+\newcommand{\ESLtriple}[3]{\ensuremath{\left<\mkern-5mu\left<#1\right>\mkern-5mu\right>\code{#2}\left<\mkern-5mu\left<#3\right>\mkern-5mu\right>}}
 
 \newcommand{\emp}[0]{\textit{emp}}
 \newcommand{\wand}{\mathrel{-\!\!\ast}}
 \newcommand{\mapstoq}[1]{\xmapsto[{\raisebox{1.25ex-\heightof{$\scriptstyle#1$}}[0pt]{$\scriptstyle#1$}}]{}}
 \newcommand{\disj}[0]{\operatorname{\#}}
+\newcommand{\freedpt}[0]{\not\mapsto}
 
 \newcommand{\full}[1]{\underline{#1}}
 
@@ -179,3 +180,9 @@
 
 \let\oldcite\cite
 \renewcommand{\cite}[1]{\mbox{\oldcite{#1}}} % disallow line breaks in citations
+
+\renewcommand{\DefTirName}[1]{\hypertarget{#1}{\TirName {#1}}}
+\newcommand{\ruleref}[1]{\hyperlink{#1}{\TirName {#1}}} % reference logic rules
+
+
+

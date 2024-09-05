@@ -1,10 +1,10 @@
 \chapter{Evaluation} \label{chap:evaluation}
 
-In this chapter we evaluate the work produced in this document. In \cref{sec:usability-library} we evaluate the usability of the theory developed; in \cref{sec:usability-library} we assess the ease of use of the developed library; in \cref{sec:comparison-gillian} we compare the performance of the developed instantiations with their monolithic equivalent in Gillian; finally in \cref{sec:perf-pmap} we evaluate the performance improvement of the various \PMap{} optimisations. 
+In this chapter we evaluate the work produced in this document. In \cref{sec:usability-library} we evaluate the usability of the theory developed; in \cref{sec:usability-library} we assess the ease of use of the developed library; in \cref{sec:comparison-gillian} we compare the performance of the developed instantiations with their monolithic equivalent in Gillian; finally in \cref{sec:perf-pmap} we evaluate the performance improvement of the various \PMap{} optimisations.
 
 \section{Theory Usability} \label{sec:usability-theory}
 
-The theory we have presented contrasts with previous work for CSE engines in its use of resource algebras rather than partially commutative monoids or separation algebras. This allows us to easily prove the soundness of the presented constructions. 
+The theory we have presented contrasts with previous work for CSE engines in its use of resource algebras rather than partial commutative monoids or separation algebras. This allows us to easily prove the soundness of the presented constructions.
 
 Still, some aspects of the theory can be at times somewhat unpractical to work with. Representing the empty memory $\bot$ as an element outside of an RA's carrier avoids common mistakes, but comes with the cost of requiring more ceremony when writing the rules for a state model transformers: in particular, we frequently need to define $\fn{wrap}$ and $\fn{unwrap}$ auxiliary functions to allow seamlessly handling the case where the state is $\bot$, which can clutter the rules. We note however that this additional care would also be needed with the PCM approach, though it would not be forced by the framework. The tradeoff here is therefore between a more restrictive notation that avoids some errors, or a more flexible notation that can be error-prone.
 
@@ -70,7 +70,7 @@ To test all combinations of optimisations available via our library, we get the 
 \tag{TR-ALocSplit} & \ALocPMap^\Str(\SplitDynPMap(\Str, \Ex(\Val)) \times \Ag(\Loc))
  \end{align}
 
-The last version, TR-ALocSplit, is the closest in terms of applied optimisations to what Gillian-JS does. The biggest difference is the use of \code{Hashtbl}, as all transformers use immutable data structures. 
+The last version, TR-ALocSplit, is the closest in terms of applied optimisations to what Gillian-JS does. The biggest difference is the use of \code{Hashtbl}, as all transformers use immutable data structures.
 
 This benchmark is split into three parts: WPST, verification, and Buckets-JS\footnote{See \url{https://www.npmjs.com/package/buckets-js}.} (in WPST mode), which are made up of respectively 21, 6, and 78 files. All tests were then run 30 times, for each state transformer stack and for Gillian-JS (labelled ``base''). The results can be seen in \autoref{fig:js-perf-bars}. The first insight this give us is that transformers seem to, on the whole, outperform the monolithic Gillian-JS, with an improvement ranging from 2.8 to 6.9\%. We also see that the ALoc optimisation that uses strings as keys is the best improvement; the Split optimisation seems to have no effect, hinting that maybe the cost of splitting the map and checking what is concrete is too high to compensate the time gain on actual substitutions. We also note that the improvement given by the ALoc optimisation is greater when doing verification than with WPST; this is likely caused because Verification uses more non-concrete locations, which implies less syntactic matches when doing lookups.
 
@@ -114,7 +114,7 @@ Looking at the average total duration for an execution of the test suite (see \a
 
 If, instead of focusing on WPST with the Buckets code we focus on verification, the picture painted is significantly different (see \autoref{fig:js-timespent-verif}). Indeed, while in WPST the memory model is only used for memory actions (as only the core engine is used), verification exercises the memory model quite differently, notably with \produce{} and \consume{}.
 
-Most notably, this shows us that one of the leading differences in total time between different transformer instantiations is substitutions: TR and TR-Split spend more than twice as much time during substitutions than TR-ALoc and TR-ALocSplit. This is because with the ALoc optimisation, substitutions for the keys (abstract location names) can be filtered: if there is no substitution for abstract locations, we can simply map the values of the heap without worrying about key conflicts. Without this, substitutions need to be applied to both the key and the value, and then all resulting keys need to be compared to compose clashing entries -- this is expensive. 
+Most notably, this shows us that one of the leading differences in total time between different transformer instantiations is substitutions: TR and TR-Split spend more than twice as much time during substitutions than TR-ALoc and TR-ALocSplit. This is because with the ALoc optimisation, substitutions for the keys (abstract location names) can be filtered: if there is no substitution for abstract locations, we can simply map the values of the heap without worrying about key conflicts. Without this, substitutions need to be applied to both the key and the value, and then all resulting keys need to be compared to compose clashing entries -- this is expensive.
 
 While this hasn't been measured, it is possible that the reason why Gillian-JS spends so little time in substitutions is because it uses mutable structures, allowing modifications to be done in-place, rather than creating new copies.
 
@@ -140,7 +140,7 @@ Finally, we may compare development effort between the two state models. While n
 
 \subsection{C}
 
-Gillian-C allows verifying a subset of the C language, via the CompCert-C verified compiler. Its state model can be defined as ${\PMap(\Loc,\Freeable(\BlockTree)) \times \CGEnv}$. To verify that the improvements from the optimised $\PMap$ versions are carried between instantiations, we also provide several C instantiations. Again we note Gillian-C already makes use of the ALoc optimisation, so in an effort to preserve parity we do not compare with instantiations that do not use it. 
+Gillian-C allows verifying a subset of the C language, via the CompCert-C verified compiler. Its state model can be defined as ${\PMap(\Loc,\Freeable(\BlockTree)) \times \CGEnv}$. To verify that the improvements from the optimised $\PMap$ versions are carried between instantiations, we also provide several C instantiations. Again we note Gillian-C already makes use of the ALoc optimisation, so in an effort to preserve parity we do not compare with instantiations that do not use it.
 \begin{align}
 \tag{TR}       & \ALocPMap(\Freeable(\BlockTree)) \times \CGEnv \\
 \tag{TR-ALoc}  & \ALocPMap^\Str(\Freeable(\BlockTree)) \times \CGEnv \\
@@ -149,7 +149,7 @@ Gillian-C allows verifying a subset of the C language, via the CompCert-C verifi
 
 This benchmark is split into five parts: WPST, verification, bi-abduction, \mbox{Collections-C}\footnote{See \url{https://github.com/srdja/Collections-C}.} (in WPST mode) and AWS (in verification mode, for the AWS Encryption SDK\footnote{See \url{https://github.com/aws/aws-encryption-sdk-c}.}), each made up of respectively 8, 6, 7, 159, and 10 files. All tests were run 50 times, except the AWS test suite that was executed 10 times\footnote{This is because verifying the AWS code takes \emph{significantly} longer than the rest, due to its size.}.
 
-The general results can be seen in \autoref{fig:c-perf-bars}. Here again, we note a significant performance improvement compared to the monolithic Gillian-C, in particular for the AWS and bi-abduction suites. As for the optimisations, we get inconsistent results: they seem to slightly improve performance for all modes but for AWS. 
+The general results can be seen in \autoref{fig:c-perf-bars}. Here again, we note a significant performance improvement compared to the monolithic Gillian-C, in particular for the AWS and bi-abduction suites. As for the optimisations, we get inconsistent results: they seem to slightly improve performance for all modes but for AWS.
 
 \begin{figure}
 	\centering

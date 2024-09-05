@@ -20,7 +20,7 @@ With composition:
 	\val f_1 \cdot \val f_2 &= \val (f_1\cdot f_2)\\
 \end{align*}
 
-This forms a valid partially commutative monoid (PCM). We may note that this definition makes Freeable($X$) a type of Sum state, with X the left hand side and the unique state model ``Freed'' on the right hand side. 
+This forms a valid partial commutative monoid (PCM). We may note that this definition makes Freeable($X$) a type of Sum state, with X the left hand side and the unique state model ``Freed'' on the right hand side.
 
 Additionally, Freeable($X$) defines a predicate, \code{Freed}, and a single action, \code{free}, that, when the state is \textit{fully owned} (part of the complete states $\underline{X}$), sets the state to $\varnothing$, effectively freeing that bit of memory. Similarly to other state models, predicates and actions that arent \code{Freed} and \code{free} respectively are passed to the contained state model. We define the implementation of \code{consume}, \code{free} and that of the auxiliary \code{is\_fully\_owned} function as:
 
@@ -50,14 +50,14 @@ We may now look at an example of using this state model that proves to be unsoun
 
 \begin{table}[h]\centering
 \begin{tabular}{l|l}
- State & Operation applied \\ \hline 
+ State & Operation applied \\ \hline
  $\val a$ & Initial State \\
  $\val \bot$ & Consume precondition \corepred{PointsTo}{}{a} \\
  undefined! & Produce postcondition \corepred{Freed}{}{}
 \end{tabular}
 \end{table}
 
-This is, of course, unsound, as the state at the end should indeed be $\varnothing$. This is because $\val \bot$, which is observably empty, is different from the Freeable empty state, $\bot$, rendering the composition $\val \bot \cdot \varnothing$ undefined. 
+This is, of course, unsound, as the state at the end should indeed be $\varnothing$. This is because $\val \bot$, which is observably empty, is different from the Freeable empty state, $\bot$, rendering the composition $\val \bot \cdot \varnothing$ undefined.
 
 This error can also be shown to exist in the implementation itself, by writing a specification with \code{False} as the postcondition.
 
@@ -94,7 +94,7 @@ Obtained 2 symbolic tests in total
 Running symbolic tests: 0.002729
 Verifying one spec of procedure free_cell... s Success
 Verifying one spec of procedure test_unsoundness... Success
-All specs succeeded: 0.004729	
+All specs succeeded: 0.004729
 \end{lstlisting}
 
 
@@ -129,7 +129,7 @@ We also remind the frame substraction property, defined as:
 
 \pfprop{Sum actions that swap sides are not frame preserving}
 
-Assuming 
+Assuming
 \begin{hypvlist}
 \hypvitem{pcm} $\mmdl_1$ is a well formed PCM, $\mmdl_1 \defeq (\St_1, 0_1, \cdot)$
 \hypvitem{pcm2} $\mmdl_2$ is a well formed PCM, $\mmdl_2 \defeq (\St_2, 0_2, \cdot)$
@@ -139,7 +139,7 @@ Assuming
 	\end{align*}
 
 \end{hypvlist}
-	
+
 We want to prove frame substraction does not hold with action \swap.
 
 \begin{hypvlist}
@@ -147,7 +147,7 @@ We want to prove frame substraction does not hold with action \swap.
 	\hypvitem{comp-eq} From the definition of composition, $\sone\st_1\cdot\sone0_1=\sone\st_1$
 	\hypvitem{equiv-s1} From \hyp{comp-eq} and \hyp{eval}, $\execswap{(\sone\st_1\cdot\sone0_1)}\Ok{\stwo\st_2',v}$
 \end{hypvlist}
-	
+
 To satisfy frame substraction, as the outcome in \hyp{eval} is \Ok, we would need $\stwo\st_2 = \stwo\st_2 \cdot \sone0_1$, which is not the case, as per the definition of composition, $\stwo\st_2 \cdot \sone0_1$ is undefined.
 
 Frame substraction thus does not hold for \swap.
@@ -157,7 +157,7 @@ Note the same can be proven analogously for actions that flip from the right-han
 
 \section{Sound Sum}
 
-To define a sound version of sum that supports flipping the side, we thus need to remove the $0$ element of both sides from the allowed states, resulting in $\mmdl_1 \oplus \mmdl_2 \defeq \code{| }\bot \code{ | S1 } (\St_1 \backslash \{ 0_1\}) \code{ | S2 } (\St_2 \backslash \{0_2\})$. This ensure the states $\sone0_1$ and $\stwo0_2$ aren't allowed, avoiding the problem seen in frame substraction. 
+To define a sound version of sum that supports flipping the side, we thus need to remove the $0$ element of both sides from the allowed states, resulting in $\mmdl_1 \oplus \mmdl_2 \defeq \code{| }\bot \code{ | S1 } (\St_1 \backslash \{ 0_1\}) \code{ | S2 } (\St_2 \backslash \{0_2\})$. This ensure the states $\sone0_1$ and $\stwo0_2$ aren't allowed, avoiding the problem seen in frame substraction.
 
 Additionally, to allow for a frame-preserving \swap{} action, a stronger requirement than a complete state must be met: the state must be \textit{exclusively owned} -- no other non-empty state can be composed with it. This thus requires for a \code{is\_exclusively\_owned} function to be provided, defined as:
 
@@ -170,7 +170,7 @@ Additionally, to allow for a frame-preserving \swap{} action, a stronger require
 \begin{proof}
 \pfprop{\\If a valid frame-preserving sum actions swaps sides, then that sum cannot permit empty elements on either sides and the swapped states must be exclusively owned}
 
-Assuming 
+Assuming
 \begin{hypvlist}
 \hypvitem{pcm1} $\mmdl_1$ is a well formed PCM, $\mmdl_1 \defeq (\St_1, 0_1, \cdot)$
 \hypvitem{cancellative1} $\mmdl_1$ is cancellative, $\st_A \cdot \st_B = \st_A \cdot \st_C \implies \st_B = \st_C$
@@ -190,7 +190,7 @@ Assuming
 	\begin{align*}
 		\exists\st_1,\st_2',v.~\execswap{\sone\st_1}\Ok{\stwo\st_2',v}
 	\end{align*}
-	
+
 \end{hypvlist}
 
 This \swap{} action is both valid and frame preserving, thus satisfying the following:
@@ -213,11 +213,11 @@ This \swap{} action is both valid and frame preserving, thus satisfying the foll
 	\end{align*}
 
 \end{hypvlist}
-	
+
 We aim to prove:
 \begin{goalvlist}
-    \goalvitem{zeronotallowedl} The zero elements of the left side of the sum is not permitted: $0_1\notin \St_1'$ 
-    \goalvitem{zeronotallowedr} The zero elements of the right side of the sum is not permitted: $0_2\notin \St_2'$ 
+    \goalvitem{zeronotallowedl} The zero elements of the left side of the sum is not permitted: $0_1\notin \St_1'$
+    \goalvitem{zeronotallowedr} The zero elements of the right side of the sum is not permitted: $0_2\notin \St_2'$
     \goalvitem{exownedl} If \swap{} flips the side of the sum, any \swap{} of ``smaller'' states will result in a \Miss:
     \begin{align*}
     	&\execswap{\sone\st_1}\Ok{\stwo\st_2',v}\land \sone\st_1 = \sone\st_A\cdot\sone\st_B \land \execswap{\sone\st_A}{o}{\st'',v'} \\
@@ -225,9 +225,9 @@ We aim to prove:
     \end{align*}
     \goalvitem{exownedr} If \swap{} flips the side of the sum, the new state must be exclusively owned:
     \begin{align*}
-    	\execswap{\sone\st_1}\Ok{\stwo\st_2',v} \implies \isexowned\st_2'  
+    	\execswap{\sone\st_1}\Ok{\stwo\st_2',v} \implies \isexowned\st_2'
     \end{align*}
-    
+
 \end{goalvlist}
 
 
@@ -237,7 +237,7 @@ We first prove \goal{zeronotallowedl}.
 
 \begin{hypvlist}
 	\hypvitem{zeroallowedl} Assume $0_1\in \St_1'$.
-	\hypvitem{0framedswapl} From \hyp{comp}, \hyp{zeroallowedl} and \hyp{swapexists}, $\execswap{(\sone\st_1\cdot\sone0_1)}\Ok{\stwo\st_2',v}$ 
+	\hypvitem{0framedswapl} From \hyp{comp}, \hyp{zeroallowedl} and \hyp{swapexists}, $\execswap{(\sone\st_1\cdot\sone0_1)}\Ok{\stwo\st_2',v}$
 \end{hypvlist}
 
 From \hyp{framesub} and \hyp{0framedswapl},
@@ -281,7 +281,7 @@ We may finally prove our fourth and last goal \goal{exownedr}.
 	\hypvitem{hypnotexownedr} Assume $\neg\isexowned\st_2'$.
 	\hypvitem{frameexistsr} From \hyp{hypnotexownedr}, $\exists \st'.~\st'\neq0 \land \st_2\#\st'$, thus $\st_2\cdot\st'$ is defined and from \hyp{comp} must be expressed as $\st'=\stwo\st_2''$.
 	\hypvitem{frameadded} From \hyp{frameadd}, we must have $\execswap{(\sone\st_1\cdot\stwo\st_2'')}\Ok{\stwo\st_2'\cdot\stwo\st_2'',v}$. This is however not possible, as per \hyp{comp}, $\sone\st_1\cdot\stwo\st_2''$ is undefined. Thus our hypothesis \hyp{hypnotexownedr} is false, giving us our goal $\isexowned\st_2'$ \goal{exownedr}.
-	
+
 \end{hypvlist}
 
 The same can of course be analogously proven for a \swap that goes from the right-hand side to the left.
@@ -300,7 +300,7 @@ let consume $\st$, $\delta$, $\ins$ =
 		let* (v', $\st'$) = $X$.consume $\st$ $\delta$ $\ins$ in
 		if $\st'$ = $X.0$ then $\bot$ else (v', $\val\st'$)
 	| $\delta$, $\val\st$ -> lfail (MismatchedState, $\st$)
-	| $\delta$, $\bot$ -> 
+	| $\delta$, $\bot$ ->
 		let* (v', $\st'$) = $X$.consume $X.0$ $\delta$ $\ins$ in
 		if $\st'$ = $X.0$ then $\bot$ else (v', $\val\st'$)
 
@@ -347,18 +347,17 @@ A state sum $\mathbb S_1 \oplus \mathbb S_2$ is now defined as \code{type $\St$ 
 \begin{lstlisting}
 produce $\st^?$ $\delta$ $\ins$ $\outs$ =
 	match $\st^?$, $\delta$ with
-	| S1 $\st_1$, P1 $\delta_1$ -> 
+	| S1 $\st_1$, P1 $\delta_1$ ->
 		let* $\delta_1'$ = produce $\st_1$ $\delta_1$ $\ins$ $\outs$ in
 		S1 $\delta_1'$
 	| $\bot$, P1 $\delta_1$ ->
 		let* $\delta_1'$ = produce $\mmdl_1.0$ $\delta_1$ $\ins$ $\outs$ in
 		S1 $\delta_1'$
-	| S2 $\st_2$, P2 $\delta_2$ -> 
+	| S2 $\st_2$, P2 $\delta_2$ ->
 		let* $\delta_2'$ = produce $\st_2$ $\delta_2$ $\ins$ $\outs$ in
 		S2 $\delta_2'$
-	| $\bot$, P2 $\delta_2$ -> 
+	| $\bot$, P2 $\delta_2$ ->
 		let* $\delta_2'$ = produce $\mmdl_2.0$ $\delta_2$ $\ins$ $\outs$ in
 		S2 $\delta_2'$
 	| _, _ -> vanish
 \end{lstlisting}
-

@@ -1,18 +1,5 @@
 \section{Syntactic Partial Map} \label{proofs:syntpmap-soundness}
 
-For the partial map with syntactic checks, we re-use the RA of \PMap, as well as the concrete and symbolic action rules, and the \produce{} and \consume{} rules, as we only modify the behaviour of the \code{get} helper function. From this, we can thus re-use the soundness proofs for all of the axioms; the only part that needs to be proved again are the axioms for symbolic \code{get}, with regards to the concrete version that is taken from \PMap.
-
-\subsection{\code{get} rules}
-
-\begin{mathparpagebreakable}
-\inferrule[SyntacticPMapGetMatch]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\in\dom(\sym h) \\ \sst_i=\sym h(\sym i)}{\ppget{\sst, \sym i}{\sym i, \sst_{i}, []}}
-\and\inferrule[SyntacticPMapGetBranch]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\notin\dom(\sym h) \\ \sym i'\in\dom(\sym h) \\ \sst_{i}=\sym h(\sym i')}{\ppget{\sst, \sym i}{\sym i', \sst_{i}, [\sym i=\sym i']}}
-\and\inferrule[SyntacticPMapGetAdd]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\notin\dom(\sym h) \\ \sym d\neq\bot}{\ppget{\sst, \sym i}{\sym i,\bot, [\sym i\notin\dom(\sym h) \land \sym i\in \sym d]}}
-\and\inferrule[SyntacticPMapGetBotDomain]{(\sym h,\sym d)=\fn{unwrap}(\sst) \\ \sym i\notin \dom(\sym h) \\ \sym d=\bot}{\ppget{\sst,\sym i}{\sym i,\bot,[\sym i\notin\dom(\sym h)]}}
-\end{mathparpagebreakable}
-
-\subsection{Soundness Proofs}
-
 \begin{proof}
 
 \pfprop{Get OX Soundness}
@@ -26,20 +13,20 @@ For the partial map with syntactic checks, we re-use the RA of \PMap, as well as
 
 We proceed by proving the property holds for all rules of the concrete \code{get}, resulting in three cases.
 
-\pfcase{\textsc{CPMapGetMatch}}
+\pfcase{\ruleref{CPMapGetMatch}}
 
 \begin{hypvlist}
 \hypvitem{rule1} Assume $(h,d)=\fn{unwrap}(\st) \land i\in\dom(h) \land \st_{i}=h(i)$.
 \hypvitem{exsym1} It follows from \hyp{getcon} and the definition of $\models$ that $\sst=(\sym h, \sym d)$.
-\hypvitem{synmatcheq} Either $\sym i\in\sym h$ or not. If $\sym i\in \sym h$, we apply \textsc{SyntacticPMapGetMatch}, giving us $\ppget{\sst,\sym i}{\sym i, \sym h(\sym i), []}$. It also follows from the definition of $\models$ that ${\theta,s,\st_i\models\sym h(\sym i)}$, completing our goal \goal{getsym}.
-\hypvitem{complete1} Otherwise $\sym i\notin \sym h$. From the definition of $\models$ we know $\exists \sym i'\ldotp \expeval{\sym i'}=i\land \sym i'\in\sym h \land {\theta,s,\st_i\models \sym h(\sym i')}$. We can apply \textsc{SyntacticPMapGetBranch}, giving us $\ppget{\sst,\sym i}{\sym i',\sst_i, [\sym i=\sym i']}$. It follows that $\SAT([\sym i = \sym i'])$, which completes our goal \goal{getsym}.
+\hypvitem{synmatcheq} Either $\sym i\in\sym h$ or not. If $\sym i\in \sym h$, we apply \ruleref{SyntacticPMapGetMatch}, giving us $\ppget{\sst,\sym i}{\sym i, \sym h(\sym i), []}$. It also follows from the definition of $\models$ that ${\theta,s,\st_i\models\sym h(\sym i)}$, completing our goal \goal{getsym}.
+\hypvitem{complete1} Otherwise $\sym i\notin \sym h$. From the definition of $\models$ we know $\exists \sym i'\ldotp \expeval{\sym i'}=i\land \sym i'\in\sym h \land {\theta,s,\st_i\models \sym h(\sym i')}$. We can apply \ruleref{SyntacticPMapGetBranch}, giving us $\ppget{\sst,\sym i}{\sym i',\sst_i, [\sym i=\sym i']}$. It follows that $\SAT([\sym i = \sym i'])$, which completes our goal \goal{getsym}.
 \end{hypvlist}
 
-\pfcase{\textsc{CPMapGetAdd}}
-The rule \textsc{SyntacticPMapGetAdd} is exactly the same as \textsc{PMapGetAdd} -- we omit the proof.
+\pfcase{\ruleref{CPMapGetAdd}}
+The rule \ruleref{SyntacticPMapGetAdd} is exactly the same as \ruleref{PMapGetAdd} -- we omit the proof.
 
-\pfcase{\textsc{CPMapGetBotDomain}}
-The rule \textsc{SyntacticPMapGetBotDomain} is exactly the same as \textsc{PMapGetBotDomain} -- we omit the proof.
+\pfcase{\ruleref{CPMapGetBotDomain}}
+The rule \ruleref{SyntacticPMapGetBotDomain} is exactly the same as \ruleref{PMapGetBotDomain} -- we omit the proof.
 
 \pfprop{Get UX Soundness}
 
@@ -53,29 +40,29 @@ The rule \textsc{SyntacticPMapGetBotDomain} is exactly the same as \textsc{PMapG
 
 We proceed by proving the property holds for all rules of the symbolic \code{get}, resulting in four cases.
 
-\pfcase{\textsc{SyntacticPMapGetMatch}}
+\pfcase{\ruleref{SyntacticPMapGetMatch}}
 
 \begin{hypvlist}
 \hypvitem{rule1} Assume $(\sym h, \sym d)=\fn{unwrap}(\sst) \land \sym i\in\dom(\sym h) \land \sst_i=\sym h(\sym i)$.
-\hypvitem{apply1} From \hyp{rule1}, \hyp{getsym} and \textsc{SyntacticPMapGetMatch} we have $\pc=[]$ and $\sym i'=\sym i$.
+\hypvitem{apply1} From \hyp{rule1}, \hyp{getsym} and \ruleref{SyntacticPMapGetMatch} we have $\pc=[]$ and $\sym i'=\sym i$.
 \hypvitem{notbot1} From \hyp{rule1}, we know $\sst\neq\bot$, thus $\st$ is of the form $\st=(h,d)$.
 \hypvitem{evalheap1} From \hyp{models}, \hyp{rule1} and the definition of $\models$, we have $i\in h$ such that $\st_i=h(i)$ and ${\theta,s,\st_i\models\sst_i}$.
-\hypvitem{applycget} From \hyp{evalheap1} we can apply \textsc{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
+\hypvitem{applycget} From \hyp{evalheap1} we can apply \ruleref{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
 \end{hypvlist}
 
-\pfcase{\textsc{SyntacticPMapGetBranch}}
+\pfcase{\ruleref{SyntacticPMapGetBranch}}
 
 \begin{hypvlist}
 \hypvitem{rule2} Assume $(\sym h,\sym d)=\fn{unwrap}(\sst) \land \sym i'\in\dom(\sym h) \land \sst_i=\sym h(\sym i')$
-\hypvitem{apply2} From \hyp{rule2}, \hyp{getsym} and \textsc{PMapGetMatch}, we have $\pc=[\sym i=\sym i']$
+\hypvitem{apply2} From \hyp{rule2}, \hyp{getsym} and \ruleref{PMapGetMatch}, we have $\pc=[\sym i=\sym i']$
 \hypvitem{notbot} From \hyp{rule2}, we have $\sst\neq\bot$, thus from \hyp{models} we have $\st=(h, d)$
 \hypvitem{evalheap} From \hyp{models}, \hyp{rule2} and the definition of $\models$, we have $i\in h$ such that $\st_i=h(i)$ and ${\theta,s,\st_i\models\sst_i}$
-\hypvitem{applycget} From \hyp{evalheap} we can apply \textsc{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
+\hypvitem{applycget} From \hyp{evalheap} we can apply \ruleref{CPMapGetMatch}, thus \ppgetc{\st,i}{\st_i}. This completes our goal \goal{getcon}.
 \end{hypvlist}
 
-\pfcase{\textsc{SyntacticPMapGetAdd}} 
-The rule \textsc{SyntacticPMapGetAdd} is exactly the same as \textsc{PMapGetAdd} -- we omit the proof.
+\pfcase{\ruleref{SyntacticPMapGetAdd}} 
+The rule \ruleref{SyntacticPMapGetAdd} is exactly the same as \ruleref{PMapGetAdd} -- we omit the proof.
 
-\pfcase{\textsc{SyntacticPMapGetBotDomain}} 
-The rule \textsc{SyntacticPMapGetBotDomain} is exactly the same as \textsc{PMapGetBotDomain} -- we omit the proof.
+\pfcase{\ruleref{SyntacticPMapGetBotDomain}} 
+The rule \ruleref{SyntacticPMapGetBotDomain} is exactly the same as \ruleref{PMapGetBotDomain} -- we omit the proof.
 \end{proof}

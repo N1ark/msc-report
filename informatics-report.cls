@@ -20,8 +20,8 @@
 
 %Text
 \usepackage{setspace}
-%\onehalfspacing
-\doublespacing
+\onehalfspacing
+%\doublespacing
 
 \def\@title{}
 \def\@author{}

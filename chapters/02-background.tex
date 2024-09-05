@@ -27,7 +27,7 @@ Separation Logic is, by definition, \emph{over-approximate} (OX): \SLtriple PSQ 
 
 To solve this problem, a recent innovation in the field is Incorrectness Separation Logic (ISL) \cite{isl}, derived from Incorrectness Logic \cite{incorrectnesslogic}. It is the \emph{under-approximate} (UX) equivalent to SL, instead ensuring that the detected errors actually exist, at the cost of possibly missing some executions of the code.
 
-Where SL uses triplets of the form \SLtriple{\text{precondition}}{S}{\text{postcondition}}, incorrectness separation logic uses \ISLtriple{\text{presumption}}{S}{\text{result}}, with the result being an under-approximation of the actual result of the code. The reasoning is thus flipped, where we start from a stronger assertion at the end of the function, and then step back and broaden our assumptions, until reaching the initial presumption. This means that all paths explored this way are guaranteed to exist, but may not encompass all possible paths. This enables us to do \emph{true bug-finding}. 
+Where SL uses triplets of the form \SLtriple{\text{precondition}}{S}{\text{postcondition}}, incorrectness separation logic uses \ISLtriple{\text{presumption}}{S}{\text{result}}, with the result being an under-approximation of the actual result of the code. The reasoning is thus flipped, where we start from a stronger assertion at the end of the function, and then step back and broaden our assumptions, until reaching the initial presumption. This means that all paths explored this way are guaranteed to exist, but may not encompass all possible paths. This enables us to do \emph{true bug-finding}.
 
 Another way of comparing SL to ISL is with consequence: in SL, the precondition implies the postcondition, whereas with ISL the result implies the presumption. Furthermore, ISL triplets are extended with an \emph{outcome} $\epsilon$, resulting in \ISLtriple{P}{S}{\epsilon:Q}, where $\epsilon$ is the outcome of the function, for instance \Ok, or an error.
 
@@ -124,7 +124,7 @@ An innovation of Gillian compared to other existing tools is the fact is is para
 
 While a fixed state model is useful for specific languages or feature sets, this can become a limitation when porting the engine to other languages. The goal behind Gillian's parametricity is to allow it to be used for virtually any language, as long as the language's state model can be encoded into a separation logic equivalent; improvements done to the engine can then be carried to all of its instantiations for free. This enables it to verify programs written in JavaScript, C or Rust, despite their significant differences in terms of state representation and level of abstraction.
 
-To define a memory model to use in Gillian, a developer must implement it in OCaml~\cite{ocaml}. A memory model is a partially commutative monoid, comprised of a set of states, which can be modified via \emph{actions} and be represented in specifications via \emph{core predicates}.
+To define a memory model to use in Gillian, a developer must implement it in OCaml~\cite{ocaml}. A memory model is a partial commutative monoid, comprised of a set of states, which can be modified via \emph{actions} and be represented in specifications via \emph{core predicates}.
 
 Actions serve as the interface for programs to interact with the state, for instance by storing or loading values into the state, or allocating a new block of memory and then freeing it. The language Gillian targets, GIL (Gillian's Intermediate Language), provides the base semantics of an imperative goto-language (variables, errors, functions...) which do not affect the state -- actions are the only way of manipulating it.
 
@@ -190,11 +190,6 @@ Gillian  & IR (GIL)                  & \cmark & \cmark & WPST, OX, UX\\
 
 \section{Legal, Social, Ethical and Professional Requirements} \label{sec:legal-requirements}
 
-There aren't particular legal, social or ethical considerations associated with compositional symbolic execution. To the contrary, improving code verification and facilitating its use and adoption may result in positive outcomes in a wide range of fields where programs are critical. This includes, among others, medical, nuclear and spatial fields, where program failures can cause life loss, catastrophic environmental degradation, or significant economic loss. For instance, the infamous Therac-25 radiation therapy machine caused the death of four patients and the injury of two others between 1985 and 1987 due to an error when handling shared mutable state \cite{therac25}. This could have been detected and avoided if proper verification of the program had been done. 
+There aren't particular legal, social or ethical considerations associated with compositional symbolic execution. To the contrary, improving code verification and facilitating its use and adoption may result in positive outcomes in a wide range of fields where programs are critical. This includes, among others, medical, nuclear and spatial fields, where program failures can cause life loss, catastrophic environmental degradation, or significant economic loss. For instance, the infamous Therac-25 radiation therapy machine caused the death of four patients and the injury of two others between 1985 and 1987 due to an error when handling shared mutable state \cite{therac25}. This could have been detected and avoided if proper verification of the program had been done.
 
 Verification tools have the potential to cause harm, if used on open source software by malevolent users that want to find possible exploits.\footnote{Though, to our knowledge, no exploit was found this way.} Exploits such as Heartbleed \cite{heartbleedcve} or more recently the \code{xz} backdoor \cite{xzutilscve} happened on Open Source code, and an attacker could very well automate verification of these libraries privately in an effort to find new exploits. It is thus important to facilitate and democratise verification tools to counteract these actors.
-
-
-
-
-
