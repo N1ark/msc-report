@@ -152,7 +152,7 @@ Both cases (when $d\neq\bot$ and $d=\bot$) are trivially lifted from the concret
 
 For the successful allocation case, we note there is an additional requirement for soundness of state instantiation to be able to prove the resulting states $\sst'$ and $\st'$ are compatible.
 \begin{align*}
-	\expeval{\sins}=\ins \implies (\forall \st,\sst\ldotp \st=\code{instantiate}~\ins \land \sst=\code{instantiate}~\sins \implies \theta,s,\st\models\sst)
+	\expeval{\sins}=\ins \land \st=\code{instantiate}~\ins \land \sst=\code{instantiate}~\sins \implies \theta,s,\st\models\sst
 \end{align*}
 
 \pfprop{UX soundness}
