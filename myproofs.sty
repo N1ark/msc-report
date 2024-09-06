@@ -11,6 +11,15 @@
 
 \newcommand{\showifmyproofsdebug}[1]{\ifthenelse{\boolean{myproofsdebugging}}{{\color{teal}#1}}{}}
 
+%% Counters
+\newcounter{proofcounter}
+\setcounter{proofcounter}{0}
+\newcounter{propcounter}
+\newcounter{hypcounter}
+\newcounter{goalcounter}
+\newcommand{\resetpropcounter}[0]{\setcounter{propcounter}{1}}
+\newcommand{\resetproofcounters}[0]{\setcounter{hypcounter}{0}\setcounter{goalcounter}{0}\stepcounter{proofcounter}}
+
 %% Some utilities to introduce elements
 \newcommand{\pflet}[0]{\textbf{Let}~}
 \newcommand{\pfprove}[0]{\textbf{To prove}~}
@@ -18,16 +27,9 @@
 \newcommand{\pfltr}[0]{\bigskip\noindent\textbf{\textit{Case}} $\boxed{\Rightarrow}$:}
 \newcommand{\pfrtl}[0]{\bigskip\noindent\textbf{\textit{Case}} $\boxed{\Leftarrow}$:}
 \newcommand{\pfcase}[1]{\bigskip\noindent\textbf{\textit{Case} {\normalfont #1}:}}
-\newcommand{\pfprop}[1]{\bigskip\noindent\textbf{Proposition: #1}\resetproofcounters}
+\newcommand{\pfprop}[1]{\bigskip\noindent\textbf{Proposition \thepropcounter: #1}\resetproofcounters\refstepcounter{propcounter}}
 
-
-%% Counters
-\newcounter{proofcounter}
-\setcounter{proofcounter}{0}
-\newcounter{hypcounter}
-\newcounter{goalcounter}
-\newcommand{\resetproofcounters}[0]{\setcounter{hypcounter}{0}\setcounter{goalcounter}{0}\stepcounter{proofcounter}}
-
+% Raw
 \newcommand{\hypraw}[1]{\mbox{\textbf{(H#1)}}}
 \newcommand{\goalraw}[1]{\mbox{\textbf{(G#1)}}}
 
@@ -55,4 +57,4 @@
 \newcommand{\goal}[1]{\goalthin{\expandafter\ref*{pf:goal:\theproofcounter:#1}}}
 
 %% The proof environment itself
-\renewenvironment{proof}{\setlength\parindent{0pt}\resetproofcounters\textit{Proof.}}{\qed\bigskip}
+\renewenvironment{proof}{\setlength\parindent{0pt}\resetproofcounters\resetpropcounter\textit{Proof.}}{\qed\bigskip}

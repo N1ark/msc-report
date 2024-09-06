@@ -30,9 +30,8 @@ The sum state model transformer, $\mmdl_1 + \mmdl_2$ with $\St_1$ and $\St_2$ th
 We want to prove \ref{eq:frame-sub} does not hold with action \swap.
 
 \begin{hypvlist}
-	\hypvitem{eval} From \hyp{swap} we have $\exists \st,\st',\ins,\outs\ldotp \execswap{l(\st),\ins}{\Ok,r(\st'),\outs}$
 	\hypvitem{comp-eq} From the definition of composition, $l(\st)\cdot l(0_1)=l(\st)$
-	\hypvitem{equiv-s1} From \hyp{comp-eq} and \hyp{eval}, $\execswap{l(\st)\cdot l(0_1),\ins}{\Ok, r(\st'),\outs}$
+	\hypvitem{equiv-s1} From \hyp{comp-eq} and \hyp{swap}, $\execswap{l(\st)\cdot l(0_1),\ins}{\Ok, r(\st'),\outs}$
 \end{hypvlist}
 	
 To satisfy frame substraction, as the outcome in \hyp{eval} is \Ok, we would need ${r(\st') = r(\st') \cdot l(0_1)}$, which is not the case, as per the definition of composition, $r(\st') \cdot l(0_1)$ is undefined. Frame substraction thus does not hold for \swap.
@@ -52,7 +51,7 @@ Additionally, to allow for a frame-preserving \swap{} action, another requiremen
 
 \begin{proof}
 
-\pfprop{\\If a valid frame-preserving sum actions swaps sides, then that sum cannot permit empty elements on either sides and the swapped states must be exclusively owned}
+\pfprop{\\If a valid frame-preserving sum actions swaps sides, then that sum cannot permit empty elements on either sides, swaps of smaller states must miss, and the resulting state is exclusively owned}
 
 Assuming 
 \begin{hypvlist}
@@ -119,8 +118,7 @@ We now prove \goal{zeronotallowedr}.
 	\hypvitem{frameaddpre} Per \hyp{zeroallowedr} and composition, $r(\st')\disj r(0_2)$, and $r(\st')\cdot r(0_2)= r(\st')$
 \end{hypvlist}
 
-Thus per \hyp{swapexists}, \hyp{frameaddpre} and \hyp{frameadd}, we would have $r(\st')\disj r(0_2)$. This is however not the case from the definition of composition. Our hypothesis \hyp{zeroallowedr} is thus wrong, giving us our goal~\goal{zeronotallowedr}.
-
+Thus per \hyp{swapexists}, \hyp{frameaddpre} and \hyp{frameadd}, we have $l(\st)\disj r(0_2)$. This is however not the case from the definition of composition. Our hypothesis \hyp{zeroallowedr} is thus wrong, giving us our goal~\goal{zeronotallowedr}.
 
 % --------- Proof ex owned L
 

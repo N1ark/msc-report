@@ -176,7 +176,7 @@ $
 \hypvitem{isok} If the action gets executed succesfully (it is not an out of bounds error), from \ruleref{PMapAction} we have $\ppget{\sst,\sym i}{\sym i',\sst_i,\pc'}$, $\ppexec{\alpha}{\sst_i,\sins'}{o,\sst'_i,\souts',\pc''}$ and ${\ppset{\sst,\sym i',\sst'_i}{\sst'}}$, with $\sins=\sym i::\sins'$, $\souts=\sym i'::\souts'$ and $\pc=\pc'::\pc''$
 \hypvitem{execcon} From \hyp{sissound}, \hyp{isok} and \hyp{symex}, we get $\exists \st_i\ldotp \theta,s,\st_i\models\sst_i \land \ppexecc{\alpha}{\st_i,\ins'}{p,\st',\outs'}$
 \hypvitem{modelsbefore} From the definition of $\models$, it follows that if $\theta,s,\st'\models\sst'$ where $\ppset{\sst,\sym i',\sst'_i}{\sst'}$, then if $\theta,s,\st_i\models\sst_i$ there exists an $\st$ and $i$ such that $\ppset{\st,i,\st_i'}{\st'}$, giving us $\theta,s,\st\models\sst$
-\hypvitem{getsound} From \hyp{isok}, \hyp{symex} and \hyp{modelsbefore} we can use \ref{eq:get-sound}, giving us ${\exists \st_i \ldotp \ppgetc{\st, i}{\st_i}} \land \theta,s,\st_i \models \sst_i$
+\hypvitem{getsound} From \hyp{isok}, \hyp{symex} and \hyp{modelsbefore} we can use \ref{eq:get-sound}, giving us ${\exists \st_i \ldotp \ppgetc{\st, i}{\st_i}} \land \theta,s,\st_i \models \sst_i$%
 \hypvitem{applcon} From \hyp{getsound}, \hyp{execcon} and \hyp{modelsbefore} we can apply \ruleref{CPMapAction}, giving us ${\ppexecc{\alpha}{\st,\ins}{o,\st',\outs}}$, which together with \hyp{modelsbefore} gives our goal \goal{conex}.
 \hypvitem{isoutofb} If the action fails as it is out of bounds, from \ruleref{PMapActionOutOfBounds} we have $\sins=\sym i::\sins'$ and $\pc=[\sym i\notin \sym d]$.
 \hypvitem{inotind} From \hyp{symex} and the definition of $\models$ we thus have $\st=(h,d)$, with $\ins=i::\ins'$, $d\neq\bot$ and $i\notin d$
@@ -401,7 +401,7 @@ From the \consume{} rules, we never vanish, so if all consumptions are \Ok{} we 
 \pfcase{$\delta = \domainset$}
 
 \begin{hypvlist}
-\hypvitem{stddef2} From \hyp{models} and the definition of $\modelsp$ we have $\st_\delta=(\emptyset,d)$ such that $\sins=[]$, $\souts=[\sym d]$ and $\expeval{\sym d}=d$.
+\hypvitem{stddef2} From \hyp{models} and the definition of $\modelsp$ we have $\st_\delta=(\emptyset,d)$ such that $\sins=[]$, $\souts=[\sym d]$ and $\expeval{\sym d}=d$.%
 \hypvitem{stfdef2} From \hyp{stddef2} and \hyp{models}, by the definition of composition, we must have $\sst_f=(\sym h,\bot)$, $\st_f=(h,\bot)$ and $\dom(h)\subseteq d$.
 \hypvitem{applyprod} From \hyp{stddef2} and \hyp{stfdef2} we may apply \ruleref{PMapProdDomainSet}, resulting in $\\\ppprod{\sst_f,\domainset,\sins,\souts}{(\sym h, \sym d), [\dom(\sym h)\subseteq \sym d]}$.
 \hypvitem{pcok2} From \hyp{models} and \hyp{stfdef2} we have $\SAT([\dom(\sym h)\subseteq \sym d])$.
