@@ -58,6 +58,8 @@ There are two accepted and clashing semantics of the \emp{} assertion; either it
 Here we make the arbitrary choice of defining it as only being satisfied by the empty memory. Because the engine is parametric on the core predicates, a user is free to chose the semantics appropriate to their use case -- this is a strength of the parametric approach.
 \end{remark}
 
+Given the predicate satisfiability $\modelsp$, producing a core predicate assertion \corepred{\delta}{\ins}{\outs} onto a state $\st$ is equivalent to composing with it a state $\st_\delta$ such that $\st_\delta\modelsp\corepred{\delta}{\ins}{\outs}$; in other words, we would get \ppprod{\st,\delta,\ins,\outs}{\st\cdot\st_\delta}. Consuming is then extracting the state satisfying the core predicate with the given ins from the state: \ppcons{\st\cdot\st_\delta,\delta,\ins}{\Ok,\st,\outs}.\footnote{\consume{} and \produce{} act on symbolic states; here we treat them as concrete to explain how they work more simply, as this allows us to use composition.}
+
 \begin{figure}
 	\begin{align*}
 	\sym v &\in \LVal\\
@@ -124,7 +126,7 @@ The notation $\ex{x\colon X}$ is equivalent to $\{ \ex{x} : \forall x\in X \}$. 
 	\Freeable_\PCM(\mmdl) &\defeq \text{sub}(\st\colon \St) ~|~ \freed ~|~ 0
 \end{align*}
 
-We then again define composition as $0 \cdot \st=\st \cdot 0=\st$, and $\text{sub}(\st) \cdot \text{sub}(\st')=\text{sub}(\st\cdot \st')$, which forms a valid PCM.\footnote{All unspecified compositions are considered undefined.} $\Freeable_\PCM$ exposes a core predicate \freedP, as well as the core predicates of the underlying memory model; similarly, \consume{} and \produce{} are lifted. The core predicate $\corepred{\freedP}{}{}$ is equivalent to the freed cell assertion without the index $\freedpt$. While we omit the full details of the state model, we note that producing \freedP{} only succeeds when in state $0$ (since a state can't be both freed and something else), producing something other that \freedP{} calls the \produce{} function of the underlying state model $\mmdl$, and stores the resulting state $\st$ as $\text{sub}(\st)$. Similarly, consuming a predicate of $\mmdl$ while in state $\text{sub}(\st)$ calls \consume{} on that predicate with $\st$, and then wraps the result $\st'$ back into~$\text{sub}(\st')$.
+We then again define composition as $0 \cdot \st=\st \cdot 0=\st$, and $\text{sub}(\st) \cdot \text{sub}(\st')=\text{sub}(\st\cdot \st')$, which forms a valid PCM.\footnote{All unspecified compositions are considered undefined.} $\Freeable_\PCM(\mmdl)$ exposes a core predicate \freedP, as well as the core predicates of~$\mmdl$; similarly, \consume{} and \produce{} are lifted. The core predicate $\corepred{\freedP}{}{}$ is equivalent to the freed cell assertion without the index $\freedpt$. While we omit the full details of the state model, we note that producing \freedP{} only succeeds when in state $0$ (since a state can't be both freed and something else), producing something other that \freedP{} calls the \produce{} function of the underlying state model $\mmdl$, and stores the resulting state $\st$ as $\text{sub}(\st)$. Similarly, consuming a predicate of $\mmdl$ while in state $\text{sub}(\st)$ calls \consume{} on that predicate with $\st$, and then wraps the result $\st'$ back into~$\text{sub}(\st')$.
 
 Going back to our state model $\Freeable_\PCM(\Ex_\PCM(\Val))$, it thus exposes two predicates, $\exP$ and $\freedP$. Its set of states is $\{\text{sub}(x) : x \in \Val \uplus \{ 0 \} \} \uplus \{ \freed, 0 \}$. To show the unsoundness of our definition, consider calling the \code{dispose} function:
 \begin{align*}
@@ -154,7 +156,7 @@ If these properties do not hold, then action is not frame-preserving. The proof 
 
 \subsubsection{Unsoundness in PMap}
 
-Finally, we consider how PCMs can cause unsoundness in the partial map state model transformer, $\PMap(I, \mmdl)$. It allows mappings from a domain $I$ to a codomain state from~$\mmdl$, by \emph{lifting} all predicates of $\mmdl$ with an additional in-value corresponding to the location $i\in I$ to which the predicate corresponds. All action executions also receive an additional argument with the location of the state the action is executed on.
+Finally, we consider how PCMs can cause unsoundness in the partial map state model transformer, $\PMap(I, \mmdl)$. It maps indices from a domain $I\subseteq\Val$ to a codomain state from~$\mmdl$, by \emph{lifting} all predicates of $\mmdl$ with an additional in-value corresponding to the location $i\in I$ to which the predicate corresponds. All action executions also receive an additional argument with the location of the state the action is executed on.
 
 The linear heap we presented earlier is equivalent to $\PMap_\PCM(\nats, \Freeable_\PCM(\Ex_\PCM(\Val)))$; the core predicate \corepred{\pointsto}{a}{x} (better known as $a\mapsto x$) is then \corepred{\exP}{a}{x}. Similarly, \corepred{\freedP}{a}{} (i.e.~$a\freedpt$) becomes \corepred{\freedP}{a}{}. In both cases, \PMap{} uses the in-value $a$ as the address of the substate. We define the PCM of $\PMap_\PCM$ as: \begin{align*}
 	\PMap_\PCM(I, \mmdl) &\defeq (I \finmap \St) \times \pset(I)^?
@@ -162,13 +164,13 @@ The linear heap we presented earlier is equivalent to $\PMap_\PCM(\nats, \Freeab
 
 We omit the precise details of how exactly it works -- it will be extensively discussed in \cref{sec:theory-state-model-transf}. 
 
-The right hand side of the product, $\pset(I)^?$, represents the domain set of the partial map, in other words the set of addresses that are known to exist -- any address outside of the set \emph{cannot} exist. The~$-^?$ signifies that we extend $\pset(I)$ with the element $\bot$, in which case the domain set is not known. We use it to allow distinguishing \Miss{} errors from out of bounds errors, when accessing a binding the state does not own: if the domain set $d$ is not $\bot$ and the index is not in $d$, then the action must be an out of bounds error. From this follows an invariant: given a state $(h,d)$ where $h$ is the heap and $d$ the domain set, $d\neq\bot\Rarr\dom(h)\subseteq d$ must always hold; in other words, we cannot own any state outside of the domain set. The domain set is \emph{exclusively owned}: if two \PMap{} states are disjoint, they can't both have a defined domain set; this allows it to be \emp{modified}, for instance during allocation. The core predicate $\corepred{\domainset}{}{d}$ is satisfied by the state with exactly the domain set $d$. When producing the $\domainset$ core predicate onto a state, the \produce{} function of $\PMap_\PCM$ must thus ensure the invariant constraint is upheld, vanishing otherwise.
+The right hand side of the product, $\pset(I)^?$, represents the domain set of the partial map, in other words the set of addresses that are known to exist -- any address outside of the set \emph{cannot} exist. The~$-^?$ signifies that we extend $\pset(I)$ with the element $\bot$, in which case the domain set is not known. We use it to allow distinguishing \Miss{} errors from out of bounds errors, when accessing a binding the state does not own: if the domain set $d$ is not $\bot$ and the index is not in $d$, then the action must be an out of bounds error. From this follows an invariant: given a state $(h,d)$ where $h$ is the heap and $d$ the domain set, $d\neq\bot\Rarr\dom(h)\subseteq d$ must always hold; in other words, we cannot own any state outside of the domain set. The domain set is \emph{exclusively owned}: if two \PMap{} states are disjoint, they can't both have a defined domain set; this allows it to be \emph{modified}, for instance during allocation. The core predicate $\corepred{\domainset}{}{d}$ is satisfied by the state with exactly the domain set $d$. When producing the $\domainset$ core predicate onto a state, the \produce{} function of $\PMap_\PCM$ must thus ensure the invariant constraint is upheld, vanishing otherwise.
 
 $\PMap_\PCM(I,\mmdl)$ lifts all core predicates and actions with an index, and as such all \consume{} and \produce{} calls must also have the index in their ins. The behaviour of a naive implementation would then be similar to what was explained for $\Freeable_\PCM$: calling \consume{} or \produce{} when the binding is not present executes it against the $0$ element of the underlying PCM, and otherwise calls it on the state at the location and stores the result back at that same location, overriding the previous binding.
 
 For this example we consider the SL linear heap state model, $\PMap_\PCM(\nats, \Ex_\PCM(\Val))$.\footnote{We use the SL linear heap, that does not have the freed assertion $a\freedpt$, for simplicity.} For simplicity, we re-use the traditional notation for cells, writing $a \mapsto x$ for \corepred{\exP}{a}{x}.
 
-Now, consider the following function specification, that moves a value:
+Now, consider the following function specification that moves a value:
 \begin{align*}
 \ESLtriple
 	{1\mapsto 1 * \corepred{\domainset}{}{\{1\}}}
@@ -179,13 +181,22 @@ This specification is valid, as it is frame preserving. More precisely, because 
 
 Let the initial state be $([1\mapsto \ex{1}], \{ 1\} )$: a heap with one cell, at address $1$ -- this matches the precondition of \code{move}. If we want to call \code{move} by specification, the engine must first consume the entire precondition, assertion by assertion (effectively framing it off). It first consumes $1\mapsto 1$, or \corepred{\exP}{1}{1}; \PMap{} in turn gets the state at address $1$, $\ex{1}$, and consumes \corepred{\exP}{}{1} from it, unlifting the index from the assertion. The pointed-to state then becomes the unit $0$ of $\Ex_\PCM(\Val)$, and the outer state becomes~$(\{ 1\mapsto 0\}, \{ 1\})$. The \domainset{} predicate is then successfully consumed too, leaving ${(\{ 1\mapsto 0\},\bot)}$, since the domain set must be consumed as a whole. 
 
-Next, the post-condition is produced onto the state. First, the engine produces $2\mapsto 1$, or \corepred{\exP}{2}{1}, which adds a binding to $\PMap_\PCM$ and creates the cell: our bigger state is now $(\{ 1\mapsto 0, 2\mapsto \ex1\},\bot)$. Finally, \corepred{\domainset}{}{\{2\}} is produced onto the state, however this \emph{doesn't succeed}. Indeed, we have $\dom(\{1\mapsto 0, 2\mapsto \ex1\})=\{1,2\}$, and of course $\{1,2\}\not\subseteq \{2\}$: the domain of the heap is not a subset of the produced domain set $\{2\}$. This is because again we forgot to check if the state at location $1$ became $0$ when consuming \corepred{\exP}{1}{1}. We would thus need to check for this, and potentially redefine the PCM of $\PMap_\PCM$ to forbid mappings to $0$. Another solution is to reformulate the invariant, such that indices pointing to $0$ are ignored, since they're empty anyways. In both cases, we must be careful about how we choose to handle the unit.
+Next, the post-condition is produced onto the state. First, the engine produces $2\mapsto 1$, or \corepred{\exP}{2}{1}, which adds a binding to $\PMap_\PCM$ and creates the cell: our bigger state is now $([1\mapsto 0, 2\mapsto \ex1],\bot)$. Finally, \corepred{\domainset}{}{\{2\}} is produced onto the state, however this \emph{doesn't succeed}. Indeed, we have $\dom([1\mapsto 0, 2\mapsto \ex1])=\{1,2\}$, and of course $\{1,2\}\not\subseteq \{2\}$: the domain of the heap is not a subset of the produced domain set $\{2\}$. This is because again we forgot to check if the state at location $1$ became $0$ when consuming \corepred{\exP}{1}{1}. We would thus need to check for this, and potentially redefine the PCM of $\PMap_\PCM$ to forbid mappings to $0$. Another solution is to reformulate the invariant, such that indices pointing to $0$ are ignored, since they're empty anyways. In both cases, we must be careful about how we choose to handle the unit.
 
 These examples hopefully showed that PCMs enforce a unit that is unwieldy, and can easily cause unsound behaviour when mishandled. Even when taken into account, it leads to unpleasant definitions, as every state model must define a $0$, and every state model transformer must then either exclude it in its construction, or explicitly take it into account. What if we could simply eliminate the $0$ entirely, avoiding the need to handle it?
 
 \subsection{RAs for Iris}
 
 Iris \cite{iris1,iris2,iris3,iris} departs from the tradition of PCMs, and introduces resource algebras (RAs) to model state, defined as a tuple ${(M, \irisval\colon M\rarr \text{iProp}, |-|\colon M\rarr M^?, (\cdot)\colon M\times M\rarr M)}$, containing the carrier set, a validity function, a partial core function and a \emph{total} composition operator. This definition makes use of the option RA $M^?\defeq M\uplus\{\bot\}$ \cite{iris-option}, that extends the set of $M$ with an ``empty'' element $\bot$, such that $m\cdot\bot=\bot\cdot m=m$. Similarly to PCMs, a set of axioms must be satisfied, as seen in \autoref{fig:irisra-properties}.
+
+The \emph{core function} $|-|\colon M\rarr M^?$ associates to an element $m$ of the RA it's \emph{duplicable core}. The crucial difference here, compared to PCMs, is that aside from allowing multiple units, it allows having \emph{no unit}, in which case $|m|=\bot$. As we will see later, having no unit is a requirement for a state to be exclusively owned (i.e. it has no frame). Indeed, if the state $m$ has a core $|m|\neq\bot$, then that core always constitutes a valid frame.
+
+The \emph{validity function} $\irisval\colon M\rarr \text{iProp}$ is used to rule out invalid compositions, rather than relying on the partiality of the composition operator. It returns an Iris property, \text{iProp}, which allows for step indexing and more sophisticated logic, that is out of the scope of this project. Most RAs are then extended with an invalid element $\lightning$, and validity is often defined as $\irisval(m)\defeq m\neq \lightning$. For instance for the $\Ex_\Iris$ RA: \begin{align*}
+	\Ex_\Iris(X) &\defeq \ex{x\colon X} ~|~ \lightning \\
+	\irisval(a) &\defeq a \neq \lightning \\
+	|\ex{x}| &\defeq \bot\\
+	a \cdot b &\defeq \lightning
+\end{align*}
 
 \begin{figure}
 An \emph{Iris resource algebra} is a tuple $(M, \irisval\colon M\rarr \text{iProp}, |-|\colon M\rarr M^?, (\cdot)\colon M\times M\rarr M)$
@@ -219,15 +230,6 @@ A \emph{unital} resource algebra is an RA $M$ with an element $\epsilon\in M$ su
 \caption{Definition of resource algebras in Iris}
 \label{fig:irisra-properties}
 \end{figure}
-
-The \emph{core function} $|-|\colon M\rarr M^?$ associates to an element $m$ of the RA it's \emph{duplicable core}. The crucial difference here, compared to PCMs, is that aside from allowing multiple units, it allows having \emph{no unit}, in which case $|m|=\bot$. As we will see later, having no unit is a requirement for a state to be exclusively owned (i.e. it has no frame). Indeed, if the state $m$ has a core $|m|\neq\bot$, then that core always constitutes a valid frame.
-
-The \emph{validity function} $\irisval\colon M\rarr \text{iProp}$ is used to rule out invalid compositions, rather than relying on the partiality of the composition operator. It returns an Iris property, \text{iProp}, which allows for step indexing and more sophisticated logic, that is out of the scope of this project. Most RAs are then extended with an invalid element $\lightning$, and validity is often defined as $\irisval(m)\defeq m\neq \lightning$. For instance for the $\Ex_\Iris$ RA: \begin{align*}
-	\Ex_\Iris(X) &\defeq \ex{x\colon X} ~|~ \lightning \\
-	\irisval(a) &\defeq a \neq \lightning \\
-	|\ex{x}| &\defeq \bot\\
-	a \cdot b &\defeq \lightning
-\end{align*}
 
 The validity and core functions thus make Iris states more powerful, as they have more flexibility in what can be expressed; while a regular PCM can be trivially converted to an RA, the opposite is not true. An example of construction that can easily be more easily constructed is the sum state model. The requirement for a transition from one side of the sum to the other can be more elegantly expressed, without having to worry about the existence of the unit $0$ \cite{iris}. Given ${\text{exclusive}_\Iris(a)\defeq \forall b\ldotp \neg\irisval(a\cdot b)}$, we have:\begin{mathpar}
 \inferrule[ExclusiveUpdate]{\text{exclusive}_\Iris(a) \\ \irisval(b)}{a \rightsquigarrow b}
@@ -281,8 +283,9 @@ A \emph{unital} resource algebra is a resource algebra $M$ with an element $\eps
 
 An interesting property of this change is that because validity is replaced by the fact composition is defined, the validity of a composition $\irisval(a\cdot b)$ in a RA is exactly equivalent to the fact two elements are disjoint in a partial RA $a \disj b$. We now define the properties of partial RAs taking this change into account -- see \autoref{fig:ra-properties}. From now, the term RA will be used to refer to these partial RAs.
 
-We may compare the definition of $\Ex_\Iris$, presented earlier, with the equivalent definition using partial RAs, $\Ex$. The main difference is the removal of $\irisval$ and the $\lightning$ element, making the definition simpler.
+We may compare the definition of $\Ex_\Iris$, presented earlier, with the equivalent definition using partial RAs, $\Ex$. The main difference is the removal of $\irisval$ and the $\lightning$ element, making the definition simpler (see \autoref{fig:comp-def-ex}).
 
+\begin{figure}
 \noindent\begin{minipage}{.5\linewidth}
 \begin{align*}
 	\Ex_\Iris(X) &\defeq \ex{x\colon X} ~|~ \lightning \\
@@ -296,6 +299,9 @@ We may compare the definition of $\Ex_\Iris$, presented earlier, with the equiva
 	|\ex{x}| &\defeq \bot\\
 	a \cdot b & \text{ is always undefined}
 \end{align*}\end{minipage}
+\caption{Comparison of the definition of \Ex{} with Iris and partial RAs}
+\label{fig:comp-def-ex}
+\end{figure}
 
 
 \subsection{Core Engine}
