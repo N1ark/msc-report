@@ -1,6 +1,6 @@
 \chapter{Evaluation} \label{chap:evaluation}
 
-In this chapter we evaluate the work produced in this document. In \cref{sec:usability-library} we evaluate the usability of the theory developed; in \cref{sec:usability-library} we assess the ease of use of the developed library; in \cref{sec:comparison-gillian} we compare the performance of the developed instantiations with their monolithic equivalent in Gillian; finally in \cref{sec:perf-pmap} we evaluate the performance improvement of the various \PMap{} optimisations.
+In this chapter we evaluate the work produced in this document. In \cref{sec:usability-theory} we evaluate the usability of the theory developed; in \cref{sec:usability-library} we assess the ease of use of the developed library; in \cref{sec:comparison-gillian} we compare the performance of the developed instantiations with their monolithic equivalent in Gillian; finally in \cref{sec:perf-pmap} we evaluate the performance improvement of the various \PMap{} optimisations.
 
 \section{Theory Usability} \label{sec:usability-theory}
 
@@ -39,6 +39,7 @@ Here $\PMap_{\text{ALocSplit}}$ represents a \PMap{} with both the ALoc and the 
 The benchmark is split into three parts: WPST, verification and bi-abduction, which are made up of respectively 1, 6 and 2 files. We note that the benchmark is small because it only has small code samples used for teaching purposes, rather than any real world code (since WISL is used for teaching). For this reason also we will not delve into too much detail for this comparison. The tests were run 50 times each, and the results are shown in \autoref{fig:wisl-perf-bars}.
 
 \begin{figure}
+\captionsetup{width=.4\linewidth}
 \centering
 \begin{minipage}[t]{.45\textwidth}
 	\centering
@@ -97,6 +98,7 @@ We may also take a closer look at how this time is spent within the engine. This
 Looking at the average total duration for an execution of the test suite (see \autoref{fig:js-timespent-buckets}) however, we note that the time taken by copying the state is minimal, as seen by the size of the ``other'' category. Instead, most time is spent during the \load{} (\code{GetCell}) action, which is called 11400 times (more than twice as many times as \store{}). The most notable improvement from the transformer construction is the reduction of the time spent getting a cell, reducing total time spent by 43\% (from 28.55 to 16.18ms). Because \load{} dominates the amount of action calls (see \autoref{fig:js-callcount-buckets}), this is sufficient to make up for the performance loss in \store{} and ``\code{GetMetadata}'' (\load{} on the right side of the product).
 
 \begin{figure}
+\captionsetup{width=.4\linewidth}
 \centering
 \begin{minipage}[t]{.45\textwidth}
 	\centering
@@ -119,6 +121,7 @@ Most notably, this shows us that one of the leading differences in total time be
 While this hasn't been measured, it is possible that the reason why Gillian-JS spends so little time in substitutions is because it uses mutable structures, allowing modifications to be done in-place, rather than creating new copies.
 
 \begin{figure}
+\captionsetup{width=.4\linewidth}
 \centering
 \begin{minipage}[t]{.45\textwidth}
 	\centering
