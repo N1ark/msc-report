@@ -762,7 +762,7 @@ Conveniently, use-after-free errors are already handled by the sum construction,
 
 \subsection{Partial Map}
 
-The partial map state model transformer $\PMap(I,\mmdl)$ is one of the most important state model transformers, as it allows having multiple state instances at different addresses and accessing them. It is constructed from a domain, $I\subseteq\Val$, and a state model for the codomain. For instance, the traditional SL linear heap can be modelled as $\PMap(\nats, \Ex(\Val))$. The C, JavaScript and Rust memory models can also all be modelled using a $\PMap$ \cite{sacha-phd}, despite them being radically different languages.
+The partial map state model transformer $\PMap(I,\mmdl)$ is one of the most important state model transformers, as it allows having multiple state instances at different addresses and accessing them. It is constructed from a domain, $I\subseteq\Val$, and a state model for the codomain. For instance, the traditional SL linear heap can be modelled as $\PMap(\nats, \Ex(\Val))$. The C, JavaScript, and Rust memory models can also all be modelled using a $\PMap$ \cite{sacha-phd}, despite them being radically different languages.
 
 It defines one action, \alloc{}, and one core predicate, \domainset. It also \emph{lifts} all actions and predicates of the underlying model, adding to them an index argument or in-value. For instance, while for $\Ex(X)$ one has the core predicate $\corepred{\exP}{}{x}$, for $\PMap(\Ex(X))$ one would instead have predicates of the form $\corepred{\exP}{i}{x}$, which corresponds to the ``points to'' assertion $i\mapsto x$. We define its RA as: \begin{breakalign*}
 	\PMap(I,\mmdl) &\defeq (I \finmap \mmdl.\Sigma) \times \pset(I)^?\\

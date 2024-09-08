@@ -34,7 +34,7 @@ We proceed by proving the property holds for all rules of the concrete \code{get
 \hypvitem{exsym2} It follows from \hyp{getcon} and the definition of $\models$ that $\sst=(\sym h, \sym d)$ such that $\sym i=\aloc{a'} \land \sym i \in \sym d$ and $a'\notin \dom(\sym h)$.
 \hypvitem{split2} We again get three possible cases, depending on $\code{to\_aloc}$: either $\code{to\_aloc}~\sym i=a'$, or $\code{to\_aloc}~\sym i=a$ such that $a\neq a'\land \expeval{\aloc a}=\expeval{\aloc{a'}}$, or $\code{to\_aloc}~\sym i=\bot$.
 \hypvitem{toaloc2} In the two first cases, from the definition of $\models$ and \code{to\_aloc}, it still holds from \hyp{exsym2} that $a'\notin \sym h$ and $a\notin \sym h$, respectively. Depending on the mode $m$, we thus apply \ruleref{ALocPMapGetNoMatchNotFound} or \ruleref{ALocPMapGetMatchNotFound}, giving us $\sst_i=\bot$ and $\pc=[\sym i\in^? \sym d]$ or $\pc=[\sym i \notin \{\aloc{a'}:a'\in \dom(\sym h)\} \land \sym i\in^? \sym d]$, which from \hyp{exsym2} we know $\SAT(\pc)$ in both cases, giving our goal \goal{getsym}.
-\hypvitem{tobot2} In the last case, we have $\code{to\_aloc}~\sym i=\bot$, we thus apply either \ruleref{ALocPMapGetNoMatchNew} or \ruleref{ALocPMapGetMatchNew} depending on $m$, giving us $a'=\code{fresh\_aloc ()}$, $\sst_i=\bot$, $\sym i'=\aloc{a'}$ and $\pc=[\sym i=\aloc{a'} \land \sym i\in^? \sym d]$ or $[\sym i=\aloc{a'} \land \sym i\notin\{\aloc{a''}:a''\in \dom(\sym h)\} \land \sym i \in^? \sym d]$. From \hyp{apply2} and \ref{eq:empty-mem}, we have $\theta,s,\st_i\models\sst_i$. Because $a'$ is a fresh abstract location, it's equality to one term can always be satisfied; and from \hyp{exsym2} we know $\sym i\in^?\sym d$ holds -- thus $\SAT(\pc)$, completing our goal \goal{getsym}.
+\hypvitem{tobot2} In the last case, we have $\code{to\_aloc}~\sym i=\bot$, we thus apply either \ruleref{ALocPMapGetNoMatchNew} or \ruleref{ALocPMapGetMatchNew} depending on $m$, giving us $a'=\code{fresh\_aloc ()}$, $\sst_i=\bot$, $\sym i'=\aloc{a'}$ and $\pc=[\sym i=\aloc{a'} \land \sym i\in^? \sym d]$ or $[\sym i=\aloc{a'} \land \sym i\notin\{\aloc{a''}:a''\in \dom(\sym h)\} \land \sym i \in^? \sym d]$. From \hyp{apply2} and \ref{eq:empty-mem}, we have $\theta,s,\st_i\models\sst_i$. Because $a'$ is a fresh abstract location, its equality to one term can always be satisfied; and from \hyp{exsym2} we know $\sym i\in^?\sym d$ holds -- thus $\SAT(\pc)$, completing our goal \goal{getsym}.
 \end{hypvlist}
 
 \pfcase{\ruleref{CPMapGetBotDomain}}
@@ -130,6 +130,3 @@ We proceed by proving the property holds for all rules of the symbolic \code{get
 \end{hypvlist}
 
 \end{proof}
-
-
-

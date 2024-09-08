@@ -26,22 +26,22 @@ The sum state model transformer, $\mmdl_1 + \mmdl_2$ with $\St_1$ and $\St_2$ th
 		\exists \st,\st',\ins,\outs\ldotp \execswap{l(\st),\ins}{\Ok,r(\st'),\outs}
 	\end{align*}
 \end{hypvlist}
-	
+
 We want to prove \ref{eq:frame-sub} does not hold with action \swap.
 
 \begin{hypvlist}
 	\hypvitem{comp-eq} From the definition of composition, $l(\st)\cdot l(0_1)=l(\st)$
 	\hypvitem{equiv-s1} From \hyp{comp-eq} and \hyp{swap}, $\execswap{l(\st)\cdot l(0_1),\ins}{\Ok, r(\st'),\outs}$
 \end{hypvlist}
-	
+
 To satisfy frame substraction, as the outcome in \hyp{eval} is \Ok, we would need ${r(\st') = r(\st') \cdot l(0_1)}$, which is not the case, as per the definition of composition, $r(\st') \cdot l(0_1)$ is undefined. Frame substraction thus does not hold for \swap.
 \end{proof}
 
 \section{Sound Sum}
 
-To define a sound version of sum that supports flipping the side, we thus need to remove the $0$ element of both sides from the allowed states. This ensure the states $l(0_1)$ and $r(0_2)$ aren't allowed, avoiding the problem seen with frame substraction. \begin{align*}
+To define a sound version of sum that supports flipping the side, we thus need to remove the $0$ element of both sides from the allowed states. This ensure the states $l(0_1)$ and $r(0_2)$ are not allowed, avoiding the problem seen with frame substraction. \begin{align*}
 	\mmdl_1 + \mmdl_2 \defeq l(\st\colon \St_1\setminus \{0_1\}) ~|~ r(\st\colon \St_2\setminus\{0_2\}) ~|~ 0
-\end{align*} 
+\end{align*}
 
 
 Additionally, to allow for a frame-preserving \swap{} action, another requirement must be met: the state must be \textit{exclusively owned} -- no other non-empty state can be composed with it. This thus requires for a \isexowned{} function to be provided, defined as:\footnote{This definition is for PCMs -- the formulation of \isexowned{} for RAs is simpler: $\isexowned~\st \defeq \nexists \st'\ldotp \st\disj\st'$}%
@@ -53,7 +53,7 @@ Additionally, to allow for a frame-preserving \swap{} action, another requiremen
 
 \pfprop{\\If a valid frame-preserving sum actions swaps sides, then that sum cannot permit empty elements on either sides, swaps of smaller states must miss, and the resulting state is exclusively owned}
 
-Assuming 
+Assuming
 \begin{hypvlist}
 \hypvitem{pcm} $\mmdl_1$ is a sound state model with a PCM $(\St_1, \cdot, 0_1)$.
 \hypvitem{pcm2} $\mmdl_2$ is a sound state model with a PCM $(\St_2, \cdot, 0_2)$.
@@ -73,11 +73,11 @@ This \swap{} action is frame preserving, thus satisfying \ref{eq:frame-sub} and 
 \quad\st \disj \st_f \land \ppexecc{\alpha}{\st\cdot\st_f, \ins}{o, \st'\cdot\st_f, \outs}
 	\end{array}$
 \end{hypvlist}
-	
+
 We aim to prove:
 \begin{goalvlist}
-    \goalvitem{zeronotallowedl} The zero elements of the left side of the sum is not permitted: $0_1\notin \St_1'$ 
-    \goalvitem{zeronotallowedr} The zero elements of the right side of the sum is not permitted: $0_2\notin \St_2'$ 
+    \goalvitem{zeronotallowedl} The zero elements of the left side of the sum is not permitted: $0_1\notin \St_1'$
+    \goalvitem{zeronotallowedr} The zero elements of the right side of the sum is not permitted: $0_2\notin \St_2'$
     \goalvitem{exownedl} If \swap{} flips the side of the sum, any \swap{} of smaller states will result in a \Miss: \\
     $\begin{array}{l}
     	\execswap{l(\st),\ins}{\Ok,r(\st'),\outs}\land \st_a \preo \st \land \execswap{l(\st_a),\ins}{o',\st'',\outs'} \\
@@ -85,9 +85,9 @@ We aim to prove:
     \end{array}$
     \goalvitem{exownedr} If \swap{} flips the side of the sum, the new state must be exclusively owned:\\
     $\begin{array}{l}
-    	\execswap{l(\st),\ins}{\Ok,r(\st'),\outs} \implies \isexowned~\st'  
+    	\execswap{l(\st),\ins}{\Ok,r(\st'),\outs} \implies \isexowned~\st'
     \end{array}$
-    
+
 \end{goalvlist}
 
 
@@ -97,14 +97,14 @@ We first prove \goal{zeronotallowedl}.
 
 \begin{hypvlist}
 	\hypvitem{zeroallowedl} Assume $0_1\in \St_1'$.
-	\hypvitem{0framedswapl} From composition, \hyp{zeroallowedl} and \hyp{swapexists}, $\execswap{l(\st)\cdot l(0_1),\ins}{\Ok,r(\st'),\outs}$ 
+	\hypvitem{0framedswapl} From composition, \hyp{zeroallowedl} and \hyp{swapexists}, $\execswap{l(\st)\cdot l(0_1),\ins}{\Ok,r(\st'),\outs}$
 \end{hypvlist}
 
 From \hyp{framesub} and \hyp{0framedswapl},
 \begin{hypvlist}
 	\hypvitem{unframedeval} $\exists \st'', o', \outs'\ldotp \execswap{l(\st),\ins}{o', \st'', \outs'}$
 	\hypvitem{ifnmiss} $o' \neq \Miss \implies o' = o \land  \outs' = \outs \land r(\st') = \st'' \cdot l(0_1)$
-	\hypvitem{substunfr} Because there can only be one action execution for a given state, action and arguments, we know from \hyp{0framedswapl} that $o'=\Ok$, $\st''=r(\st')$, $\outs'=\outs$.
+	\hypvitem{substunfr} Because there can only be one action execution for a given state, action, and arguments, we know from \hyp{0framedswapl} that $o'=\Ok$, $\st''=r(\st')$, $\outs'=\outs$.
 \end{hypvlist}
 
 However, from composition, $r(\st')\cdot l(0_1)$ is undefined, thus despite $o'=\Ok$, $r(\st')\neq r(\st')\cdot l(0_1)$ -- our hypothesis \hyp{zeroallowedl} is thus wrong, giving us our goal $0_1\notin \St_1'$ \goal{zeronotallowedl}.
@@ -141,7 +141,7 @@ We may finally prove our fourth and last goal \goal{exownedr}.
 	\hypvitem{hypnotexownedr} Assume $\neg\isexowned~\st'$.
 	\hypvitem{frameexistsr} From \hyp{hypnotexownedr}, $\exists \st''\ldotp \st''\neq0_2 \land \st''\disj\st'$, thus from composition we also have $r(\st'')\disj r(\st')$.%
 	\hypvitem{frameadded} From \hyp{frameadd}, we must have $\execswap{l(\st)\cdot r(\st''),\ins}{\Ok,r(\st')\cdot r(\st''),\outs}$. This is however not possible, as per composition, $l(\st)\cdot r(\st'')$ is undefined. Thus our hypothesis \hyp{hypnotexownedr} is false, giving us our goal \goal{exownedr}.
-	
+
 \end{hypvlist}
 
 \end{proof}

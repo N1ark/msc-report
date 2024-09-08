@@ -221,7 +221,7 @@ $\statemodel{Injector}(\mmdl, I)$ adds hooks into \consume, \produce{} and \exec
 
 \section{Instantiations} \label{sec:impl-instantiations}
 
-We now look at how this library of state models can be used to instantiate Gillian. In particular we focus on instantiating Gillian to target languages (TLs) that have already been instantiated for it: WISL, JavaScript and C.
+We now look at how this library of state models can be used to instantiate Gillian. In particular we focus on instantiating Gillian to target languages (TLs) that have already been instantiated for it: WISL, JavaScript, and C.
 
 To instantiate a language to Gillian, the developer must provide its state model, and a compiler from the TL to GIL. Because this project focuses on constructing state models, it is thus natural that we picked languages for which the compiler already exists.
 
@@ -365,11 +365,3 @@ module CMonadicSMemory = Wrap (BaseMemory)
 Here \code{ExtendMemory} is the functor responsible for adding the \code{move} action to the state model. We make use of the \code{Wrap} functor to avoid code duplication when building the state model with different optimisations of \PMap{}. The module defined on lines 5-8 specifies the suffixes used to distinguish actions and core predicates from the left and right side of the product.
 
 The instantiation of C with our library is a good example of mixing modular, general use state models with specialised state models; one can still make use of this library while implementing a perhaps more performant or more complex state model for some of the construction.
-
-
-
-
-
-
-
-
