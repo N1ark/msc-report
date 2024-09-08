@@ -6,7 +6,7 @@ In this chapter we will cover the theoretical foundations for resource algebras 
 
 \subsection{State Models with PCMs for CSE}
 
-Abstract separation logic historically has mostly used partial commutative monoids (PCMs) \cite{abstractseplogic,sepalgebra,iris1,higherorderseplogic}. These are defined as a tuple ${(M, (\cdot)\colon M\times M\part M, 0)}$, corresponding to the carrier set, composition operator, and a unique identity (or unit) element, which must satisfy the properties highlighted in \autoref{fig:pcm-properties}. PCMs are useful for representing state in SL, as they ``mathematically represent the essential notions of state ownership and ownership transfer'' \cite{abstractpcm}, while being simple and abstract enough that they can represent a variety of concrete states (the traditional case being that of heaps).
+Abstract separation logic historically has mostly used partial commutative monoids (PCMs) \cite{abstractseplogic,sepalgebra,iris1,higherorderseplogic}. These are defined as a tuple ${(\St, (\cdot)\colon \St\times \St\part \St, 0)}$, corresponding to the carrier set, composition operator, and a unique identity (or unit) element, which must satisfy the properties highlighted in \autoref{fig:pcm-properties}. PCMs are useful for representing state in SL, as they ``mathematically represent the essential notions of state ownership and ownership transfer'' \cite{abstractpcm}, while being simple and abstract enough that they can represent a variety of concrete states (the traditional case being that of heaps).
 
 \begin{figure}
 	\centering
@@ -39,12 +39,12 @@ When bringing this concept to a Compositional Symbolic Execution (CSE) engine, t
 \end{compactitem}\vspace{0.3cm}
 \textbf{Theoretical Properties:}
 \begin{compactitem}
-\item $\models$: symbolic interpretation relation.
-\item $\modelsp$: core predicate satisfiability relation.
+\item $\models$: symbolic interpretation relation, relating concrete to symbolic states via a substitution and store.
+\item $\modelsp$: core predicate satisfiability relation, relating concrete states to core predicate assertions.
 \end{compactitem}
 }}%
-\vspace{0.2cm}
-\caption{High-level description of the elements of a state model}
+\vspace{0.05cm}
+\caption{High-level description of the elements of a state model $\mmdl$}
 \label{fig:state-model-elements}
 \end{figure}
 
@@ -53,7 +53,7 @@ All of these together enable a CSE engine to be \emph{parametric} on the state m
 \emph{Core predicates} (sometimes simply called predicates) are used to make the assertion language of the engine parametric; they're written ${\delta\in\preds}$. To enable this parametricity, the assertions of the language (see \autoref{fig:assertion-language}) are extended with a core predicate assertion, written $\corepred{\delta}{\ins}{\outs}$, where $\delta$ is the core predicate, $\ins$ are the \emph{in-values} (or ``ins'') of the predicate, and $\outs$ are the \emph{out-values} (or ``outs''). This distinction is used for automation purposes, to create matching plans: they tell the engine that given the values $\ins$, the state can return the corresponding $\outs$ associated with it; this is akin to the ``parameter modes'' described in \cite{parametermodes}. For instance, the traditional ``points to'' assertion $a \mapsto v$, where $a$ is an address and $v$ a value, can be written as $\corepred{\pointsto}{a}{v}$: given the address $a$, a heap can return the value store at the location $v$. Core predicate also imply a satisfiability relation, denoted $\st\modelsp\corepred{\delta}{\ins}{\outs}$ to signify a state satisfies a given predicate -- this is akin to \cite{abstractseplogic,localreasoning}, where predicates over states are a set of states. Predicate satisfiability happens at the concrete level, and is later lifted to the symbolic realm by evaluating the ins and outs using a substitution $\theta$ and variable store $s$. Another traditional example is the \emp{} assertion, that is satisfied by the empty memory; it can be defined as a core predicate: $\corepred{\code{emp}}{}{\!}$.
 
 \begin{remark}[Semantics of emp]
-There are two accepted and clashing semantics of the \emp{} assertion; either it is equivalent to $\vtrue$ and any state satisfies \emp{}, or it represents strictly the empty memory and nothing else -- the former is more appropriate for garbage collected languages while the latter for \alloc/\free{} languages \cite{sljungle}.
+There are two accepted and clashing semantics of the \emp{} assertion; either it is equivalent to $\vtrue$ and any state satisfies \emp{}, or it represents strictly the empty memory and nothing else. The former holds in intuitionistic separation logics, and is more appropriate for garbage collected languages, while the latter holds in classical separation logic and is better suited for \alloc/\free{} languages \cite{sljungle}.
 
 Here we make the arbitrary choice of defining it as only being satisfied by the empty memory. Because the engine is parametric on the core predicates, a user is free to chose the semantics appropriate to their use case -- this is a strength of the parametric approach.
 \end{remark}
@@ -65,8 +65,8 @@ Given the predicate satisfiability $\modelsp$, producing a core predicate assert
 	\sym v &\in \LVal\\
 	\sym x &\in \LVar \subset \LVal\\
 	\delta &\in \Delta \\
-	P, Q, ... \in \Asrt &\defeq \sym v ~|~ \vtrue ~|~ P \Rarr Q ~|~ P \lor Q ~|~ \exists \sym x \ldotp P ~|\\
-	&\quad~ P * Q ~|~ \corepred{\delta}{\sins}{\souts}
+	P, Q, ... \in \Asrt &\defeq \sym v \mid \vtrue \mid P \Rarr Q \mid P \lor Q \mid \exists \sym x \ldotp P \mid\\
+	&\quad~ P * Q \mid \corepred{\delta}{\sins}{\souts}
 	\end{align*}
 	\caption{Assertion language}
 	\label{fig:assertion-language}
@@ -79,9 +79,9 @@ We may now look at an example of function, to understand how the state model is 
 \ESLtriple
 	{\code{a}=\sym a * \code{x} = \sym x * \corepred{\pointsto}{\sym a}{\sym v}}
 	{set\_value(a, x)}
-	{\corepred{\pointsto}{\sym a}{\sym x}}
+	{\code{ret}=\sym a * \corepred{\pointsto}{\sym a}{\sym x}}
 \end{align*}%
-If the engine aims to verify the function, it will start with an empty state and \emph{produce} all assertions of the pre-condition (the order being determined by the matching plan). Here, this means adding the assertions $\code{a} = \sym a$ and $\code{x} = \sym x$ to the path condition, and producing the core predicate \corepred{\pointsto}{\sym a}{\sym v} into the state. It will then execute the function's body until it terminates. Finally, to ensure the state at the end of the function matches the postcondition, the assertions are consumed: \corepred{\pointsto}{\sym a}{\sym x} is consumed, effectively removing the binding from the state. 
+If the engine aims to verify the function, it will start with an empty state and \emph{produce} all assertions of the pre-condition (the order being determined by the matching plan). Here, this means adding the assertions $\code{a} = \sym a$ and $\code{x} = \sym x$ to the path condition, and producing the core predicate \corepred{\pointsto}{\sym a}{\sym v} into the state. It will then execute the function's body until it terminates. Finally, to ensure the state at the end of the function matches the postcondition, the assertions are consumed: \corepred{\pointsto}{\sym a}{\sym x} is consumed, effectively removing the binding from the state, and we verify the returned value is $\sym a$.
 
 For the case of function calls using function specifications, the inverse is done: when calling a function its precondition is consumed, and its postcondition is produced, effectively \emph{framing off} the corresponding state, and then framing back on the post condition. For function calls by inlining, the specification is not used; instead, the code of the function is directly executed on the state. See \autoref{fig:function-call-vs-verif} for an illustration.
 
@@ -107,7 +107,7 @@ To exemplify how a state model works, let's consider the traditional linear heap
 
 \subsection{Where it goes wrong}
 
-While PCMs are an obvious and straightforward choice for representing state ownership, they come with certain drawbacks. Firstly, PCMs can be overly restrictive; in particular, the presence of a unit $0$ is restrictive, as it makes construction of sums impossible: for that, one needs to allow for multiple units in the object. In \cite{sepalgebra}, it is shown that where a PCM fulfils $\exists u\ldotp \forall x\ldotp x\cdot u = x$, one can allow for more units by simply swapping the existentials: $\forall x\ldotp \exists u_x\ldotp x \cdot u_x = x$. This rule is further relaxed in Iris \cite{iris}, where it is shown that not having a unit at all can also be useful, in particular when one wants to construct \emph{resource algebras} from simpler elements. Finally, and as noted in \cite{iris}, PCMs are ``not enough'' for certain applications, such as when wanting to support higher-order logic.
+While PCMs are an obvious and straightforward choice for representing state ownership, they come with certain drawbacks. Firstly, PCMs can be overly restrictive; in particular, the presence of a unit $0$ is restrictive, as it makes construction of sums impossible: for that, one needs to allow for multiple units in the object. In \cite{sepalgebra}, it is shown that where a PCM fulfils $\exists u\ldotp \forall \st\ldotp \st\cdot u = \st$, one can allow for more units by simply swapping the existentials: $\forall \st\ldotp \exists u_\st\ldotp \st \cdot u_\st = \st$. Finally, Iris \cite{iris} shows that one \emph{does not need a unit at all}; in fact, not having a unit makes RA constructions easier to do soundly.
 
 In \cite{sacha-phd}, the concept of RA constructions from \cite{iris} is brought into a CSE setting, using PCMs. The original work however contained some errors in constructions, that created unsoundness in the verification tool. These errors stemmed, from the most part, to the use of PCMs, and the existence of the unit $0$. Indeed, this made some constructions, such as sum, freeable or the partial map unsound. We will now look at examples of these.
 
@@ -115,14 +115,14 @@ In \cite{sacha-phd}, the concept of RA constructions from \cite{iris} is brought
 
 The first example is with $\Freeable_\PCM(\mmdl)$. This state model \emph{transformer} is given a state model $\mmdl$, and extends it with the capacity to free state, via the \free{} action. It also adds a \freedP{} predicate, to represent freed memory.
 
-Now consider the simple state model $\Freeable_\PCM(\Ex_\PCM(\Val))$. This represents exactly the pointed-to state in our previous linear heap example. Here $\Ex_\PCM(X)$ is the exclusive state model, that represents exclusive ownership of a value of type $X$.\footnote{Note we write $\Ex_\PCM(X)$ and $\Freeable_\PCM(\mmdl)$ -- the $\Ex_\PCM$ state model accepts a set, $X$, whereas $\Freeable_\PCM$ accepts a state model, $\mmdl$.} Going back to our linear heap, the pointed to cell is also exclusively owned; one cannot have two different values at the same address, we either have it all, or don't have it. Ownership is indicated via the $\exP$ core predicate: \corepred{\exP}{}{x} means the state currently has the value $x$ -- this state model will be further defined later, and is only used here for the example. For now, we define $\Ex_\PCM(X)$~as:
+Now consider the simple state model $\Freeable_\PCM(\Ex_\PCM(\Val))$. This represents exactly the state of a singular cell in our previous linear heap example. Here $\Ex_\PCM(X)$ is the exclusive state model, that represents exclusive ownership of a value of type $X$.\footnote{Note we write $\Ex_\PCM(X)$ and $\Freeable_\PCM(\mmdl)$ -- the $\Ex_\PCM$ state model accepts a set, $X$, whereas $\Freeable_\PCM$ accepts a state model, $\mmdl$.} Going back to our linear heap, the cell is also exclusively owned; one cannot have two different values at the same address, we either have it all, or don't have it. Ownership is indicated via the $\exP$ core predicate: \corepred{\exP}{}{x} means the state currently has the value $x$ -- this state model will be further defined later, and is only used here for the example. For now, we define $\Ex_\PCM(X)$~as:
 \begin{align*}
-	\Ex_\PCM(X) &\defeq \ex{x\colon X} ~|~ 0
+	\Ex_\PCM(X) &\defeq \ex{x\colon X} \mid 0
 \end{align*}
 
 The notation $\ex{x\colon X}$ is equivalent to $\{ \ex{x} : \forall x\in X \}$. We thus define $\Ex_\PCM(X)$ as the set of elements of $X$ \emph{and} the $0$ element. We also define composition such that $0\cdot \st=\st\cdot 0=\st$ and $\ex{x} \cdot \ex{y}$ is always undefined: since the value is owned exclusively, we own it as a whole and nothing can be added to it. This satisfies the axioms of PCMs. We now consider a naive definition of $\Freeable_\PCM(\mmdl)$'s PCM, where $\St$ is the carrier set of $\mmdl$'s~PCM:
 \begin{align*}
-	\Freeable_\PCM(\mmdl) &\defeq \text{sub}(\st\colon \St) ~|~ \freed ~|~ 0
+	\Freeable_\PCM(\mmdl) &\defeq \text{sub}(\st\colon \St) \mid \freed \mid 0
 \end{align*}
 
 We then again define composition as $0 \cdot \st=\st \cdot 0=\st$, and $\text{sub}(\st) \cdot \text{sub}(\st')=\text{sub}(\st\cdot \st')$, which forms a valid PCM.\footnote{All unspecified compositions are considered undefined.} $\Freeable_\PCM(\mmdl)$ exposes a core predicate \freedP, as well as the core predicates of~$\mmdl$; similarly, \consume{} and \produce{} are lifted. The core predicate $\corepred{\freedP}{}{}$ is equivalent to the negative cell assertion $\freedpt$, modulo the index. While we omit the full details of the state model, we note that producing \freedP{} only succeeds when in state $0$ (since a state can't be both freed and something else), producing something other that \freedP{} calls the \produce{} function of the underlying state model $\mmdl$, and stores the resulting state $\st$ as $\text{sub}(\st)$. Similarly, consuming a predicate of $\mmdl$ while in state $\text{sub}(\st)$ calls \consume{} on that predicate with $\st$, and then wraps the result $\st'$ back into~$\text{sub}(\st')$.
@@ -132,7 +132,7 @@ Going back to our state model $\Freeable_\PCM(\Ex_\PCM(\Val))$, it thus exposes 
 	\ESLtriple
 		{\corepred{\exP}{}{\sym x}}
 		{dispose()}
-		{\corepred{\freedP}{}{}}
+		{\code{ret}=0 * \corepred{\freedP}{}{}}
 \end{align*}
 
 Assume we're in the state $\text{sub}(\ex{1})$. To call \code{dispose} by its specification, we first need to consume its precondition: we consume \corepred{\exP}{}{\sym x} from the state. To do this, $\Freeable_\PCM$ calls the \consume{} function of $\Ex_\PCM(\Val)$, with the state $\ex{1}$, which returns $0$. $\Freeable_\PCM$ then wraps this state back, resulting in $\text{sub}(0)$. We then produce the post-condition of \code{dispose}, thus producing \corepred{\freedP}{}{} into $\text{sub}(0)$. This however is not valid, according to the rules outlined earlier! Indeed the state can't both be freed and something else. Of course, $\text{sub}(0)$ represents an empty state, but that means that the \consume{} and \produce{} rules of $\Freeable_\PCM$ must take this into account -- a simple implementation could miss it, resulting in such errors.
@@ -174,11 +174,11 @@ Now, consider the following function specification that moves a value:
 \ESLtriple
 	{1\mapsto 1 * \corepred{\domainset}{}{\{1\}}}
 	{move()}
-	{2\mapsto 1 * \corepred{\domainset}{}{\{2\}}}
+	{\code{ret}=0 * 2\mapsto 1 * \corepred{\domainset}{}{\{2\}}}
 \end{align*}
 This specification is valid, as it is frame preserving. More precisely, because the domain set of the precondition is $\{1\}$ and we own the cell at address $1$, the only state compatible with the precondition is the empty state $([], \bot)$; the same also applies for the postcondition. As such, one should be able to soundly call this function.
 
-Let the initial state be $([1\mapsto \ex{1}], \{ 1\} )$: a heap with one cell, at address $1$ -- this matches the precondition of \code{move}. If we want to call \code{move} by specification, the engine must first consume the entire precondition, assertion by assertion (effectively framing it off). It first consumes $1\mapsto 1$, or \corepred{\exP}{1}{1}; \PMap{} in turn gets the state at address $1$, $\ex{1}$, and consumes \corepred{\exP}{}{1} from it, unlifting the index from the assertion. The pointed-to state then becomes the unit $0$ of $\Ex_\PCM(\Val)$, and the outer state becomes~$(\{ 1\mapsto 0\}, \{ 1\})$. The \domainset{} predicate is then successfully consumed too, leaving ${(\{ 1\mapsto 0\},\bot)}$, since the domain set must be consumed as a whole. 
+Let the initial state be $([1\mapsto \ex{1}], \{ 1\} )$: a heap with one cell, at address $1$ -- this matches the precondition of \code{move}. If we want to call \code{move} by specification, the engine must first consume the entire precondition, assertion by assertion (effectively framing it off). It first consumes $1\mapsto 1$, or \corepred{\exP}{1}{1}; \PMap{} in turn gets the state at address $1$, $\ex{1}$, and consumes \corepred{\exP}{}{1} from it, unlifting the index from the assertion. The state at $1$ then becomes the unit $0$ of $\Ex_\PCM(\Val)$, and the outer state becomes ${(\{ 1\mapsto 0\}, \{ 1\})}$. The \domainset{} predicate is then successfully consumed too, leaving ${(\{ 1\mapsto 0\},\bot)}$, since the domain set must be consumed as a whole. 
 
 Next, the post-condition is produced onto the state. First, the engine produces $2\mapsto 1$, or \corepred{\exP}{2}{1}, which adds a binding to $\PMap_\PCM$ and creates the cell: our bigger state is now $([1\mapsto 0, 2\mapsto \ex1],\bot)$. Finally, \corepred{\domainset}{}{\{2\}} is produced onto the state, however this \emph{doesn't succeed}. Indeed, we have $\dom([1\mapsto 0, 2\mapsto \ex1])=\{1,2\}$, and of course $\{1,2\}\not\subseteq \{2\}$: the domain of the heap is not a subset of the produced domain set $\{2\}$. This is because again we forgot to check if the state at location $1$ became $0$ when consuming \corepred{\exP}{1}{1}. We would thus need to check for this, and potentially redefine the PCM of $\PMap_\PCM$ to forbid mappings to $0$. Another solution is to reformulate the invariant, such that indices pointing to $0$ are ignored, since they're empty anyways. In both cases, we must be careful about how we choose to handle the unit.
 
@@ -186,59 +186,59 @@ These examples hopefully showed that PCMs enforce a unit that is unwieldy, and c
 
 \subsection{RAs for Iris}
 
-Iris \cite{iris1,iris2,iris3,iris} departs from the tradition of PCMs, and introduces resource algebras (RAs) to model state, defined as a tuple ${(M, \irisval\colon M\rarr \text{iProp}, |-|\colon M\rarr M^?, (\cdot)\colon M\times M\rarr M)}$, containing the carrier set, a validity function, a partial core function and a \emph{total} composition operator. This definition makes use of the option RA $M^?\defeq M\uplus\{\bot\}$ \cite{iris-option}, that extends the set of $M$ with an ``empty'' element $\bot$, such that $m\cdot\bot=\bot\cdot m=m$. Similarly to PCMs, a set of axioms must be satisfied, as seen in \autoref{fig:irisra-properties}.
+Iris \cite{iris1,iris2,iris3,iris} departs from the tradition of PCMs, and introduces resource algebras (RAs) to model state, defined as a tuple ${(\St, \irisval\colon \St\rarr \text{iProp}, |-|\colon \St\rarr \St^?, (\cdot)\colon \St\times \St\rarr \St)}$,\footnote{The original papers on Iris use the symbol $M$ rather than $\St$; we keep $\St$ for uniformity with the rest of the presentation.} containing the carrier set, a validity function, a partial core function and a \emph{total} composition operator. This definition makes use of the option RA $\St^?\defeq \St\uplus\{\bot\}$ \cite{iris-option}, that extends the set of $\St$ with an ``empty'' element $\bot$, such that $\st\cdot\bot=\bot\cdot \st=\st$. Similarly to PCMs, a set of axioms must be satisfied, as seen in \autoref{fig:irisra-properties}.
 
-The \emph{core function} $|-|\colon M\rarr M^?$ associates to an element $m$ of the RA it's \emph{duplicable core}. The crucial difference here, compared to PCMs, is that aside from allowing multiple units, it allows having \emph{no unit}, in which case $|m|=\bot$. As we will see later, having no unit is a requirement for a state to be exclusively owned (i.e. it has no frame). Indeed, if the state $m$ has a core $|m|\neq\bot$, then that core always constitutes a valid frame.
+The \emph{core function} $|-|\colon \St\rarr \St^?$ associates to an element $\st$ of the RA it's \emph{duplicable core}. The crucial difference here, compared to PCMs, is that aside from allowing multiple units, it allows having \emph{no unit}, in which case $|\st|=\bot$. As we will see later, having no unit is a requirement for a state to be exclusively owned (i.e. it has no frame). Indeed, if the state $\st$ has a core $|\st|\neq\bot$, then that core always constitutes a valid frame.
 
-The \emph{validity function} $\irisval\colon M\rarr \text{iProp}$ is used to rule out invalid compositions, rather than relying on the partiality of the composition operator. It returns an Iris property, \text{iProp}, which allows for step indexing and more sophisticated logic, that is out of the scope of this project. Most RAs are then extended with an invalid element $\lightning$, and validity is often defined as $\irisval(m)\defeq m\neq \lightning$. For instance for the $\Ex_\Iris$ RA: \begin{align*}
-	\Ex_\Iris(X) &\defeq \ex{x\colon X} ~|~ \lightning \\
-	\irisval(a) &\defeq a \neq \lightning \\
+The \emph{validity function} $\irisval\colon \St\rarr \text{iProp}$ is used to rule out invalid compositions, rather than relying on the partiality of the composition operator. It returns an Iris property, \text{iProp}, which allows for step indexing and more sophisticated logic, that is out of the scope of this project. Most RAs are then extended with an invalid element $\lightning$, and validity is often defined as $\irisval(\st)\defeq \st\neq \lightning$. For instance for the $\Ex_\Iris$ RA: \begin{align*}
+	\Ex_\Iris(X) &\defeq \ex{x\colon X} \mid \lightning \\
+	\irisval(\st) &\defeq \st \neq \lightning \\
 	|\ex{x}| &\defeq \bot\\
-	a \cdot b &\defeq \lightning
+	\st \cdot \st' &\defeq \lightning
 \end{align*}
 
 \begin{figure}
-An \emph{Iris resource algebra} is a tuple $(M, \irisval\colon M\rarr \text{iProp}, |-|\colon M\rarr M^?, (\cdot)\colon M\times M\rarr M)$
+An \emph{Iris resource algebra} is a tuple $(\St, \irisval\colon \St\rarr \text{iProp}, |-|\colon \St\rarr \St^?, (\cdot)\colon \St\times \St\rarr \St)$
 \begin{align}
 	\tag{Iris-RA-Assoc}
 	\forall a,b,c&\ldotp (a\cdot b)\cdot c = a\cdot (b\cdot c)\\
 	\tag{Iris-RA-Comm}
 	\forall a,b&\ldotp a\cdot b = b\cdot a\\
 	\tag{Iris-RA-Core-ID}
-	\forall a&\ldotp |a| \in M \Rarr |a|\cdot a = a\\
+	\forall a&\ldotp |a| \in \St \Rarr |a|\cdot a = a\\
 	\tag{Iris-RA-Core-Idem}
-	\forall a&\ldotp |a|\in M\Rarr ||a|| = |a|\\
+	\forall a&\ldotp |a|\in \St\Rarr ||a|| = |a|\\
 	\tag{Iris-RA-Core-Mono}
-	\forall a,b&\ldotp |a|\in M\land a\preo b \Rarr |b| \in M \land |a| \preo |b|\\
+	\forall a,b&\ldotp |a|\in \St\land a\preo b \Rarr |b| \in \St \land |a| \preo |b|\\
 	\tag{Iris-RA-Valid-Op}\label{eq:iris-ra-valid-op}
 	\forall a,b&\ldotp \irisval(a\cdot b)\Rarr \irisval(a)
 \end{align}
 \begin{align*}
 	\text{where}\qquad
-	M^? &\defeq M \uplus \{\bot\}\text{, with }a\cdot \bot \defeq \bot\cdot a\defeq a\\
+	\St^? &\defeq \St \uplus \{\bot\}\text{, with }\st\cdot \bot \defeq \bot\cdot \st\defeq \st\\
 	a \preo b &\defeq \exists c\ldotp b = a\cdot c\\
-	a \rightsquigarrow B &\defeq \forall c^? \in M^?\ldotp \irisval(a\cdot c^?) \Rarr \exists b\in B\ldotp \irisval(b\cdot c^?)\\
+	a \rightsquigarrow B &\defeq \forall c^? \in \St^?\ldotp \irisval(a\cdot c^?) \Rarr \exists b\in B\ldotp \irisval(b\cdot c^?)\\
 	a \rightsquigarrow b &\defeq a \rightsquigarrow \{b\}
 \end{align*}
-A \emph{unital} resource algebra is an RA $M$ with an element $\epsilon\in M$ such that:
+A \emph{unital} resource algebra is an RA $\St$ with an element $\epsilon\in\St$ such that:
 \begin{align*}
 	\irisval(\epsilon) &&
-	\forall a\in M. \epsilon\cdot a = a&&
+	\forall \st\in \St\ldotp \epsilon\cdot \st = \st&&
 	|\epsilon|=\epsilon
 \end{align*}
 \caption{Definition of resource algebras in Iris}
 \label{fig:irisra-properties}
 \end{figure}
 
-The validity and core functions thus make Iris states more powerful, as they have more flexibility in what can be expressed; while a regular PCM can be trivially converted to an RA, the opposite is not true. An example of construction that can easily be more easily constructed is the sum state model. The requirement for a transition from one side of the sum to the other can be more elegantly expressed, without having to worry about the existence of the unit $0$ \cite{iris}. Given ${\text{exclusive}_\Iris(a)\defeq \forall b\ldotp \neg\irisval(a\cdot b)}$, we have:\begin{mathpar}
-\inferrule[ExclusiveUpdate]{\text{exclusive}_\Iris(a) \\ \irisval(b)}{a \rightsquigarrow b}
+The validity and core functions thus make Iris states more powerful, as they have more flexibility in what can be expressed; while a regular PCM can be trivially converted to an RA, the opposite is not true. An example of construction that can easily be more easily constructed is the sum state model. The requirement for a transition from one side of the sum to the other can be more elegantly expressed, without having to worry about the existence of the unit $0$ \cite{iris}. Given ${\text{exclusive}_\Iris(\st)\defeq \forall \st'\ldotp \neg\irisval(\st\cdot \st')}$, we have:\begin{mathpar}
+\inferrule[ExclusiveUpdate]{\text{exclusive}_\Iris(\st) \\ \irisval(\st')}{\st \rightsquigarrow \st'}
 \end{mathpar}
 
-The Iris update $a \rightsquigarrow b$ is a form of frame preserving update: if we update $a$ into $b$, we know that any frame that was compatible with $a$ remains compatible with $b$. For the above rule, because $a$ is owned exclusively, we can replace it with any state, as $a\rightsquigarrow b$ is vacuously true.
+The Iris update $\st \rightsquigarrow \st'$ is a form of frame preserving update: if we update $\st$ into $\st'$, we know that any frame that was compatible with $\st$ remains compatible with $\st'$. For the above rule, because $\st$ is owned exclusively, we can replace it with any state, as $\st\rightsquigarrow \st'$ is vacuously true. This rule is not the only way for one to have a frame preserving update, of course; but it is a rule that can be applied for any RA $\St$, and is thus crucial. We will often implicitly use a form of it when wanting to prove the soundness of actions.
 
-Furthermore, Iris is a battle-tested logic,\footnote{See \url{https://iris-project.org/\#publications}, where more than a hundred publications are cited as using Iris, allowing for the verification of, among others, C, Go, OCaml, Rust, Scala or WASM.} that comes with plenty of proofs and properties making them easy to use and adapt, whereas PCMs can prove unwieldy even for simpler state models, as shown previously.
+Furthermore, Iris is a battle-tested and certified logic,\footnote{See \url{https://iris-project.org/\#publications}, where more than a hundred publications are cited as using Iris, allowing for the verification of, among others, C, Go, OCaml, Rust, Scala or WASM.} that comes with plenty of proofs and properties making them easy to use and adapt, whereas PCMs can prove unwieldy even for simpler state models, as shown previously.
 
-We note an interesting similarity between Iris and the PCM approach however, which is that ``the global RA must be unital, which means it should have a unit element $\epsilon$'' \cite{iris}. This is similar to what one would find in a PCM, where we have the $0$ element. Any RA can be trivially extended to have a unit, via the option RA. This in particular means that while the building blocks of both approaches are different (PCMs or RAs), the end result that is used is similar. This is good news: it means that adapting an RA construction to a CSE engine that uses PCMs should be fairly straightforward, as one can rely on the added unit as a de facto $0$.
+We note an interesting similarity between Iris and the PCM approach, which is that ``the global RA must be unital, which means it should have a unit element $\epsilon$'' \cite{iris}. This is similar to what one would find in a PCM, where we have the $0$ element. Any RA can be trivially extended to have a unit, via the option RA. This in particular means that while the building blocks of both approaches are different (PCMs or RAs), the end result that is used is similar. This is good news: it means that adapting an RA construction to a CSE engine that uses PCMs should be fairly straightforward, as one can rely on the added unit as a de facto $0$.
 
 \section{State Models with RAs} \label{sec:theory-state-model-ras}
 
@@ -246,26 +246,26 @@ We have seen how PCMs are unpractical for a CSE engine, as they easily create in
 
 \subsection{Partial RAs}
 
-A property of Iris RAs is that composition is \emph{total} -- to take into account invalid composition, states are usually extended with a $\lightning$ state, such that $\irisval(\st)\Leftrightarrow \st\neq\lightning$. While this is needed in the Iris framework for higher-order ghost state and step-indexing, this doesn't come into play when one is only manipulating RAs. As such, because having to define and later verify the validity of states can be quite unwieldy, we remove validity by instead making use of partiality, as was originally the case in PCMs. This translation is done by removing the invalid state $\lightning$ when present, and instead defining compositions that lead to it as undefined. From this, we can get rid of the validity function, and define composition as being partial: $(\cdot)\colon M\times M\part M$. This is also in line with the core function $(-)$ being partial.
+A property of Iris RAs is that composition is \emph{total} -- to take into account invalid composition, states are usually extended with a $\lightning$ state, such that $\irisval(\st)\Leftrightarrow \st\neq\lightning$. While this is needed in the Iris framework for higher-order ghost state and step-indexing, this doesn't come into play when one is only manipulating RAs. As such, because having to define and later verify the validity of states can be quite unwieldy, we remove validity by instead making use of partiality, as was originally the case in PCMs. This translation is done by removing the invalid state $\lightning$ when present, and instead defining compositions that lead to it as undefined. From this, we can get rid of the validity function, and define composition as being partial: $(\cdot)\colon \St\times \St\part \St$. This is also in line with the core function $(-)$ being partial.
 
 \begin{figure}
-A \emph{partial resource algebra} (RA) is a triple $(M, |\!-\!|\colon M\rarr M^?, (\cdot)\colon M\times M \part M)$
+A \emph{partial resource algebra} (RA) is a triple $(\St, |\!-\!|\colon \St\rarr \St^?, (\cdot)\colon \St\times \St \part \St)$
 \begin{align}
 	\tag{RA-Assoc} \forall a,b,c&\ldotp (a\cdot b)\cdot c = a\cdot (b\cdot c)\\
 	\tag{RA-Comm} \forall a,b&\ldotp a\cdot b = b\cdot a\\
-	\tag{RA-Core-ID} \forall a&\ldotp |a| \in M \Rarr |a|\cdot a = a\\
-	\tag{RA-Core-Idem} \forall a&\ldotp |a|\in M\Rarr ||a|| = |a|\\
-	\tag{RA-Core-Mono} \forall a,b&\ldotp |a|\in M\land a\preo b \Rarr |b| \in M \land |a| \preo |b|
+	\tag{RA-Core-ID} \forall a&\ldotp |a| \in \St \Rarr |a|\cdot a = a\\
+	\tag{RA-Core-Idem} \forall a&\ldotp |a|\in \St\Rarr ||a|| = |a|\\
+	\tag{RA-Core-Mono} \forall a,b&\ldotp |a|\in \St\land a\preo b \Rarr |b| \in \St \land |a| \preo |b|
 \end{align}
 \begin{align*}
 	\text{where}\qquad
-	M^? &\defeq M \uplus \{\bot\}\text{, with }a\cdot \bot \defeq \bot\cdot a\defeq a\\
+	\St^? &\defeq \St \uplus \{\bot\}\text{, with }\st\cdot \bot \defeq \bot\cdot \st\defeq \st\\
 	a \preo b &\defeq \exists c\ldotp b = a\cdot c\\
 	a\disj b &\defeq a \cdot b \text{ is defined}
 \end{align*}
-A \emph{unital} resource algebra is a resource algebra $M$ with an element $\epsilon\in M$ such that:
+A \emph{unital} resource algebra is a resource algebra $\St$ with an element $\epsilon\in \St$ such that:
 \begin{align*}
-	\forall a\in M\ldotp \epsilon\cdot a = a&&
+	\forall \st\in \St\ldotp \epsilon\cdot \st = \st&&
 	|\epsilon|=\epsilon
 \end{align*}
 \caption{Definition of (partial) resource algebras}
@@ -273,12 +273,12 @@ A \emph{unital} resource algebra is a resource algebra $M$ with an element $\eps
 \end{figure}
 
 \begin{remark}[Partiality and the option RA]
-	One may note that we use the term ``partial'' to refer to two different signatures; the core $|-|\colon M \rarr M^?$ is called partial but is in fact total, with undefined mappings being equal to $\bot$, while composition $(\cdot)\colon M\times M\part M$ is a ``proper'' partial function.
+	One may note that we use the term ``partial'' to refer to two different signatures; the core $|-|\colon \St \rarr \St^?$ is called partial but is in fact total, with undefined mappings being equal to $\bot$, while composition $(\cdot)\colon \St\times \St\part \St$ is a ``proper'' partial function.
 
-	While one could adapt the core to be $M\part M$, this would prove unpractical, in cases where one still wants to use $|m|$ even when it is $\bot$. On the other hand, defining composition as $M\times M\rarr M^?$ is simply incorrect: let $a\cdot b$ undefined, it is untrue that $(a\cdot b)\cdot c=c$, while defining an undefined composition to equal $\bot$ would render this statement true.
+	While one could adapt the core to be $\St\part \St$, this would prove unpractical, in cases where one still wants to use $|\st|$ even when it is $\bot$. On the other hand, defining composition as $\St\times \St\rarr \St^?$ is simply incorrect: let $a\cdot b$ undefined, it is untrue that $(a\cdot b)\cdot c=c$, while defining an undefined composition to equal $\bot$ would render this statement true.
 \end{remark}
 
-\emph{Partial} RAs are equivalent to regular RAs, as long as ${\neg\irisval(a)\Rarr \neg\irisval(a\cdot b)}$ holds; luckily for us, this is equivalent to the axiom \eqref{eq:iris-ra-valid-op}. Compositions that yield $\lightning$ (or any state $m$ such that $\neg\irisval(m)$) can be made undefined, and the validity function removed, to gain partiality, and inversely to go back to the Iris definition.
+\emph{Partial} RAs, defined as a triple $(\St, |\!-\!|\colon \St\rarr \St^?, (\cdot)\colon \St\times \St \part \St)$, are equivalent to regular RAs, as long as ${\neg\irisval(a)\Rarr \neg\irisval(a\cdot b)}$ holds; luckily for us, this is equivalent to the axiom \eqref{eq:iris-ra-valid-op}, that states $\irisval(a\cdot b)\Rarr \irisval(a)$. Compositions that yield $\lightning$ (or any state $\st$ such that $\neg\irisval(\st)$) can be made undefined, and the validity function removed, to gain partiality, and inversely to go back to the Iris definition.
 
 An interesting property of this change is that because validity is replaced by the fact composition is defined, the validity of a composition $\irisval(a\cdot b)$ in a RA is exactly equivalent to the fact two elements are disjoint in a partial RA $a \disj b$. We now define the properties of partial RAs taking this change into account -- see \autoref{fig:ra-properties}. From now, the term RA will be used to refer to these partial RAs.
 
@@ -287,16 +287,16 @@ We may compare the definition of $\Ex_\Iris$, presented earlier, with the equiva
 \begin{figure}
 \noindent\begin{minipage}{.5\linewidth}
 \begin{align*}
-	\Ex_\Iris(X) &\defeq \ex{x\colon X} ~|~ \lightning \\
-	\irisval(a) &\defeq a \neq \lightning \\
+	\Ex_\Iris(X) &\defeq \ex{x\colon X} \mid \lightning \\
+	\irisval(\st) &\defeq \st \neq \lightning \\
 	|\ex{x}| &\defeq \bot\\
-	a \cdot b &\defeq \lightning
+	\st \cdot \st' &\defeq \lightning
 \end{align*}\end{minipage}%
 \begin{minipage}{.5\linewidth}
 \begin{align*}
 	\Ex(X) &\defeq \ex{x\colon X} \\
 	|\ex{x}| &\defeq \bot\\
-	a \cdot b & \text{ is always undefined}
+	\st \cdot \st' & \text{ is always undefined}
 \end{align*}\end{minipage}
 \caption{Comparison of the definition of \Ex{} with Iris and partial RAs}
 \label{fig:comp-def-ex}
@@ -316,7 +316,7 @@ This CSE engine is split into three layers, each adding functionality to the lay
 	\label{fig:layers-cse-engine}
 \end{figure}
 
-The core engine enables whole-program symbolic execution. For this, state models must firstly define the set of states the execution will happen on. While \emph{concrete} compositional state is modelled as an RA, \emph{symbolic} compositional state is simply a set of elements that does not come with composition or cores. This is because when one handles symbolic values, composition isn't a partial function any more, as it can branch, and thus output more than one value. Take for instance the RA of trees, where nodes are defined as having an offset and size. Composing two trees made of a single node with a symbolic offset may lead to different results, depending on the interpretation of the offsets: are the two nodes adjacent? Which is on the left or the right? This cannot be modelled with an RA. Soundness of the engine is instead verified by unlifting symbolic states to concrete states via symbolic interpretation~($\models$), and then using the properties of these concretes states, which do form a valid RA.
+The core engine enables whole-program symbolic testing. For this, state models must firstly define the set of states the execution will happen on. While \emph{concrete} compositional state is modelled as an RA, \emph{symbolic} compositional state is simply a set of elements that does not come with composition or cores. This is because when one handles symbolic values, composition isn't a partial function any more, as it can branch, and thus output more than one value. Take for instance the RA of trees, where nodes are defined as having an offset and size. Composing two trees made of a single node with a symbolic offset may lead to different results, depending on the interpretation of the offsets: are the two nodes adjacent? Which is on the left or the right? This cannot be modelled with an RA. Soundness of the engine is instead verified by unlifting symbolic states to concrete states via symbolic interpretation~($\models$), and then using the properties of these concretes states, which do form a valid RA.
 
 Once the set of symbolic states $\Sst\ni\sst$ is defined, it must be further equipped with a set of actions~$\actions$ and an $\execac$ function that allows the program to modify the state. We also include the definition of the $\models$ relation, called \code{sat}, noting that this is a purely theoretical construct that isn't implemented in the actual engine.
 \begin{align*}
@@ -335,7 +335,7 @@ Here, the outcome is in the set of \emph{execution outcomes} $\outcomes_e=\{ \Ok
 
 The main difference with \cite{cse2} is that the state may be $\bot$, if the action is executed on empty state; this is made explicit from using $\Sst^?$ (rather than $\Sst$). This ensures non-unital RAs are not ruled out as invalid -- indeed, many useful RAs are not unital and sometimes don't have a unit at all, as is the case for instance for \Ex.
 
-We also modify the definition of a path condition. It is typically defined as a logical value $\LVal$ that must evaluate to a boolean, and which is extended via conjunction. Internally, the engine however still needs to split the conjunction into a list of terms to manipulate it. As such, to make the theory closer to what is effectively done within the engine, we make the choice of defining the path condition as a \emph{list of logical values}: $\pc\in\Pc=\lvallist$. Extension is then defined as concatenating new logical values to the path condition, and strengthening of the path condition can be trivially checked with $\pc'\supseteq\pc$. We further define the predicate \code{SAT}, that is true if, given the substitution $\theta$, store $s$ and a path condition $\pc$, the conjunction of the elements of $\pc$ resolves to $\vtrue$ once evaluated:
+We also modify the definition of a path condition. It is typically defined as a logical value $\LVal$ that must evaluate to a boolean, and which is extended via conjunction. Internally, the engine however still needs to split the conjunction into a list of terms to manipulate it. As such, to make the theory closer to what is effectively done within the engine, we make the choice of defining the path condition as a \emph{list of logical values}: $\pc\in\Pc=\lvallist$. Extension is then defined as concatenating new logical values to the path condition, and strengthening of the path condition can be trivially checked with $\pc'\supseteq\pc$. Substitutions $\theta\in\Theta$ and variable stores (or simply stores) $s\in\text{Store}$ are variable environments, for logic and program variables respectively. We define the predicate \code{SAT}, that is true if, given the substitution $\theta$, store $s$ and a path condition $\pc$, the conjunction of the elements of $\pc$ resolves to $\vtrue$ once evaluated:
 \begin{align*}
 	\SAT(\pc) \defeq \left\llbracket \bigwedge_{i}^{|\pc|}\pc(i) \right\rrbracket_{\theta,s} \hspace{-1em} = \vtrue
 \end{align*}
@@ -366,7 +366,7 @@ The $\code{sat}_\preds$ relation relates a possibly empty \emph{concrete} state,
 	\theta,s,\st\modelsp \corepred{\delta}{\sins}{\souts} \defeq \expeval{\sins}=\ins \land \expeval{\souts}=\outs \land \st\modelsp \corepred{\delta}{\ins}{\outs}
 \end{align*}
 
-Here we define logical outcomes $\outcomes_l = \{\Ok, \LFail, \Miss \}$. These are outcomes that happen during reasoning; in particular, \LFail{} equates to a logical failure due to an \emph{incompatibility} between the consumed predicate and the state. For instance, consuming $1 \mapsto 1$ from a state $[1 \mapsto 2]$ would yield a \LFail{}, while consuming it from state $[2 \mapsto 1]$ would yield a \Miss{}, as the state $[1\mapsto 1]$ could be composed with it to yield a non-miss outcome.
+Here we define logical outcomes $\outcomes_l = \{\Ok, \LFail, \Miss \}$. These are outcomes that happen during reasoning; in particular, \LFail{} equates to a logical failure due to an \emph{incompatibility} between the consumed predicate and the state. For instance, consuming $1 \mapsto 1$ from a state $[1 \mapsto 2]$ would yield a \LFail{}, while consuming it from state $[2 \mapsto 1]$ would yield a \Miss{}, as the state $[1\mapsto 1]$ could be composed with it to yield a non-miss outcome. \Err{} and \LFail{} are distinct because they represent to different types of error: \Err{} is a language error that can occur at runtime (e.g. a division by zero, a null pointer dereference) while \LFail{} corresponds to a reasoning failure, that happens in the logic and doesn't exist when running the code.
 
 An addition to what \cite{cse2} previously defined, taking inspiration from \cite{sacha-phd}, is thus the split of what was the \code{Abort} outcome into \LFail{} and \Miss{}, which improves the quality of error messages and allows \emph{fixing} consumptions that yield a \Miss{} -- this will be described in the next subsection. This means function calls by specification with missing resources can be done in bi-abduction.
 
@@ -376,7 +376,7 @@ An addition to what \cite{cse2} previously defined, taking inspiration from \cit
 
 \begin{figure}
 	\centering
-	\includegraphics[width=5cm]{diagrams/outcomes-overlap.drawio.pdf}
+	\includegraphics[width=8cm]{diagrams/outcomes-overlap.drawio.pdf}
 	\caption{Overlap of outcomes}
 	\label{fig:outcomes-overlap}
 \end{figure}
@@ -635,7 +635,7 @@ The sum state model $\Sum(\mmdl_1,\mmdl_2)$, also written $\mmdl_1 + \mmdl_2$, a
 
 Let $\St_1$ and $\St_2$ be the carrier sets of the RAs of $\mmdl_1$ and $\mmdl_2$ respectively; the RA of $\Sum(\mmdl_1,\mmdl_2)$ is:
 \begin{align*}
-	\Sum(\mmdl_1, \mmdl_2) \defeq \mmdl_1+\mmdl_2 &\defeq l(\st\colon \St_1) ~|~ r(\st\colon \St_2)\\
+	\Sum(\mmdl_1, \mmdl_2) \defeq \mmdl_1+\mmdl_2 &\defeq l(\st\colon \St_1) \mid r(\st\colon \St_2)\\
 	l(\st)\cdot l(\st') &\defeq l(\st\cdot \st')\\
 	r(\st)\cdot r(\st') &\defeq r(\st\cdot \st')\\
 	|l(\st)|&\defeq \begin{cases}
