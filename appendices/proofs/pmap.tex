@@ -1,8 +1,8 @@
 \section{Partial Map} \label{proofs:pmap-soundness}
 
-To facilitate the soundness proof for \PMap, and due to its extensive use of the \code{get} and \code{set} helper methods to modify the elements in the heap, we first define and prove axioms about these auxiliary functions.
+To facilitate the soundness proof for \PMap, and due to its extensive use of the \code{get} and \code{set} helper methods to modify the elements in the heap, we first define and prove properties about these auxiliary functions.
 
-We introduce a pair of axioms for \code{get}, similar to OX and UX soundness of actions, to ensure that the symbolic function retrieves the right state if it exists in the concrete counterpart of the state. 
+We introduce a pair of properties for \code{get}, similar to OX and UX soundness of actions, to ensure that the symbolic function retrieves the right state if it exists in the concrete counterpart of the state. 
 
 \begin{equation}
 \tag{Get OX Soundness}\label{eq:get-complete}
@@ -309,7 +309,7 @@ Again, both cases (when the domains set $d$ is owned and when it is $\bot$) are 
 \hypvitem{modelsp} Assume now $\st_\delta\neq\bot$. From the definition of $\modelsp$ and \hyp{modelsparts}, we have $\exists i, \st_{\delta,i}\ldotp {\expeval{\sym i}=i} \land {\st_\delta=([i\mapsto\st_{\delta,i}],\bot)} \land \st_{\delta,i}\modelsp \corepred{\delta}{\sins'}{\souts}$.
 \hypvitem{submodels} From \hyp{modelsparts}, \hyp{subcon} and the definitions of $\models$  and composition we have $\exists \st_i'\ldotp {\theta,s,\st_i'\models\sst_i'} \land \st_i' \disj \st_{\delta,i}$.
 \hypvitem{subcomp} From \hyp{submodels}, \hyp{modelsp} and \hyp{ssatsconscomp}, we can apply \ref{eq:consume-ox-sound}, giving us $\exists \st_i\ldotp {\st_i=\st_{\delta,i}\cdot\st_i'} \land \theta,s,\st_i\models \sst_i \land \SAT(\pc'')$.
-\hypvitem{modelscell} From the definition of $\models$, because \consume{} doesn't affect any other cell, given ${\theta,s,\st_i\models\sst_i}$ and $\theta,s,\st_f\models\sst_f$ and $\ppset{\sst,\sym i',\sst_i'}{\sst_f}$, we obtain $\theta,s,\st\models\sst$.
+\hypvitem{modelscell} From the definition of $\models$, because \consume{} does not affect any other cell, given ${\theta,s,\st_i\models\sst_i}$ and $\theta,s,\st_f\models\sst_f$ and $\ppset{\sst,\sym i',\sst_i'}{\sst_f}$, we obtain $\theta,s,\st\models\sst$.
 \hypvitem{sthasi} From \hyp{modelsp}, we have $\st_\delta$ of the form $\st_\delta=(h_\delta,\bot)$ where $i\in \dom(h_\delta)$. From composition rules, it follows that if $\st=\st_\delta\cdot\st_f$ we have $\st=(h,d)$ where $i\in \dom(h)$ too.
 \hypvitem{exgetc} From \hyp{sthasi} and \hyp{modelscell}, it follows that we can apply \ruleref{CPMapGetMatch} such that ${\ppgetc{\st,i}{\st_i}}$. We can then use \ref{eq:get-complete}, giving us, from \hyp{subcon} that $\SAT(\pc')$.
 \hypvitem{pcok} It follows from \hyp{exgetc} and \hyp{subcomp} that $\SAT(\pc)$. This along with \hyp{modelscell} gives our goal \goal{conscomp}.
