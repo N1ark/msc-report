@@ -28,7 +28,7 @@ This evaluation is split among the three different stacks originally supported b
 
 \subsection{WISL}
 
-The WISL state model is $\PMap(\Loc, \Freeable(\List(\Ex(\Val))))$. The Gillian-WISL instantiation uses the abstract location optimisation, so our instantiations also do; using $\PMap$ without the optimisation would yield different test outcomes, due to its unsoundness.  To measure the performance impact of different optimisations, we build the following transformer stacks: \begin{align}
+The WISL state model is $\PMap(\Loc, \Freeable(\List(\Ex(\Val))))$. The Gillian-WISL instantiation uses the abstract location optimisation, so our instantiations also do; using $\PMap$ without the optimisation would yield different test outcomes, due to its unsoundness. To measure the performance impact of different optimisations, we build the following transformer stacks: \begin{align}
 \tag{TR}       & \ALocPMap(\Freeable(\List(\Ex(\Val)))) \\
 \tag{TR-ALoc}  & \ALocPMap^\Str(\Freeable(\List(\Ex(\Val)))) \\
 \tag{TR-Split} & \PMap_{\text{ALocSplit}}(\Freeable(\List(\Ex(\Val))))
@@ -84,7 +84,7 @@ This benchmark is split into three parts: WPST, verification, and Buckets-JS (in
 	\label{fig:js-perf-bars}
 \end{figure}
 
-The initial conclusion we can reach from this is that transformer stacks are  more performant than the monolithic alternative. One could, of course, imagine that a hyper-optimised monolith could be made with optimisations specific to the state model, which would then out-perform the more generic transformers. However, in practice, the size of such monoliths makes these optimisations hard to apply, as code becomes complex quickly and makes changes harder. In contrast, transformers are very simple to optimise, as they maintain a more generic structure.
+The initial conclusion we can reach from this is that transformer stacks are more performant than the monolithic alternative. One could, of course, imagine that a hyper-optimised monolith could be made with optimisations specific to the state model, which would then out-perform the more generic transformers. However, in practice, the size of such monoliths makes these optimisations hard to apply, as code becomes complex quickly and makes changes harder. In contrast, transformers are very simple to optimise, as they maintain a more generic structure.
 
 Another hypothesis this experiment seems to confirm is that the improvement given by optimisations is highly dependent on the context in which the engine is used: ALoc has a much lesser impact when doing WPST than when doing verification. Transformers thus allow users to tailor the optimisations they use in their stack according to what code is verified and how, by empirically measuring the performance of different alternatives (which are trivial to construct).
 

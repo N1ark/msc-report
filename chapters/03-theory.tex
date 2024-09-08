@@ -421,7 +421,7 @@ The above axiom is obtained for free, by lifting the $\models$ relation to the o
 \tag{Memory Model OX Soundness}\label{eq:mem-ox-soundness}
 \begin{array}{l}
 \ppexecc{\alpha}{\st,\ins}{o,\st',\outs} \land \theta,s,\st\models\sst \land \expeval{\sins}=\ins \implies \exists \sst',\souts,\pc,\theta'\ldotp\\
-\quad \ppexec{\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT[\theta',s](\pc) \land \theta',s,\st'\models \sst' \land  \expeval[\theta',s]{\souts}=\outs
+\quad \ppexec{\alpha}{\sst,\sins}{o,\sst',\souts,\pc} \land \SAT[\theta',s](\pc) \land \theta',s,\st'\models \sst' \land \expeval[\theta',s]{\souts}=\outs
 \end{array}
 \end{equation}
 
@@ -445,7 +445,7 @@ Because incorrectness separation logic does execution backwards, we also prove U
 \begin{array}{l}
 \st\disj\st_f \land \ppexecc{\alpha}{\st\cdot\st_f,\sins}{o, \st',\outs} \implies \\
 \quad\exists \st'', o', \outs'\ldotp \ppexecc{\alpha}{\st,\ins}{o', \st'', \outs'} ~\land \\
-\qquad(o' \neq \Miss \implies o' = o \land  \outs' = \outs \land \st' = \st'' \cdot \st_f)
+\qquad(o' \neq \Miss \implies o' = o \land \outs' = \outs \land \st' = \st'' \cdot \st_f)
 \end{array}
 \end{equation}
 
@@ -472,7 +472,7 @@ The above two axioms are what enable the traditional frame rule of separation lo
 \tag{Consume OX: No Path Drops}\label{eq:consume-ox-no-drop}
 \begin{array}{l}
 (\forall o, \sst_f,\souts,\pc \ldotp \ppcons{\OX,\sst,\delta,\sins}{o, \sst_f, \souts, \pc}\Rarr o_c = \Ok) \implies \\
-\quad \exists  \sst_f',\souts',\pc' \ldotp \ppcons{\OX, \sst, \delta,\ins,\pc}{\Ok, \sst_f', \souts', \pc'}
+\quad \exists \sst_f',\souts',\pc' \ldotp \ppcons{\OX, \sst, \delta,\ins,\pc}{\Ok, \sst_f', \souts', \pc'}
 \end{array}
 \end{equation}
 
@@ -740,7 +740,7 @@ The $\Freeable(\mmdl)$ state model transformer allows extending a state model wi
 
 To ensure frame preservation, the underlying state model must provide an additional function, equivalent to the aforementioned property ``exclusive'': ${\isexowned\colon\St\rarr\bools}$. Because actions in the symbolic realm need to be sound with respect to the concrete realm, we then lift its definition to ${\isexowned\colon\Sst\rarr\LVal}$, making it return a symbolic value that can be appended to the path condition.
 
-While not needed for the core and compositional engines, the bi-abductive engine requires that  misses may be fixed; $\Freeable(\mmdl)$ however cannot access directly the core predicates of \mmdl{} to provide fixes when freeing an empty state. As such, the state model must also provide a ${\code{fix\_owned}\colon\Sst^?\rarr\lvallist}$ function that returns possible fixes to make the given state exclusively owned. This also implies that for any state $\st$ of \mmdl{}, if it is not exclusively owned then there must exist a bigger state $\st'$ such that $\st\preo\st'$ and $\isexowned~\st'$. This is not the case, for instance, for \Ag, meaning a construction such as $\Freeable(\Ag(X))$ is not sound.
+While not needed for the core and compositional engines, the bi-abductive engine requires that misses may be fixed; $\Freeable(\mmdl)$ however cannot access directly the core predicates of \mmdl{} to provide fixes when freeing an empty state. As such, the state model must also provide a ${\code{fix\_owned}\colon\Sst^?\rarr\lvallist}$ function that returns possible fixes to make the given state exclusively owned. This also implies that for any state $\st$ of \mmdl{}, if it is not exclusively owned then there must exist a bigger state $\st'$ such that $\st\preo\st'$ and $\isexowned~\st'$. This is not the case, for instance, for \Ag, meaning a construction such as $\Freeable(\Ag(X))$ is not sound.
 
 Like Iris, we define the $\Freeable(\mmdl)$ state model by construction: ${\Freeable(\mmdl) \defeq \mmdl + \Ex(\{\freed\})}$, which allows all associated rules to be kept. For clarity, we rename the core predicate $\code{R}~\exP$ (defined by~$\Ex(\{\freed\})$) as $\freedP$. We also extend its actions with the $\free$ action.
 
