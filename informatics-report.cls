@@ -63,17 +63,17 @@
 	\end{abstract}
 
 	%Acknowledgements
-%	\clearpage
-%	\thispagestyle{empty}
-%	\vspace*{1.4in}
-%	\begin{center}
-%		{\textbf{Acknowledgements}} \\*
-%	\end{center}
-%	\begin{quotation}
-%		\begin{flushleft}
-%			\input{frontmatter/acknowledgments.tex}
-%		\end{flushleft}
-%	\end{quotation}
+	\clearpage
+	\thispagestyle{empty}
+	\vspace*{1.4in}
+	\begin{center}
+		{\textbf{Acknowledgements}} \\*
+	\end{center}
+	\begin{quotation}
+		\begin{flushleft}
+			\input{frontmatter/acknowledgments.tex}
+		\end{flushleft}
+	\end{quotation}
 
 \setcounter{page}{0}	
 }
