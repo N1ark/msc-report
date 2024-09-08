@@ -52,8 +52,12 @@ All of these together enable a CSE engine to be \emph{parametric} on the state m
 
 \emph{Core predicates} (sometimes simply called predicates) are used to make the assertion language of the engine parametric; they're written ${\delta\in\preds}$. To enable this parametricity, the assertions of the language (see \autoref{fig:assertion-language}) are extended with a core predicate assertion, written $\corepred{\delta}{\ins}{\outs}$, where $\delta$ is the core predicate, $\ins$ are the \emph{in-values} (or ``ins'') of the predicate, and $\outs$ are the \emph{out-values} (or ``outs''). This distinction is used for automation purposes, to create matching plans: they tell the engine that given the values $\ins$, the state can return the corresponding $\outs$ associated with it; this is akin to the ``parameter modes'' described in \cite{parametermodes}. For instance, the traditional ``points to'' assertion $a \mapsto v$, where $a$ is an address and $v$ a value, can be written as $\corepred{\pointsto}{a}{v}$: given the address $a$, a heap can return the value store at the location $v$. Core predicate also imply a satisfiability relation, denoted $\st\modelsp\corepred{\delta}{\ins}{\outs}$ to signify a state satisfies a given predicate -- this is akin to \cite{abstractseplogic,localreasoning}, where predicates over states are a set of states. Predicate satisfiability happens at the concrete level, and is later lifted to the symbolic realm by evaluating the ins and outs using a substitution $\theta$ and variable store $s$. Another traditional example is the \emp{} assertion, that is satisfied by the empty memory; it can be defined as a core predicate: $\corepred{\code{emp}}{}{\!}$.
 
+\begin{remark}[Assertion language]
+We follow the approach outlines in \cite{sacha-phd}, by only defining a minimal assertion language, consisting of the separating conjunction, the existential quantifier, core predicates and logical values. First order formulae are part of \LVal's grammar, and contain the usual operators: disjunction, implication, etc. This introduces a clear divide between logical assertions, expressed via logical values, and spatial assertions, expressed via core predicate assertions.
+\end{remark}
+
 \begin{remark}[Semantics of emp]
-There are two accepted and clashing semantics of the \emp{} assertion; either it is equivalent to $\vtrue$ and any state satisfies \emp{}, or it represents strictly the empty memory and nothing else. The former holds in intuitionistic separation logics, and is more appropriate for garbage collected languages, while the latter holds in classical separation logic and is better suited for \alloc/\free{} languages \cite{sljungle}.
+There are two accepted and clashing semantics of the \emp{} assertion; either it is equivalent to $\vtrue$ and any state satisfies \emp{}, or it represents strictly the empty memory and nothing else. The former holds in intuitionistic separation logics, and is more appropriate for garbage collected languages, while the latter holds in classical separation logic and is better suited for \alloc/\free{} languages~\cite{sljungle}.
 
 Here we make the arbitrary choice of defining it as only being satisfied by the empty memory. Because the engine is parametric on the core predicates, a user is free to chose the semantics appropriate to their use case -- this is a strength of the parametric approach.
 \end{remark}
@@ -65,8 +69,7 @@ Given the predicate satisfiability $\modelsp$, producing a core predicate assert
 	\sym v &\in \LVal\\
 	\sym x &\in \LVar \subset \LVal\\
 	\delta &\in \Delta \\
-	P, Q, ... \in \Asrt &\defeq \sym v \mid \vtrue \mid P \Rarr Q \mid P \lor Q \mid \exists \sym x \ldotp P \mid\\
-	&\quad~ P * Q \mid \corepred{\delta}{\sins}{\souts}
+	P, Q, ... \in \Asrt &\defeq P * Q \mid \sym v \mid \exists \sym x \ldotp P \mid \corepred{\delta}{\sins}{\souts}
 	\end{align*}
 	\caption{Assertion language}
 	\label{fig:assertion-language}
@@ -94,14 +97,14 @@ For the case of function calls using function specifications, the inverse is don
 
 \subsubsection{The Linear Heap State Model}
 
-To exemplify how a state model works, let's consider the traditional linear heap. We use a definition similar to what is shown in \cite{isl}: the two spatial assertions are the cell $a\mapsto x$, and the freed resource $a\freedpt$, meaning the cell at $a$ was freed. We also need four memory-related commands: \load, \store, \alloc{} and \free{}. Our concrete state is a mapping from integers to values or to a special $\varnothing$ value representing a freed state. The symbolic state is then the same, but lifting addresses and values to the symbolic realm. As such, our state model $\mmdl_\statemodel{LinHeap}$ thus defines: \begin{compactitem}
+To exemplify how a state model works, let's consider the traditional linear heap. We use a definition similar to what is shown in \cite{isl}: the two spatial assertions are the cell $a\mapsto x$, and the freed resource $a\freedpt$, meaning the cell at $a$ was freed. We also need four memory-related commands: \load, \store, \alloc{} and \free{}. Our concrete state is a mapping from integers to values or to a special $\varnothing$ value representing a freed state.\footnote{We write $a\freedpt$ for the spatial assertion saying $a$ was freed, and $a\mapsto\varnothing$ for the state with the cell at $a$ freed. Note also that $\varnothing$ is the freed value, not the empty set ($\emptyset$).} The symbolic state is then the same, but lifting addresses and values to the symbolic realm. As such, our state model $\mmdl_\statemodel{LinHeap}$ thus defines: \begin{compactitem}
  \item The concrete PCM $\St$, of which the carrier set is $\nats\part \Val \uplus \{\varnothing\}$ -- composition is the disjoint union, and the $0$ is the empty map.
  \item The symbolic states $\Sst = \LVal \part \LVal \uplus\{\varnothing\}$.
  \item The actions $\actions=\{\load,\store,\alloc,\free\}$.
  \item The core predicates $\preds=\{\pointsto, \freedP\}$; we can then write \corepred{\pointsto}{a}{x} and \corepred{\freedP}{a}{} for $a\mapsto x$ and $a\freedpt$ respectively.
  \end{compactitem}
 
- The definition of \execac{} is straightforward, modifying the state accordingly. \consume{} of \pointsto{} and \freedP{} suceeds and removes the binding appropriately when the mapped-to value is in \LVal{} or is $\varnothing$ respectively. \produce{} does the opposite, adding the binding to the address and vanishing (resulting in no branches) if the binding clashes.
+ The definition of \execac{} is straightforward, modifying the state accordingly. \consume{} of \pointsto{} and \freedP{} suceeds and removes the binding appropriately when the mapped-to value is in \LVal{} or is $\varnothing$ respectively. \produce{} does the opposite, adding the binding to the address and vanishing (resulting in no branches) if the binding already exists, since two values cannot be at the same address.
 
  Finally we define the satisfiability relations: $\models$ is defined with the evaluation of the addresses and values of the symbolic state. We then define $\modelsp$ as ${[a\mapsto x]\modelsp \corepred{\pointsto}{a}{x}}$ and ${[a\mapsto\varnothing]\modelsp\corepred{\freedP}{a}{}}$.
 
@@ -335,7 +338,7 @@ Here, the outcome is in the set of \emph{execution outcomes} $\outcomes_e=\{ \Ok
 
 The main difference with \cite{cse2} is that the state may be $\bot$, if the action is executed on empty state; this is made explicit from using $\Sst^?$ (rather than $\Sst$). This ensures non-unital RAs are not ruled out as invalid -- indeed, many useful RAs are not unital and sometimes don't have a unit at all, as is the case for instance for \Ex.
 
-We also modify the definition of a path condition. It is typically defined as a logical value $\LVal$ that must evaluate to a boolean, and which is extended via conjunction. Internally, the engine however still needs to split the conjunction into a list of terms to manipulate it. As such, to make the theory closer to what is effectively done within the engine, we make the choice of defining the path condition as a \emph{list of logical values}: $\pc\in\Pc=\lvallist$. Extension is then defined as concatenating new logical values to the path condition, and strengthening of the path condition can be trivially checked with $\pc'\supseteq\pc$. Substitutions $\theta\in\Theta$ and variable stores (or simply stores) $s\in\text{Store}$ are variable environments, for logic and program variables respectively. We define the predicate \code{SAT}, that is true if, given the substitution $\theta$, store $s$ and a path condition $\pc$, the conjunction of the elements of $\pc$ resolves to $\vtrue$ once evaluated:
+We also modify the definition of a path condition. Because it only contains first order formulae, \cite{cse1,cse2} makes the choice of defining it as a logical value that must evaluate to a boolean, and which is extended via conjunction. Internally, the engine however still needs to split the conjunction into a list of terms to manipulate it. As such, to make the theory closer to what is effectively done within the engine, we make the choice of defining the path condition as a \emph{list of logical values}: $\pc\in\Pc=\lvallist$. Extension is then defined as concatenating new logical values to the path condition, and strengthening of the path condition can be trivially checked with $\pc'\supseteq\pc$. Substitutions $\theta\in\Theta$ and variable stores (or simply stores) $s\in\text{Store}$ are variable environments, for logical and program variables respectively. We define the predicate \code{SAT}, that is true if, given the substitution $\theta$, store $s$ and a path condition $\pc$, the conjunction of the elements of $\pc$ resolves to $\vtrue$ once evaluated:
 \begin{align*}
 	\SAT(\pc) \defeq \left\llbracket \bigwedge_{i}^{|\pc|}\pc(i) \right\rrbracket_{\theta,s} \hspace{-1em} = \vtrue
 \end{align*}
@@ -850,8 +853,8 @@ Due to the strong similarity between $\PMap$ and $\List$, it is tempting to defi
 The discriminator must come equipped with an $\code{is\_within}\colon \St_D \rarr I \rarr \bools$ function that given an index returns whether or not the state is within bounds. Here, the input discriminator state is never $\bot$: if the discriminator is not known then a \Miss{} must be issued, since composing a state with a non-$\bot$ discriminator can change the outcome. \code{is\_within} must also be lifted to the symbolic realm, resulting in $\code{is\_within}\colon \Sst_D\rarr I\rarr \pset(\LVal)$.
 
 Defining \PMap{} and \List{} with a \GMap{} would require using the discriminator state models $\Ex(\pset(I))$ and $\Ex(\nats)$ respectively, with the following $\code{is\_within}$ definitions: \begin{align*}
-	\code{is\_within}_{\PMap}~d~i&\defeq i\in d\\
-	\code{is\_within}_{\List}~n~i&\defeq 0 \leq i \land i < n
+	\code{is\_within}_{\PMap}~d~i&\defeq \{i\in d\}\\
+	\code{is\_within}_{\List}~n~i&\defeq \{0 \leq i \land i < n\}
 \end{align*}
 
 For the above two examples it is also needed to exclude the $\store$ actions defined by the discriminator (via \Ex), as modifying the domain set of a partial map or the bound of a list is not frame preserving. In general, it is unsound to modify the discriminator directly without also modifying the map (like \alloc{} does): ``increasing'' it breaks \ref{eq:frame-add} (as states compatible with the new state aren't compatible with the old state), while ``decreasing'' it breaks \ref{eq:frame-sub} (for the inverse reason). Here increasing and decreasing refer to modifying the discriminator such that more or less indices are considered \emph{within} it.
