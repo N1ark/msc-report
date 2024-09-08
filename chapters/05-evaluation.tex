@@ -20,7 +20,7 @@ The key improvement our approach has over defining entire state models from scra
 
 We now measure the performance of the instantiations created using our library against the performance of the original monolithic Gillian state models.
 
-The evaluation is focused on testing the performance of state models across all modes supported by Gillian: Whole Program Symbolic Testing (WPST), OX Verification and UX Bi-Abduction. The files tested are either small programs used to test the engine, or larger verification targets extracted from real world code. Furthermore, when possible, the tests are also run with different optimisations of $\PMap$: $\ALocPMap$ and $\SplitPMap$.
+The evaluation is focused on testing the performance of state models across all modes supported by Gillian: whole program symbolic testing (WPST), OX verification and UX bi-abduction. The files tested are either small programs used to test the engine, or larger verification targets extracted from real world code. Furthermore, when possible, the tests are also run with different optimisations of $\PMap$: $\ALocPMap$ and $\SplitPMap$.
 
 All test logs were verified to ensure full parity between all versions: the instantiations built using state model transformers yield the same results as the original instantiations. All passing tests pass, and all failing tests fail for the same reasons. All tests were run on a 2020 MacBook Pro, with an M1 processor and 8GB of memory.
 
@@ -57,7 +57,7 @@ The benchmark is split into three parts: whole program symbolic testing (WPST), 
 
 The performance here seems to be worsened by the use of our library. This makes sense: WISL has a small toy-like state model, allowing for relatively simple code that can work straightforwardly. Gillian-WISL also uses an older and lower level API for Gillian, allowing it for instance to manipulate the PC without using \code{Delayed}. While this approach is more error-prone, it works well for small state models, and explains the better performance observed here. In comparison, using state model transformers is probably overkill and the added indirection worsens performance compared to a simple implementation. The difference is however negligible: no more than 3\% performance loss in verification and WPST.
 
-While not a perfect measure of complexity, lines of code (LOCs) are used to compare the amount of code needed to instantiate each state model to get equivalent results. We only measure the lines of code in implementation files (\code{.ml}), ignoring interface files (\code{.mli}) and whitespace. What is gained from using transformers is a shorter implementation, as shown in \autoref{fig:wisl-locs}: the amount of work required from the developer has been reduced to almost none, as most functionality comes with the provided library. There are more LOCs needed as a whole, but the developer of the state model doesn't need to worry about the size of the library.
+While not a perfect measure of complexity, lines of code (LOCs) are used to compare the amount of code needed to instantiate each state model to get equivalent results. We only measure the lines of code in implementation files (\code{.ml}), ignoring interface files (\code{.mli}) and whitespace. What is gained from using transformers is a shorter implementation, as shown in \autoref{fig:wisl-locs}: the amount of work required from the developer has been reduced to almost none, as most functionality comes with the provided library. There are more LOCs needed as a whole, but the developer of the state model does not need to worry about the size of the library.
 
 \subsection{JavaScript}
 
@@ -120,7 +120,7 @@ If, instead of focusing on WPST with the Buckets code we focus on verification, 
 
 Most notably, this shows us that one of the leading differences in total time between different transformer instantiations is substitutions: TR and TR-Split spend more than twice as much time during substitutions than TR-ALoc and TR-ALocSplit. This is because with the ALoc optimisation, substitutions for the keys (abstract location names) can be filtered: if there is no substitution for abstract locations, we can simply map the values of the heap without worrying about key conflicts. Without this, substitutions need to be applied to both the key and the value, and then all resulting keys need to be compared to compose clashing entries -- this is expensive.
 
-While this hasn't been measured, it is possible that the reason why Gillian-JS spends so little time in substitutions is because it uses mutable structures, allowing modifications to be done in-place, rather than creating new copies.
+While this has not been measured, it is possible that the reason why Gillian-JS spends so little time in substitutions is because it uses mutable structures, allowing modifications to be done in-place, rather than creating new copies.
 
 \begin{figure}
 \captionsetup{width=.4\linewidth}
@@ -209,6 +209,6 @@ Finally, and to confirm our intuition, we do a brief evaluation of the time take
 	\label{fig:pmap-perf}
 \end{figure}
 
-We first notice the significant difference between the \PMap{} with and without the ALoc optimisation: while the data only exists for map sizes up to 50 elements, the operation takes up to 10ns without ALocs, while taking on average 0.5ns with them. The use of the split optimisation doesn't seem to have an impact in this regard.
+We first notice the significant difference between the \PMap{} with and without the ALoc optimisation: while the data only exists for map sizes up to 50 elements, the operation takes up to 10ns without ALocs, while taking on average 0.5ns with them. The use of the split optimisation does not seem to have an impact in this regard.
 
 We can also compare performance when using expressions as keys (\code{aloc}) against using strings (\code{aloc-str}); here the impact seems to be constant, with an approximate improvement of 30\% when using strings. In both cases, the time taken for a lookup seems to logarithmically scale with the size, which makes sense given \code{Map}, the used data structure, is a balanced binary tree.

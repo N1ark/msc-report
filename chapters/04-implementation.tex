@@ -79,7 +79,7 @@ A significant difference with the theory presented is that the \execac, \consume
 
 One of the most significant improvements of our interface is the re-work of fixes in the engine, to behave precisely like the definition of \fix{} in the theory. Gillian uses an intermediary \code{fix\_t} type, that is obtained from an error with \code{get\_fixes}, and must then be applied with \code{apply\_fix: t -> fix\_ t -> (t, err\_t) result Delayed.t}. Aside from being an unpractical system to use, generating a fix and then applying it separately, it \emph{introduces unsoundness into the bi-abductive engine}. Indeed, applying a fix modifies the state directly; there is no requirement for this fix to be describable in terms of assertions. This means that applying the same fix on the state and the anti-frame may give different results, that do not result in the appropriate change for the function's generated pre-condition.
 
-For instance in \cite{sacha-phd}, an example implementation of \PMap{} is given, where executing an action on an empty cell creates a \Miss{}, called \code{MissingBinding}. A naive implementation of \PMap{} for Gillian could resolve this fix by simply adding a binding that points to the empty substate in the heap at the corresponding index. This however is not sound, as it \emph{cannot be expressed as an assertion}: it manipulates the representation of state, but no assertion exists that creates an empty binding, since \PMap{} doesn't define core predicates for bindings -- it only lifts the core predicates of the wrapped state model. This would therefore result in a fix that doesn't change the anti-frame or the specification of the function, which is invalid.
+For instance in \cite{sacha-phd}, an example implementation of \PMap{} is given, where executing an action on an empty cell creates a \Miss{}, called \code{MissingBinding}. A naive implementation of \PMap{} for Gillian could resolve this fix by simply adding a binding that points to the empty substate in the heap at the corresponding index. This however is not sound, as it \emph{cannot be expressed as an assertion}: it manipulates the representation of state, but no assertion exists that creates an empty binding, since \PMap{} does not define core predicates for bindings -- it only lifts the core predicates of the wrapped state model. This would therefore result in a fix that does not change the anti-frame or the specification of the function, which is invalid.
 
 We fix this by enforcing \code{fix\_t} to be of type \code{MyAsrt.t}: strongly typed assertions. The implementation of \code{apply\_fix} then produces all the fixes into the state model. This change thus not only makes state models less prone to error, but also simplifies their code.
 
@@ -111,7 +111,7 @@ let produce core_pred s insouts =
   | Ex, Some _, _ -> Delayed.vanish ()
   | _ -> failwith "Invalid Ex produce"
 \end{lstlisting}
-Again, this is straightforward; a simple pattern matching suffices. \code{DR.ok} stands for \mbox{\code{Delayed.return (Ok -)}}, returning the input in a \code{Result} monad, wrapped in a \code{Delayed} monad. The outcome is thus \Ok{} -- for \Err{}, \LFail{} and \Miss{} outcomes, we use \code{DR.error}; the state model then provides a \code{can\_fix} function that given an error returns whether it is fixable, signifying it's a \Miss. Experiments were done to create an \code{Outcome} monad, with variants \code{Ok | Miss | Err | LFail}, as a replacement for the \code{Result} monad with \code{Ok | Err}. While this allowed getting rid of the \code{can\_fix} function, it was unpractical to use, as it was purely ``aesthetic''; the engine still needed to parse everything back to a \code{Result}. Furthermore, this made lifting errors quite tedious: instead of simply defining a variant \code{SubError of S.err\_t} for the error type and lifting the errors of the underlying state model through it, one had to handle all three error cases, creating a lot of boilerplate code for little to no added value.
+Again, this is straightforward; a simple pattern matching suffices. \code{DR.ok} stands for \mbox{\code{Delayed.return (Ok -)}}, returning the input in a \code{Result} monad, wrapped in a \code{Delayed} monad. The outcome is thus \Ok{} -- for \Err{}, \LFail{} and \Miss{} outcomes, we use \code{DR.error}; the state model then provides a \code{can\_fix} function that given an error returns whether it is fixable, signifying it is a \Miss. Experiments were done to create an \code{Outcome} monad, with variants \code{Ok | Miss | Err | LFail}, as a replacement for the \code{Result} monad with \code{Ok | Err}. While this allowed getting rid of the \code{can\_fix} function, it was unpractical to use, as it was purely ``aesthetic''; the engine still needed to parse everything back to a \code{Result}. Furthermore, this made lifting errors quite tedious: instead of simply defining a variant \code{SubError of S.err\_t} for the error type and lifting the errors of the underlying state model through it, one had to handle all three error cases, creating a lot of boilerplate code for little to no added value.
 
 Finally here we mention some of the additional functions that the state model must implement: \begin{lstlisting}
 let empty () = None
@@ -203,7 +203,7 @@ let produce pred s args =
       | h, None -> Delayed.return (h, Some d'))
   | _ -> failwith "Invalid PMap produce"
 \end{lstlisting}
-Here again, and even for a transformer as complex as $\PMap(I,\mmdl)$, the code is short and minimal. For the case of a core predicate from $\mmdl$ (\code{SubPred pred}), we get the substate associated with the index (\code{let*?} gets the value associated with a \code{Result} and vanishes if it's an error), we produce the predicate onto the substate, and then update the entry. For the domain set, we simply add it to the state, vanishing if a domain set is already present as it is exclusively owned.
+Here again, and even for a transformer as complex as $\PMap(I,\mmdl)$, the code is short and minimal. For the case of a core predicate from $\mmdl$ (\code{SubPred pred}), we get the substate associated with the index (\code{let*?} gets the value associated with a \code{Result} and vanishes if it is an error), we produce the predicate onto the substate, and then update the entry. For the domain set, we simply add it to the state, vanishing if a domain set is already present as it is exclusively owned.
 
 The entire \PMap{} code is 343 lines of code -- a sizeable amount, but still rather short given its complexity.
 
@@ -213,11 +213,11 @@ We now define some additional state model transformers that are often used when 
 
 $\statemodel{ActionAdd}(\mmdl, A)$ is a transformer that equips the given state model with additional actions defined by $A$, without needing to define any predicates, overriding functions, or re-implementing repetitive functions.
 
-$\statemodel{Filter}(\mmdl, \actions, \Delta)$ is a transformer that allows filtering the actions and predicates exposed by a state model, for instance to limit the functionality of a state model if one of its provided actions shouldn't exist in the semantics of the language.
+$\statemodel{Filter}(\mmdl, \actions, \Delta)$ is a transformer that allows filtering the actions and predicates exposed by a state model, for instance to limit the functionality of a state model if one of its provided actions should not exist in the semantics of the language.
 
 $\statemodel{Mapper}(\mmdl, F_\actions, F_\Delta)$ allows renaming predicates or actions.
 
-$\statemodel{Injector}(\mmdl, I)$ adds hooks into \consume, \produce{} and \execac{}, allowing the developer to apply transformations to the inputs or outputs of these functions. For instance, this makes re-ordering the arguments of actions trivial, or allows treating an out-value as an in-value that makes the branch vanish if it doesn't correspond.
+$\statemodel{Injector}(\mmdl, I)$ adds hooks into \consume, \produce{} and \execac{}, allowing the developer to apply transformations to the inputs or outputs of these functions. For instance, this makes re-ordering the arguments of actions trivial.
 
 \section{Instantiations} \label{sec:impl-instantiations}
 
@@ -264,7 +264,7 @@ This is \underline{all} the code needed for the instantiation of WISL to match e
 
 A consequence of our modular approach to state models is functor-heavy code, with many intermediary modules to allow for further constructions. This can be a bit unwieldy if not organised properly, which explains why here we take some intermediary steps, instead of writing down one large and confusing functor application.\footnote{It is often not possible to write the whole state model as a single functor application anyway, due to constraints in OCaml about naming modules -- see \url{https://github.com/ocaml/ocaml/issues/6917\#issuecomment-626586129}.}
 
-We now describe, module by module, how the instantiation of WISL is done. We first override the \Ex{} state model, to modify its default value on instantiation, as WISL requires instantiation to \code{null} and the base implementation of \Ex{} initialises it to \code{undefined} instead. We then create the intermediary module \code{BaseMemory}, equivalent to $\PMap(\Loc,\Freeable(\List(\Ex)))$,\footnote{The \List{} state model transformer is called \code{MList} to avoid shadowing OCaml's \code{List} module.} which corresponds to the bulk of the state model. We finish by applying the substitutions needed to match the target instantiation, via the \code{Mapper} module, and voilà! Thanks to our library, what used to be about 800 lines of code is now 25 lines. We point out that our instantiation is also easier to verify the soundness of, as all modules are independent and don't require understanding how the other state model transformers work.
+We now describe, module by module, how the instantiation of WISL is done. We first override the \Ex{} state model, to modify its default value on instantiation, as WISL requires instantiation to \code{null} and the base implementation of \Ex{} initialises it to \code{undefined} instead. We then create the intermediary module \code{BaseMemory}, equivalent to $\PMap(\Loc,\Freeable(\List(\Ex)))$,\footnote{The \List{} state model transformer is called \code{MList} to avoid shadowing OCaml's \code{List} module.} which corresponds to the bulk of the state model. We finish by applying the substitutions needed to match the target instantiation, via the \code{Mapper} module, and voilà! Thanks to our library, what used to be about 800 lines of code is now 25 lines. We point out that our instantiation is also easier to verify the soundness of, as all modules are independent and do not require understanding how the other state model transformers work.
 
 \subsection{JavaScript}
 
@@ -273,9 +273,9 @@ Gillian originated from JaVerT \cite{javert1,javert2}, which eventually became G
 \end{align*}
 Here $\DynPMap(\Str, \Ex(\Val))$ represents objects, and $\Ag(\Loc)$ is the location of the object's metadata, which itself is also an object. An object's metadata is immutable, and thus shareable, explaining the choice of an agreement.
 
-Its implementation with our library is more involved than for WISL; indeed, Gillian-JS doesn't quite line up with the actions and predicates we defined for our state models. These differences mostly stem from different design, meaning most of the work required to fix them is juggling values to fit the right shape.
+Its implementation with our library is more involved than for WISL; indeed, Gillian-JS does not quite line up with the actions and predicates we defined for our state models. These differences mostly stem from different design, meaning most of the work required to fix them is juggling values to fit the right shape.
 
-For instance in Gillian-JS the \domainset{} predicate has one in-value, the domain set, and no out. In our definitions however, the same predicate has no in, and one out, the domain set. To this end, we override \consume{} for \domainset{}, and vanish when the given in doesn't match the out.
+For instance in Gillian-JS the \domainset{} predicate has one in-value, the domain set, and no out. In our definitions however, the same predicate has no in, and one out, the domain set. To this end, we override \consume{} for \domainset{}, and vanish when the given in does not match the out.
 \begin{lstlisting}
 module MoveInToOut (S : States.MyMonadicSMemory.S) :
   States.MyMonadicSMemory.S with type t = S.t = struct
@@ -294,7 +294,7 @@ module MoveInToOut (S : States.MyMonadicSMemory.S) :
 end
 \end{lstlisting}
 
-Another difference is that for the \DynPMap, when accessing a field that didn't exist, Gillian-JS instantiates it to \code{Nono}, a special value to represent values that are not actually there. When using the \code{get\_domainset} action or consuming the \domainset{} predicate, all keys mapping to a \code{Nono} value must thus be removed:
+Another difference is that for the \DynPMap, when accessing a field that did not exist, Gillian-JS instantiates it to \code{Nono}, a special value to represent values that are not actually there. When using the \code{get\_domainset} action or consuming the \domainset{} predicate, all keys mapping to a \code{Nono} value must thus be removed:
 \begin{lstlisting}
 module PatchDomainsetObject (S : sig
   include MyMonadicSMemory
