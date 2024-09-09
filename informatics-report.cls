@@ -43,15 +43,18 @@
 			\begin{flushright}
 			      \includegraphics[scale=0.4]{FrontMatter/logo.png}\\*
 			\end{flushright}
-			\vspace*{2.2in}
+			\vspace*{1.5in}
+			{Imperial College London\\*
+			Department of Computing}\\*
+			\vspace*{0.5in}
 			{\huge \bf{\@title}}\\*
-			\vspace*{3in}
+			\vspace*{3.1in}
 			\large{Author: \@author\\*
 			       Supervisor: \@supervisor}\\*
+			\vspace*{1in}
+			{Submitted in partial fulfilment of the requirements for the MSc Degree in Computing (Software Engineering) of Imperial College London}\\*
 			\vspace*{0.2in}
-			{\@date}\\*
-			\vspace*{1.5in}
-			{Submitted in partial fulfilment of the requirements for the MSc Degree in Computing (Software Engineering)}
+			{September 2024}
 		}
 	\end{center}
 	\restoregeometry
