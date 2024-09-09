@@ -24,7 +24,7 @@ The evaluation is focused on testing the performance of state models across all 
 
 All test logs were verified to ensure full parity between all versions: the instantiations built using state model transformers yield the same results as the original instantiations. All passing tests pass, and all failing tests fail for the same reasons. All tests were run on a 2020 MacBook Pro, with an M1 processor and 8GB of memory.
 
-This evaluation is split among the three different stacks originally supported by Gillian: WISL, JavaScript, and C. A more in-depth presentation of the instantiations is done in \cref{sec:impl-instantiations}. We note that all Gillian instantiations make use of the abstract location optimisation internally, which as shown in \cref{sec:theory-optim-pmap} has some unsoundness issues. Therefore, to ensure our instantiations have the same results as the reference implementation, we evaluate our transformer constructions using the ALoc optimisation where relevant.
+This evaluation is split among the three different stacks originally supported by Gillian: WISL, JavaScript, and C; the full list of tested files is included in \cref{ap:test-files}. A more in-depth presentation of the instantiations is done in \cref{sec:impl-instantiations}. We note that all Gillian instantiations make use of the abstract location optimisation internally, which as shown in \cref{sec:theory-optim-pmap} has some unsoundness issues. Therefore, to ensure our instantiations have the same results as the reference implementation, we evaluate our transformer constructions using the ALoc optimisation where relevant.
 
 \subsection{WISL}
 

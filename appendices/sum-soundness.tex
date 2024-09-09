@@ -34,7 +34,7 @@ We want to prove \ref{eq:frame-sub} does not hold with action \swap.
 	\hypvitem{equiv-s1} From \hyp{comp-eq} and \hyp{swap}, $\execswap{l(\st)\cdot l(0_1),\ins}{\Ok, r(\st'),\outs}$
 \end{hypvlist}
 
-To satisfy frame substraction, as the outcome in \hyp{eval} is \Ok, we would need ${r(\st') = r(\st') \cdot l(0_1)}$, which is not the case, as per the definition of composition, $r(\st') \cdot l(0_1)$ is undefined. Frame substraction thus does not hold for \swap.
+To satisfy frame substraction, as the outcome in \hyp{swap} is \Ok, we would need ${r(\st') = r(\st') \cdot l(0_1)}$, which is not the case, as per the definition of composition, $r(\st') \cdot l(0_1)$ is undefined. Frame substraction thus does not hold for \swap.
 \end{proof}
 
 \section{Sound Sum}
