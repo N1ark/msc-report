@@ -20,7 +20,7 @@ The key improvement our approach has over defining entire state models from scra
 
 We now measure the performance of the instantiations created using our library against the performance of the original monolithic Gillian state models.
 
-The evaluation is focused on testing the performance of state models across all modes supported by Gillian: whole program symbolic testing (WPST), OX verification and UX bi-abduction. The files tested are either small programs used to test the engine, or larger verification targets extracted from real world code. Furthermore, when possible, we run the tests with different optimisations of $\PMap$: $\ALocPMap$ and $\SplitPMap$.
+The evaluation is focused on testing the performance of state models across all modes supported by Gillian: whole program symbolic testing (WPST), OX verification and UX bi-abduction. The files tested are either small programs used to test the engine, or larger verification targets extracted from real-world code. Furthermore, when possible, we run the tests with different optimisations of $\PMap$: $\ALocPMap$ and $\SplitPMap$.
 
 We verified all test logs to ensure full parity between all versions: the instantiations built using state model transformers yield the same results as the original instantiations. All passing tests pass, and all failing tests fail for the same reasons. All tests were run on a 2020 MacBook Pro, with an M1 processor and 8 GB of memory.
 
@@ -36,7 +36,7 @@ The WISL state model is $\PMap(\Loc, \Freeable(\List(\Ex(\Val))))$. The Gillian-
 
 Here $\PMap_{\text{ALocSplit}}$ represents a \PMap{} with both the ALoc and the split optimisations.
 
-The benchmark is split into three parts: whole program symbolic testing (WPST), verification, and bi-abduction, which are made up of respectively 1, 6, and 2 files. We note that the benchmark is small because it only has small code samples used for teaching purposes, rather than any real world code (since WISL is used for teaching). For this reason also we will not delve into too much detail for this comparison. The tests were run 50 times each, and the results are shown in \autoref{fig:wisl-perf-bars}.
+The benchmark is split into three parts: whole program symbolic testing (WPST), verification, and bi-abduction, which are made up of respectively 1, 6, and 2 files. We note that the benchmark is small because it only has small code samples used for teaching purposes, rather than any real-world code (since WISL is used for teaching). For this reason also we will not delve into too much detail for this comparison. The tests were run 50 times each, and the results are shown in \autoref{fig:wisl-perf-bars}.
 
 \begin{figure}
 \captionsetup{width=.4\linewidth}
@@ -73,7 +73,7 @@ To test all combinations of optimisations available via our library, we get the 
 
 The last version, TR-ALocSplit, is the closest in terms of applied optimisations to what Gillian-JS does. The biggest difference is the use of \code{Hashtbl}, as all transformers use immutable data structures.
 
-Gillian-JS is capable of analysing real world code: the Buckets-JS\footnote{See \url{https://www.npmjs.com/package/buckets-js}.} library, which provides several data structures such as linked lists, dictionaries, or sets has been verified by it, using whole program symbolic testing. Our instantiations having parity with the reference instantiations, we are also capable of verifying Buckets-JS, with no additional modifications.
+Gillian-JS is capable of analysing real-world code: the Buckets-JS\footnote{See \url{https://www.npmjs.com/package/buckets-js}.} library, which provides several data structures such as linked lists, dictionaries, or sets has been verified by it, using whole program symbolic testing. Our instantiations having parity with the reference instantiations, we are also capable of verifying Buckets-JS, with no additional modifications.
 
 This benchmark is split into three parts: WPST, verification, and Buckets-JS (in WPST mode), which are made up of respectively 21, 6, and 78 files. All tests were then run 30 times, for each state transformer stack and for Gillian-JS (labelled ``base''). The results can be seen in \autoref{fig:js-perf-bars}. The first insight this give us is that transformers seem to, on the whole, outperform the monolithic Gillian-JS, with an improvement ranging from 2.8 to 6.9\%. We also see that the ALoc optimisation that uses strings as keys is the best improvement; the Split optimisation seems to have no effect, hinting that maybe the cost of splitting the map and checking what is concrete is too high to compensate the time gain on actual substitutions. We also note that the improvement given by the ALoc optimisation is greater when doing verification than with WPST; this is likely caused because verification uses more non-concrete locations, which implies less syntactic matches when doing lookups.
 
