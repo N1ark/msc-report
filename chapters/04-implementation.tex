@@ -4,7 +4,7 @@ We now present the implementation of the state models and state model transforme
 
 \section{State Model Library} \label{sec:state-model-lib}
 
-All of the presented state models have been implemented in OCaml 5.2 \cite{ocaml} for Gillian \cite{gillian0,gillian1,gillian2}, a CSE engine that is parametric on the state model. We first present the general interface for state models, and how it connects to the Gillian engine. We then look more in depth into the implementation of two state models: \Ex{} for its canonical simplicity, and \PMap{} for its complexity. Finally, we list some additional ``utility'' state models that were omitted in the previous chapter but that are frequently used when instantiating state~models.
+All the presented state models have been implemented in OCaml 5.2 \cite{ocaml} for Gillian \cite{gillian0,gillian1,gillian2}, a CSE engine that is parametric on the state model. We first present the general interface for state models, and how it connects to the Gillian engine. We then look more in depth into the implementation of two state models: \Ex{} for its canonical simplicity, and \PMap{} for its complexity. Finally, we list some additional ``utility'' state models that were omitted in the previous chapter, but that are frequently used when instantiating state~models.
 
 \subsection{State Model Interface}
 
@@ -75,7 +75,7 @@ The interface provided by Gillian is not satisfactory: it is quite complex, requ
 
 Most of the removals are possible because some default function can be used for all state models, under the assumption they behave a particular way; for instance, we remove the \code{copy} function, because we assume all state models only work on immutable code. Most of the additions are due to the modular nature of our state models, or to enforce a stronger typing of actions and predicates.
 
-A significant difference with the theory presented is that the \execac, \consume{} and \produce{} functions do not take as input states of type \code{t option} (to imitate $\Sst^?$), but instead \code{t}. While both options are possible, using the \code{option} monad proved to at times be somewhat unweildy (for the same reason it is unpractical to use $\fn{wrap}$ and $\fn{unwrap}$ in the rules) -- we instead rely on the \code{is\_empty} function when necessary. We also require a \code{compose} function, despite it not being justified in the theory, because of substitutions.
+A significant difference with the theory presented is that the \execac, \consume{}, and \produce{} functions do not take as input states of type \code{t option} (to imitate $\Sst^?$), but instead \code{t}. While both options are possible, using the \code{option} monad proved to at times be somewhat unwieldy (for the same reason it is unpractical to use $\fn{wrap}$ and $\fn{unwrap}$ in the rules) -- we instead rely on the \code{is\_empty} function when necessary. We also require a \code{compose} function, despite it not being justified in the theory, because of substitutions.
 
 One of the most significant improvements of our interface is the re-work of fixes in the engine, to behave precisely like the definition of \fix{} in the theory. Gillian uses an intermediary \code{fix\_t} type, that is obtained from an error with \code{get\_fixes}, and must then be applied with \code{apply\_fix: t -> fix\_ t -> (t, err\_t) result Delayed.t}. Aside from being an unpractical system to use, generating a fix and then applying it separately, it \emph{introduces unsoundness into the bi-abductive engine}. Indeed, applying a fix modifies the state directly; there is no requirement for this fix to be describable in terms of assertions. This means that applying the same fix on the state and the anti-frame may give different results, that do not result in the appropriate change for the function's generated pre-condition.
 
@@ -91,7 +91,7 @@ type err_t = MissingState
 type action = Load | Store
 type pred = Ex
 \end{lstlisting}
-Here we define states as being an optional expression, where the \code{None} case stands for $\bot$. There is also one singular error, for misses. We then must define the function of the state model: \execac, \consume{} and \produce, following the rules outlined in \cref{rules:ex}: \begin{lstlisting}
+Here we define states as being an optional expression, where the \code{None} case stands for $\bot$. There is also one singular error, for misses. We then must define the function of the state model: \execac, \consume{}, and \produce, following the rules outlined in \cref{rules:ex}: \begin{lstlisting}
 let execute_action action s args =
   match (action, s, args) with
   | _, None, _ -> DR.error MissingState
@@ -113,7 +113,7 @@ let produce core_pred s insouts =
 \end{lstlisting}
 Again, this is straightforward; a simple pattern matching suffices. \code{DR.ok} stands for \mbox{\code{Delayed.return (Ok -)}}, returning the input in a \code{Result} monad, wrapped in a \code{Delayed} monad. The outcome is thus \Ok{} -- for \Err{}, \LFail{} and \Miss{} outcomes, we use \code{DR.error}; the state model then provides a \code{can\_fix} function that given an error returns whether it is fixable, signifying it is a \Miss. Experiments were done to create an \code{Outcome} monad, with variants \code{Ok | Miss | Err | LFail}, as a replacement for the \code{Result} monad with \code{Ok | Err}. While this allowed getting rid of the \code{can\_fix} function, it was unpractical to use, as it was purely ``aesthetic''; the engine still needed to parse everything back to a \code{Result}. Furthermore, this made lifting errors quite tedious: instead of simply defining a variant \code{SubError of S.err\_t} for the error type and lifting the errors of the underlying state model through it, one had to handle all three error cases, creating a lot of boilerplate code for little to no added value.
 
-Finally here we mention some of the additional functions that the state model must implement: \begin{lstlisting}
+Finally, here we mention some of the additional functions that the state model must implement: \begin{lstlisting}
 let empty () = None
 let is_empty = Option.is_none
 let is_exclusively_owned = Option.is_some
@@ -213,15 +213,15 @@ We now define some additional state model transformers that are often used when 
 
 $\statemodel{ActionAdd}(\mmdl, A)$ is a transformer that equips the given state model with additional actions defined by $A$, without needing to define any predicates, overriding functions, or re-implementing repetitive functions.
 
-$\statemodel{Filter}(\mmdl, \actions, \Delta)$ is a transformer that allows filtering the actions and predicates exposed by a state model, for instance to limit the functionality of a state model if one of its provided actions should not exist in the semantics of the language.
+$\statemodel{Filter}(\mmdl, \actions, \Delta)$ is a transformer that allows filtering the actions and predicates exposed by a state model. This is useful if for instance to limit the functionality of a state model if one of its provided actions should not exist in the semantics of the language.
 
 $\statemodel{Mapper}(\mmdl, F_\actions, F_\Delta)$ allows renaming predicates or actions.
 
-$\statemodel{Injector}(\mmdl, I)$ adds hooks into \consume, \produce{} and \execac{}, allowing the developer to apply transformations to the inputs or outputs of these functions. For instance, this makes re-ordering the arguments of actions trivial.
+$\statemodel{Injector}(\mmdl, I)$ adds hooks into \consume, \produce{}, and \execac{}, allowing the developer to apply transformations to the inputs or outputs of these functions. For instance, this makes re-ordering the arguments of actions trivial.
 
 \section{Instantiations} \label{sec:impl-instantiations}
 
-We now look at how this library of state models can be used to instantiate Gillian. In particular we focus on instantiating Gillian to target languages (TLs) that have already been instantiated for it: WISL, JavaScript, and C.
+We now look at how this library of state models can be used to instantiate Gillian. In particular, we focus on instantiating Gillian to target languages (TLs) that have already been instantiated for it: WISL, JavaScript, and C.
 
 To instantiate a language to Gillian, the developer must provide its state model, and a compiler from the TL to GIL. Because this project focuses on constructing state models, it is thus natural that we picked languages for which the compiler already exists.
 
@@ -264,7 +264,7 @@ This is \underline{all} the code needed for the instantiation of WISL to match e
 
 A consequence of our modular approach to state models is functor-heavy code, with many intermediary modules to allow for further constructions. This can be a bit unwieldy if not organised properly, which explains why here we take some intermediary steps, instead of writing down one large and confusing functor application.\footnote{It is often not possible to write the whole state model as a single functor application anyway, due to constraints in OCaml about naming modules -- see \url{https://github.com/ocaml/ocaml/issues/6917\#issuecomment-626586129}.}
 
-We now describe, module by module, how the instantiation of WISL is done. We first override the \Ex{} state model, to modify its default value on instantiation, as WISL requires instantiation to \code{null} and the base implementation of \Ex{} initialises it to \code{undefined} instead. We then create the intermediary module \code{BaseMemory}, equivalent to $\PMap(\Loc,\Freeable(\List(\Ex)))$,\footnote{The \List{} state model transformer is called \code{MList} to avoid shadowing OCaml's \code{List} module.} which corresponds to the bulk of the state model. We finish by applying the substitutions needed to match the target instantiation, via the \code{Mapper} module, and voilà! Thanks to our library, what used to be about 800 lines of code is now 25 lines. We point out that our instantiation is also easier to verify the soundness of, as all modules are independent and do not require understanding how the other state model transformers work.
+We now describe, module by module, how the instantiation of WISL is done. Firstly, we override the \Ex{} state model, to modify its default value on instantiation, as WISL requires instantiation to \code{null} and the base implementation of \Ex{} initialises it to \code{undefined} instead. We then create the intermediary module \code{BaseMemory}, equivalent to $\PMap(\Loc,\Freeable(\List(\Ex)))$,\footnote{The \List{} state model transformer is called \code{MList} to avoid shadowing OCaml's \code{List} module.} which corresponds to the bulk of the state model. We finish by applying the substitutions needed to match the target instantiation, via the \code{Mapper} module, and voilà! Thanks to our library, what used to be about 800 lines of code is now 25 lines. We point out that our instantiation is also easier to verify the soundness of, as all modules are independent and do not require understanding how the other state model transformers work.
 
 \subsection{JavaScript}
 
@@ -336,7 +336,7 @@ The entire instantiation to JavaScript is 253 lines of code, including all versi
 
 \subsection{C}
 
-Gillian-C \cite{gillian0} targets a subset of C, via the CompCert-C verified compiler \cite{compcert}. Due to the intricacies of the C memory model, its construction uses custom components, not part of the shared library. Its state model is: \begin{align*}
+Gillian-C \cite{gillian0} targets a subset of C, via the CompCert C verified compiler \cite{compcert}. Due to the intricacies of the C memory model, its construction uses custom components, not part of the shared library. Its state model is: \begin{align*}
 	\PMap(\Loc, \Freeable(\BlockTree)) \times \CGEnv
 \end{align*}
 
